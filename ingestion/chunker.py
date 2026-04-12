@@ -40,7 +40,7 @@ import logging
 from pathlib import Path
 from typing import Generator
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 logger = logging.getLogger(__name__)
 

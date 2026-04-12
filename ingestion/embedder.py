@@ -16,25 +16,67 @@
 # agent can find relevant passages even when the query words don't appear
 # verbatim in the document.
 #
-# WHY text-embedding-3-small?
-# ---------------------------
-# OpenAI offers three embedding models as of early 2025:
+# LOCAL INFERENCE vs. API EMBEDDINGS
+# ------------------------------------
+# There are two broad approaches to generating embeddings:
 #
-#   Model                    | Dimensions | $/1M tokens | MTEB avg
-#   -------------------------|------------|-------------|----------
-#   text-embedding-ada-002   |   1 536    |   $0.10     |  61.0
-#   text-embedding-3-small   |   1 536    |   $0.02     |  62.3
-#   text-embedding-3-large   |   3 072    |   $0.13     |  64.6
+#   Approach          | Model               | Dims | Cost        | Privacy
+#   ------------------|---------------------|------|-------------|--------
+#   OpenAI API        | text-embedding-3-small | 1536 | $0.02/1M tok | data leaves machine
+#   Local (this file) | all-MiniLM-L6-v2   |  384 | free        | data stays local
 #
-# text-embedding-3-small is the right default for this project because:
-#   1. Cost: 5× cheaper than ada-002 and 6.5× cheaper than 3-large.  A full
-#      corpus of 5 company 10-Ks (~2–3 million tokens) costs ≈ $0.05 to embed.
-#   2. Quality: slightly *beats* ada-002 on the MTEB benchmark despite the
-#      lower price — OpenAI's newer architecture is more efficient.
-#   3. Dimension parity with ada-002: both produce 1 536-dim vectors, so
-#      switching from ada-002 requires no schema changes to the vector store.
-#   4. Upgrade path: if retrieval quality needs a boost later, swapping to
-#      text-embedding-3-large is a one-line change and a re-index.
+# We use a LOCAL model for the following reasons:
+#
+#   1. Cost — embedding five 10-K filings (~2–3 M tokens each time the index
+#      is rebuilt) costs nothing locally vs. ~$0.05–$0.10 per run with OpenAI.
+#      For a research prototype that may be rebuilt many times this adds up.
+#
+#   2. Privacy — SEC filings are public documents, but in a real deployment
+#      a financial agent often processes proprietary research notes or internal
+#      communications.  Running embeddings locally ensures that sensitive text
+#      never leaves the machine or network perimeter.
+#
+#   3. Latency and offline use — local inference needs no network round-trip.
+#      The pipeline can run fully offline after the model is downloaded once.
+#
+#   4. Reproducibility — API models can be updated or deprecated by the
+#      provider.  A pinned local model produces identical vectors forever,
+#      which is important for deterministic retrieval benchmarks.
+#
+# WHY all-MiniLM-L6-v2?
+# ----------------------
+# all-MiniLM-L6-v2 is the most widely used sentence-transformer model for
+# RAG prototypes because it sits at the right point on the speed/quality curve:
+#
+#   Model               | Dims | MTEB avg | Params  | CPU speed
+#   --------------------|------|----------|---------|----------
+#   all-MiniLM-L6-v2   |  384 |  56.3    |  22 M   |  fast
+#   all-MiniLM-L12-v2  |  384 |  59.8    |  33 M   |  medium
+#   all-mpnet-base-v2  |  768 |  63.3    |  109 M  |  slow
+#   OpenAI 3-small      | 1536 |  62.3    |   -     |  API only
+#
+#   - 22 M parameters fits comfortably in CPU RAM; no GPU required.
+#   - 384 dimensions is a third the size of OpenAI's vectors, so ChromaDB
+#     uses less disk space and similarity queries run faster.
+#   - MTEB score of 56.3 is competitive with models 5× its size on the
+#     kinds of factual Q&A tasks a financial agent performs.
+#
+# TRADEOFF TO BE AWARE OF:
+#   all-MiniLM-L6-v2 was trained on general web text, not financial prose.
+#   If retrieval quality on domain-specific terminology (GAAP line items,
+#   bond covenants, segment accounting) proves insufficient, consider:
+#     - BAAI/bge-small-en-v1.5  (similar size, higher MTEB, Apache-2 licence)
+#     - thenlper/gte-small       (strong financial domain performance)
+#     - Swapping back to OpenAI text-embedding-3-small for production
+#   The model name is a single constant (EMBEDDING_MODEL below), so swapping
+#   requires changing exactly one line plus a re-index.
+#
+# FIRST-RUN NOTE:
+#   On first use, sentence-transformers downloads the model weights (~80 MB)
+#   from the Hugging Face Hub and caches them at:
+#     Windows : C:\Users\<user>\.cache\huggingface\hub\
+#     Linux   : ~/.cache/huggingface/hub/
+#   Subsequent runs load directly from the cache with no network access.
 #
 # WHY ChromaDB?
 # -------------
@@ -46,23 +88,20 @@
 # minimal code changes.
 
 import logging
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-# The embedding model identifier.  Defined as a constant so every module that
-# needs to know the model name (e.g. for logging, cost estimation) imports it
-# from one place — no magic strings scattered through the codebase.
-EMBEDDING_MODEL = "text-embedding-3-small"
+# The sentence-transformers model to use for embedding.  This string is passed
+# directly to SentenceTransformer(), which accepts any model name from the
+# Hugging Face Hub or a local directory path.  Changing this one constant and
+# re-running the pipeline is all that is needed to switch models.
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 # Directory where ChromaDB persists its SQLite + binary index files.
 # Keeping this outside the Python package directory prevents accidental
@@ -75,40 +114,48 @@ CHROMA_PERSIST_DIR = Path(__file__).resolve().parent.parent / "data" / "chroma_d
 # reports) and want to search them independently.
 COLLECTION_NAME = "sec_filings"
 
-# How many chunks to send per embedding API call.
-# OpenAI allows up to 2 048 inputs per request.  100 is a conservative batch
-# size that:
-#   - Keeps individual request payloads small (avoids 413 errors on large chunks)
-#   - Allows the SDK to retry a failed batch without re-embedding thousands of
-#     chunks
-EMBED_BATCH_SIZE = 100
+# Number of chunks processed per encode() call.
+# Unlike the OpenAI API (where batch_size is a network request limit),
+# here it controls how many texts are passed to the model's forward pass at
+# once.  32 is a safe default for CPU inference on a laptop:
+#   - Small enough that 32 × 512-char chunks fits comfortably in RAM.
+#   - Large enough to amortise the per-batch Python overhead across many chunks.
+# Increase to 64–128 if you have a GPU or ample RAM to speed up indexing.
+ENCODE_BATCH_SIZE = 32
 
 
-def build_embeddings() -> OpenAIEmbeddings:
-    """Construct and return the OpenAI embeddings client.
+def build_embeddings() -> HuggingFaceEmbeddings:
+    """Construct and return the local HuggingFace embeddings client.
+
+    On first call, sentence-transformers downloads the model weights from
+    the Hugging Face Hub (~80 MB) and caches them locally.  All subsequent
+    calls load from the cache instantly.
 
     Centralised in a factory so callers (embedder, retriever, query engine)
     all use the same model and configuration without duplicating parameters.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise EnvironmentError(
-            "OPENAI_API_KEY is not set.  Copy .env.example to .env and add "
-            "your key before running the ingestion pipeline."
-        )
-
-    return OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        # chunk_size here is the *API* batch size (how many texts per HTTP
-        # request), NOT the document chunk size from chunker.py.  The naming
-        # collision in the LangChain API is unfortunate but intentional — it
-        # matches the OpenAI SDK parameter name.
-        chunk_size=EMBED_BATCH_SIZE,
-        openai_api_key=api_key,
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        # model_kwargs are forwarded to the SentenceTransformer constructor.
+        # Explicitly setting device="cpu" avoids a CUDA/MPS detection step on
+        # machines without a GPU, which can otherwise add a second of startup
+        # time.  Change to "cuda" or "mps" to use a GPU if one is available.
+        model_kwargs={"device": "cpu"},
+        # encode_kwargs are forwarded to SentenceTransformer.encode().
+        # normalize_embeddings=True scales every vector to unit length before
+        # storing it.  ChromaDB uses cosine similarity by default, and cosine
+        # similarity is only well-defined on unit vectors — without
+        # normalisation, vectors with different magnitudes would produce
+        # misleading similarity scores, causing irrelevant chunks to rank above
+        # relevant ones purely because of text length differences.
+        encode_kwargs={
+            "normalize_embeddings": True,
+            "batch_size": ENCODE_BATCH_SIZE,
+        },
     )
 
 
-def build_vectorstore(embeddings: OpenAIEmbeddings | None = None) -> Chroma:
+def build_vectorstore(embeddings: HuggingFaceEmbeddings | None = None) -> Chroma:
     """Open (or create) the persistent ChromaDB collection.
 
     Parameters
@@ -116,7 +163,7 @@ def build_vectorstore(embeddings: OpenAIEmbeddings | None = None) -> Chroma:
     embeddings:
         Pre-built embeddings instance.  If None, one is created automatically.
         Pass an explicit instance when you want to reuse the client across
-        multiple calls (saves repeated env-var lookups and object construction).
+        multiple calls (saves repeated model-loading overhead).
 
     Returns
     -------
@@ -159,7 +206,7 @@ def embed_chunks(
         Metadata is stored alongside each vector and returned in search results,
         allowing the agent to cite the exact filing and section.
     vectorstore:
-        Pre-built Chroma instance.  If None, one is built from the environment.
+        Pre-built Chroma instance.  If None, one is built automatically.
 
     Returns
     -------
@@ -176,8 +223,9 @@ def embed_chunks(
 
     logger.info("Embedding %d chunks with model '%s' …", len(chunks), EMBEDDING_MODEL)
 
-    # add_texts handles batching internally (respecting EMBED_BATCH_SIZE) and
-    # returns a list of document IDs assigned by ChromaDB.
+    # add_texts handles batching internally (respecting ENCODE_BATCH_SIZE via
+    # the encode_kwargs set in build_embeddings) and returns a list of document
+    # IDs assigned by ChromaDB.
     ids = vectorstore.add_texts(texts=chunks, metadatas=metadatas)
     logger.info("Upserted %d vectors into collection '%s'.", len(ids), COLLECTION_NAME)
 
@@ -220,12 +268,23 @@ def embed_ticker_chunks(
 
 
 if __name__ == "__main__":
-    # Smoke test: embed a single synthetic chunk and confirm it round-trips.
-    logging.basicConfig(level=logging.INFO)
+    # Smoke test: embed two synthetic chunks and confirm similarity search
+    # returns the more relevant one for a financial query.
+    #   python -m ingestion.embedder
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
     test_chunks = [
         "Apple Inc. reported record revenue of $394 billion in fiscal year 2023.",
         "Microsoft Azure cloud revenue grew 28% year-over-year in Q4 2023.",
     ]
+    print(f"Embedding {len(test_chunks)} test chunks with {EMBEDDING_MODEL} …")
     vs = embed_ticker_chunks("TEST", test_chunks, vectorstore=None)
-    results = vs.similarity_search("cloud revenue growth", k=1)
-    print("Top result:", results[0].page_content[:120])
+
+    query = "What was Apple's annual revenue?"
+    results = vs.similarity_search(query, k=1)
+    print(f"\nQuery : {query!r}")
+    print(f"Top-1 : {results[0].page_content!r}")
