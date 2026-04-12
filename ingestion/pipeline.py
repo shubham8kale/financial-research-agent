@@ -15,8 +15,8 @@
 #                via clean_filing() in cleaner.py
 #   3. Chunk   – split clean prose into 512-char overlapping segments
 #                via chunk_text() in chunker.py
-#   4. Embed   – call OpenAI text-embedding-3-small and upsert vectors into
-#                ChromaDB via embed_ticker_chunks() in embedder.py
+#   4. Embed   – encode chunks locally with all-MiniLM-L6-v2 and upsert
+#                vectors into ChromaDB via embed_ticker_chunks() in embedder.py
 #
 # After all tickers are processed a test similarity search is run to give
 # immediate confirmation that end-to-end retrieval is working.
@@ -32,10 +32,9 @@
 #   queries ("Compare Apple and Microsoft margins") require a unified index.
 #
 # One embeddings client, shared across all tickers:
-#   OpenAIEmbeddings validates the API key and configures the HTTP connection
-#   pool at construction time.  Reusing it avoids repeated env-var lookups and
-#   connection setup on every ticker, and ensures all batches go through the
-#   same retry/backoff logic.
+#   HuggingFaceEmbeddings loads the model weights into memory at construction
+#   time.  Reusing the instance avoids reloading ~80 MB of weights on every
+#   ticker and ensures all batches run through the same in-process model.
 #
 # Per-ticker error isolation:
 #   Each ticker's work is wrapped in try/except so one missing or corrupt
@@ -58,8 +57,8 @@ from ingestion.embedder import (
 )
 from ingestion.downloader import TARGET_TICKERS, DATA_DIR
 
-# Load .env before anything else so OPENAI_API_KEY is available when
-# build_embeddings() is called.
+# Load .env so GEMINI_API_KEY and any other secrets are available to
+# modules that need them (e.g. retrieval/query_engine.py).
 load_dotenv()
 
 # ── Logging ───────────────────────────────────────────────────────────────────

@@ -4,13 +4,6 @@
 #                     together without boilerplate.
 langchain
 
-# langchain-openai  : the OpenAI-specific integrations (chat models +
-#                     embeddings). Kept as a separate package so you can swap
-#                     providers (Anthropic, Cohere, …) by replacing only this
-#                     dependency.  Still used for the LLM layer (GPT-4o);
-#                     embeddings have moved to langchain-huggingface below.
-langchain-openai
-
 # langchain-huggingface: official LangChain integration for Hugging Face
 #                     models.  Provides HuggingFaceEmbeddings, which wraps
 #                     sentence-transformers for local (no-API-key) embedding.
@@ -45,13 +38,6 @@ langchain-text-splitters
 #                     because there is nothing to deploy; swap for Pinecone /
 #                     Weaviate when you need cloud scale.
 chromadb
-
-# ── LLM provider SDK ───────────────────────────────────────────────────────────
-# openai            : the official Python client for the OpenAI REST API.
-#                     LangChain calls this under the hood, but having it pinned
-#                     explicitly ensures we control the version and can call the
-#                     API directly if needed (e.g. fine-tuning, batch jobs).
-openai
 
 # ── Tokenisation ───────────────────────────────────────────────────────────────
 # tiktoken          : OpenAI's fast BPE tokeniser. We use it in the chunker to
@@ -88,6 +74,21 @@ beautifulsoup4
 #                     speed (~5-10× faster) on the large (500 K+ token) filings
 #                     we ingest, and for its tolerance of malformed markup.
 lxml
+
+# ── LLM provider — Google Gemini ──────────────────────────────────────────────
+# langchain-google-genai: LangChain's official integration for Google's
+#                     Gemini family of models.  Provides ChatGoogleGenerativeAI,
+#                     which wraps the Google GenAI SDK in the standard LangChain
+#                     chat-model interface (invoke, stream, batch).  Kept as a
+#                     separate package so switching to a different provider
+#                     (Anthropic, Mistral) only requires swapping this dependency.
+langchain-google-genai
+
+# google-generativeai: the underlying Google GenAI Python SDK that
+#                     langchain-google-genai calls under the hood.  Pinned
+#                     explicitly so we control the SDK version independently
+#                     of LangChain's minimum requirement.
+google-generativeai
 
 # ── API layer ──────────────────────────────────────────────────────────────────
 # fastapi           : async web framework for exposing the agent as a REST API.
