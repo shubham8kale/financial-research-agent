@@ -1,0 +1,79 @@
+# ── Core LLM / RAG orchestration ──────────────────────────────────────────────
+# langchain         : the main orchestration framework; provides chains,
+#                     retrievers, and memory abstractions that wire everything
+#                     together without boilerplate.
+langchain
+
+# langchain-openai  : the OpenAI-specific integrations (chat models +
+#                     embeddings). Kept as a separate package so you can swap
+#                     providers (Anthropic, Cohere, …) by replacing only this
+#                     dependency.
+langchain-openai
+
+# langchain-community: third-party loaders, retrievers, and vector-store
+#                     wrappers (e.g. Chroma) that the community maintains.
+#                     Separating "core" from "community" lets LangChain evolve
+#                     the stable API without breaking experimental integrations.
+langchain-community
+
+# ── Vector store ───────────────────────────────────────────────────────────────
+# chromadb          : an open-source, embedded vector database that runs
+#                     locally with no external service. Ideal for prototyping
+#                     because there is nothing to deploy; swap for Pinecone /
+#                     Weaviate when you need cloud scale.
+chromadb
+
+# ── LLM provider SDK ───────────────────────────────────────────────────────────
+# openai            : the official Python client for the OpenAI REST API.
+#                     LangChain calls this under the hood, but having it pinned
+#                     explicitly ensures we control the version and can call the
+#                     API directly if needed (e.g. fine-tuning, batch jobs).
+openai
+
+# ── Tokenisation ───────────────────────────────────────────────────────────────
+# tiktoken          : OpenAI's fast BPE tokeniser. We use it in the chunker to
+#                     measure chunk sizes in *tokens* rather than characters,
+#                     which is what the model's context window actually counts.
+tiktoken
+
+# ── HTTP / data fetching ───────────────────────────────────────────────────────
+# requests          : de-facto standard HTTP library; used for any supplemental
+#                     REST calls (e.g. fetching market data from a public API).
+requests
+
+# ── Configuration ──────────────────────────────────────────────────────────────
+# python-dotenv     : loads variables from a .env file into os.environ so that
+#                     secrets (API keys) never have to be hard-coded in source.
+python-dotenv
+
+# ── SEC filing ingestion ───────────────────────────────────────────────────────
+# sec-edgar-downloader: a thin wrapper around the SEC EDGAR full-text search
+#                     API. Handles rate limiting, retry logic, and filing
+#                     navigation so our downloader.py stays focused on business
+#                     logic rather than HTTP plumbing.
+sec-edgar-downloader
+
+# ── HTML parsing / cleaning ────────────────────────────────────────────────────
+# beautifulsoup4    : HTML/XML parsing library used by cleaner.py to strip all
+#                     markup from SEC iXBRL filings.  BeautifulSoup handles
+#                     malformed tags, HTML entities, and mixed SGML/HTML
+#                     conventions that are common in EDGAR full-submission files.
+beautifulsoup4
+
+# lxml              : fast C-based XML/HTML parser used as BeautifulSoup's
+#                     backend.  Chosen over the built-in html.parser for its
+#                     speed (~5-10× faster) on the large (500 K+ token) filings
+#                     we ingest, and for its tolerance of malformed markup.
+lxml
+
+# ── API layer ──────────────────────────────────────────────────────────────────
+# fastapi           : async web framework for exposing the agent as a REST API.
+#                     Chosen for its automatic OpenAPI docs (great for demos)
+#                     and native async support, which avoids blocking when
+#                     awaiting LLM responses.
+fastapi
+
+# uvicorn           : ASGI server that runs the FastAPI app. The standard
+#                     production-grade choice; supports hot-reload in dev with
+#                     --reload flag.
+uvicorn
