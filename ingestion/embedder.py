@@ -123,6 +123,12 @@ COLLECTION_NAME = "sec_filings"
 # Increase to 64–128 if you have a GPU or ample RAM to speed up indexing.
 ENCODE_BATCH_SIZE = 32
 
+# Maximum number of chunks passed to a single vectorstore.add_texts() call.
+# ChromaDB can become slow or run out of memory when adding very large batches
+# in one shot.  Splitting into chunks of 5 000 keeps each call manageable while
+# still amortising the per-call overhead across many embeddings.
+CHROMA_BATCH_SIZE = 5000
+
 
 def build_embeddings() -> HuggingFaceEmbeddings:
     """Construct and return the local HuggingFace embeddings client.
@@ -223,11 +229,19 @@ def embed_chunks(
 
     logger.info("Embedding %d chunks with model '%s' …", len(chunks), EMBEDDING_MODEL)
 
-    # add_texts handles batching internally (respecting ENCODE_BATCH_SIZE via
-    # the encode_kwargs set in build_embeddings) and returns a list of document
-    # IDs assigned by ChromaDB.
-    ids = vectorstore.add_texts(texts=chunks, metadatas=metadatas)
-    logger.info("Upserted %d vectors into collection '%s'.", len(ids), COLLECTION_NAME)
+    all_ids: list[str] = []
+    total_batches = (len(chunks) + CHROMA_BATCH_SIZE - 1) // CHROMA_BATCH_SIZE
+    for batch_num, start in enumerate(range(0, len(chunks), CHROMA_BATCH_SIZE), start=1):
+        batch_texts = chunks[start : start + CHROMA_BATCH_SIZE]
+        batch_metas = metadatas[start : start + CHROMA_BATCH_SIZE] if metadatas else None
+        logger.info(
+            "Upserting batch %d/%d (%d chunks, indices %d–%d) …",
+            batch_num, total_batches, len(batch_texts), start, start + len(batch_texts) - 1,
+        )
+        batch_ids = vectorstore.add_texts(texts=batch_texts, metadatas=batch_metas)
+        all_ids.extend(batch_ids)
+
+    logger.info("Upserted %d vectors into collection '%s'.", len(all_ids), COLLECTION_NAME)
 
     return vectorstore
 

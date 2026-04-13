@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from langchain.agents.agent import AgentExecutor; print\\('OK'\\)\")",
+      "Bash(python -c \"import langchain_community.agents; print\\(dir\\(langchain_community.agents\\)\\)\")"
+    ]
+  }
+}
