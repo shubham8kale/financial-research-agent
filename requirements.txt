@@ -101,3 +101,12 @@ fastapi
 #                     production-grade choice; supports hot-reload in dev with
 #                     --reload flag.
 uvicorn
+
+# ── MCP server ─────────────────────────────────────────────────────────────────
+# mcp[cli]          : Anthropic's Model Context Protocol Python SDK.  The [cli]
+#                     extra adds the `mcp` command-line tool (mcp dev, mcp run)
+#                     used for local development and inspection.  The core SDK
+#                     provides FastMCP (high-level server API), the Context type
+#                     for lifespan-state injection, and transport implementations
+#                     (stdio, SSE, streamable-http).
+mcp[cli]
