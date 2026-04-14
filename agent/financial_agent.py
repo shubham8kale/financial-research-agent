@@ -269,7 +269,13 @@ _SYSTEM_PROMPT = (
     "5. When searching for financial figures, use specific terms like total net "
     "sales, operating income, net income rather than generic terms like revenue. "
     "Include the company name and fiscal year in your search queries. For example, "
-    "search for total net sales Apple fiscal year 2025 rather than just revenue."
+    "search for total net sales Apple fiscal year 2025 rather than just revenue.\n"
+    "6. Always use your tools to search for information before asking clarifying "
+    "questions. If a query is ambiguous about the fiscal year, search for the "
+    "most recent data available. If a query asks to compare companies without "
+    "specifying which ones, use list_available_companies first to discover what's "
+    "available, then proceed. Never ask the user for clarification when you can "
+    "resolve the ambiguity by searching."
 )
 
 
