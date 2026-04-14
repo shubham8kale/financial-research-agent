@@ -22,7 +22,7 @@
 #                any language and from remote machines.
 #   Lifespan   — an async context manager that runs once at startup/shutdown,
 #                used here to load the ChromaDB index once and share it across
-#                all requests via lifespan_state.
+#                all requests via ctx.request_context.lifespan_context.
 #
 # WHY FastMCP?
 # ------------
@@ -31,8 +31,11 @@
 #   - Tool registration via the @mcp.tool() decorator
 #   - JSON Schema generation from Python type hints and Pydantic Field metadata
 #   - Transport negotiation (stdio / SSE / streamable-http)
-#   - Context injection: ctx.request_context.lifespan_state carries state
+#   - Context injection: ctx.request_context.lifespan_context carries state
 #     initialised in the lifespan hook into every tool call, avoiding globals.
+#     (Note: older docs/tutorials call this attribute ``lifespan_state`` —
+#     in mcp >= 1.9 it is named ``lifespan_context`` and holds the raw value
+#     yielded by the lifespan async context manager.)
 #
 # ARCHITECTURE
 # ------------
@@ -94,8 +97,8 @@ TOP_K: int = 5
 # ── Lifespan: load ChromaDB once at server startup ────────────────────────────
 #
 # FastMCP calls this async context manager once when the server starts and once
-# when it shuts down.  Whatever the generator yields becomes lifespan_state —
-# a dict shared across all tool calls via ctx.request_context.lifespan_state.
+# when it shuts down.  Whatever the generator yields becomes lifespan_context —
+# a dict shared across all tool calls via ctx.request_context.lifespan_context.
 #
 # Using lifespan avoids:
 #   - Module-level globals that are hard to test and reset.
@@ -219,7 +222,7 @@ async def search_filings(
     ctx: Context,
 ) -> str:
     """Return the top-5 most relevant 10-K filing chunks for the query."""
-    vs = ctx.request_context.lifespan_state["vectorstore"]
+    vs = ctx.request_context.lifespan_context["vectorstore"]
 
     await ctx.info(f"Searching filings for: {query!r}")
     docs = vs.similarity_search(query, k=TOP_K)
@@ -291,7 +294,7 @@ async def compare_companies(
     ctx: Context,
 ) -> str:
     """Return per-company filing passages grouped under labelled headers."""
-    vs = ctx.request_context.lifespan_state["vectorstore"]
+    vs = ctx.request_context.lifespan_context["vectorstore"]
 
     ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     if not ticker_list:

@@ -110,3 +110,13 @@ uvicorn
 #                     for lifespan-state injection, and transport implementations
 #                     (stdio, SSE, streamable-http).
 mcp[cli]
+
+# ── MCP client adapter for LangGraph ──────────────────────────────────────────
+# langchain-mcp-adapters: bridges MCP servers and LangChain/LangGraph. Provides
+#                     MultiServerMCPClient which connects to one or more MCP
+#                     servers (stdio, SSE, streamable-HTTP, or WebSocket), runs
+#                     the tools/list RPC, and wraps each returned tool in a
+#                     LangChain StructuredTool. That lets LangGraph's
+#                     create_react_agent consume MCP tools with no code changes
+#                     to the reasoning loop — only the tool *source* changes.
+langchain-mcp-adapters
