@@ -1,0 +1,32 @@
+services:
+  mcp-server:
+    build: .
+    command: python -m mcp_server.server
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/mcp/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api-server:
+    build: .
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - chroma_data:/app/data
+    env_file:
+      - .env
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8000/mcp
+    depends_on:
+      - mcp-server
+
+volumes:
+  chroma_data:
