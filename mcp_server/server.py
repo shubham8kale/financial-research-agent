@@ -77,6 +77,7 @@ from typing import Annotated, Any, AsyncIterator
 from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from ingestion.embedder import build_vectorstore
 
@@ -128,12 +129,16 @@ async def _lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
 mcp = FastMCP(
     name="sec_filings_mcp",
     lifespan=_lifespan,
-    # Human-readable description shown in MCP client discovery UIs.
+    host="0.0.0.0",
+    port=8000,
     instructions=(
         "SEC 10-K filing research server. "
         "Use search_filings for open-ended queries across all companies, "
         "list_available_companies to discover indexed tickers, and "
         "compare_companies for side-by-side retrieval of per-company evidence."
+    ),
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
     ),
 )
 

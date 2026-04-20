@@ -224,3 +224,5 @@ data/*
 # be rebuilt by re-running the embedding step.  Committing it would add
 # hundreds of MB of opaque binary data to the repo.
 chroma_db/
+
+prompt.md

@@ -124,7 +124,7 @@ def _parse_tool_content(content: str) -> List[SourceChunk]:
         header = _CHUNK_HEADER_RE.match(line)
         if header:
             ticker = (header.group(1) or current_ticker or "UNKNOWN").upper()
-            chunk_idx = header.group(2)
+            chunk_idx = header.group(2).strip()
             i += 1
             snippet_lines: List[str] = []
             while i < len(lines):
@@ -160,7 +160,17 @@ def _extract_sources(messages) -> List[SourceChunk]:
     seen = set()
     unique: List[SourceChunk] = []
     for msg in tool_messages:
-        content = msg.content if isinstance(msg.content, str) else str(msg.content)
+        # MCP ToolMessages wrap content as a list of dicts: [{"type": "text", "text": "..."}]
+        # Direct agent ToolMessages return plain strings.
+        if isinstance(msg.content, list):
+            content = "\n".join(
+                block["text"] for block in msg.content
+                if isinstance(block, dict) and block.get("type") == "text"
+            )
+        elif isinstance(msg.content, str):
+            content = msg.content
+        else:
+            content = str(msg.content)
         for chunk in _parse_tool_content(content):
             key = (chunk.ticker, chunk.source_file)
             if key in seen:
@@ -169,13 +179,17 @@ def _extract_sources(messages) -> List[SourceChunk]:
             unique.append(chunk)
 
     if not unique and tool_messages:
-        combined = "\n".join(
-            (m.content if isinstance(m.content, str) else str(m.content))
-            for m in tool_messages
-        )
+        def _get_text(m):
+            if isinstance(m.content, list):
+                return "\n".join(
+                    block["text"] for block in m.content
+                    if isinstance(block, dict) and block.get("type") == "text"
+                )
+            return m.content if isinstance(m.content, str) else str(m.content)
+        combined = "\n".join(_get_text(m) for m in tool_messages)
         for raw_ticker, raw_idx in _FALLBACK_RE.findall(combined):
             ticker = raw_ticker.upper()
-            chunk_idx = raw_idx.rstrip(",")
+            chunk_idx = raw_idx.rstrip(",").strip()
             key = (ticker, chunk_idx)
             if key in seen:
                 continue
@@ -270,9 +284,18 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
 async def health():
     mcp_reachable = False
     try:
-        async with httpx.AsyncClient(timeout=2.0) as client:
-            resp = await client.get(MCP_SERVER_URL)
-            mcp_reachable = resp.status_code < 500
+        # Parse host and port from MCP_SERVER_URL to do a simple TCP check
+        # instead of hitting the MCP endpoint (which triggers session creation)
+        from urllib.parse import urlparse
+        parsed = urlparse(MCP_SERVER_URL)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 8000
+        _, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port), timeout=2.0
+        )
+        writer.close()
+        await writer.wait_closed()
+        mcp_reachable = True
     except Exception as exc:
-        logger.debug("MCP server at %s unreachable: %s", MCP_SERVER_URL, exc)
+        logger.debug("MCP server unreachable: %s", exc)
     return {"status": "healthy", "mcp_server": mcp_reachable}

@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 # ── Core LLM / RAG orchestration ──────────────────────────────────────────────
 # langchain         : the main orchestration framework; provides chains,
 #                     retrievers, and memory abstractions that wire everything

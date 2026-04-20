@@ -5,12 +5,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - chroma_data:/app/data
+      - ./data:/app/data
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/mcp/"]
-      interval: 10s
+      test: ["CMD-SHELL", "nc -z localhost 8000 || exit 1"]
+      interval: 30s
       timeout: 5s
       retries: 3
 
@@ -20,13 +20,10 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - chroma_data:/app/data
+      - ./data:/app/data
     env_file:
       - .env
     environment:
       - MCP_SERVER_URL=http://mcp-server:8000/mcp
     depends_on:
       - mcp-server
-
-volumes:
-  chroma_data:
