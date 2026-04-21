@@ -4,7 +4,9 @@
 # -------
 # Accept a natural-language question, retrieve the most relevant passages from
 # the ChromaDB vector store, and generate a grounded answer using Google Gemini
-# 1.5 Flash — returning both the answer text and the source chunks for citation.
+# 2.5 Flash-Lite — returning both the answer text and the source chunks for
+# citation.  The exact model is controlled by the LLM_MODEL env var and
+# defaults to gemini-2.5-flash-lite (see GEMINI_MODEL below).
 #
 # PIPELINE
 # --------
@@ -17,19 +19,20 @@
 #   _build_context_block()     ← formats chunks as numbered, labelled passages
 #       │
 #       ▼
-#   ChatGoogleGenerativeAI     ← Gemini 1.5 Flash, temperature=0
+#   ChatGoogleGenerativeAI     ← Gemini 2.5 Flash-Lite, temperature=0
 #       │
 #       ▼
 #   QueryResult(answer, sources)
 #
-# WHY GEMINI 1.5 FLASH?
-# ---------------------
+# WHY GEMINI 2.5 FLASH-LITE?
+# --------------------------
 # For a RAG system the LLM's job is synthesis and faithfulness, not recall —
-# retrieval already surfaces the relevant facts.  Flash is well suited because:
+# retrieval already surfaces the relevant facts.  Flash-Lite is well suited:
 #
-#   - Speed  : Flash is ~3-5× faster than Gemini 1.5 Pro, which matters when
-#              the agent is called interactively.  Retrieval latency dominates
-#              total response time; a slower LLM would flip that balance.
+#   - Speed  : Flash-Lite is several times faster than the larger Gemini
+#              models, which matters when the agent is called interactively.
+#              Retrieval latency dominates total response time; a slower LLM
+#              would flip that balance.
 #
 #   - Cost   : Flash is significantly cheaper than Pro per million tokens.
 #              In a RAG pipeline each call sends ~5 × 512-char chunks (~640 tokens
@@ -236,7 +239,7 @@ def _build_context_block(docs: list[Document]) -> str:
 
 
 def _build_llm(api_key: str) -> ChatGoogleGenerativeAI:
-    """Construct and return the Gemini 1.5 Flash chat model.
+    """Construct and return the Gemini 2.5 Flash-Lite chat model.
 
     Centralised in a factory so the model configuration (name, temperature,
     safety settings) lives in one place and every call site gets the same
@@ -337,7 +340,7 @@ def ask(
         HumanMessage(content=human_content),
     ]
 
-    # ── 6. Call Gemini 1.5 Flash ──────────────────────────────────────────────
+    # ── 6. Call Gemini 2.5 Flash-Lite ─────────────────────────────────────────
     llm = _build_llm(api_key)
     logger.info("Sending prompt to %s (context: %d docs).", GEMINI_MODEL, len(docs))
     response = llm.invoke(messages)

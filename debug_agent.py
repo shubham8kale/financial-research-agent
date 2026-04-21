@@ -1,4 +1,4 @@
-"""test_agent.py — inspect every message produced by the financial agent."""
+"""debug_agent.py — inspect every message produced by the financial agent."""
 
 from agent.financial_agent import build_agent_executor
 

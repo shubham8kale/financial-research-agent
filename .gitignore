@@ -226,3 +226,9 @@ data/*
 chroma_db/
 
 prompt.md
+
+# RAGAS evaluation outputs written by eval/run_eval.py.
+# results.json contains run-specific answer/context/score payloads that are
+# regenerated on every run — not source artefacts.  Committing it would churn
+# the history and conflate code changes with eval output changes.
+eval/results.json

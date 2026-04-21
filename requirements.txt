@@ -122,3 +122,27 @@ mcp[cli]
 #                     create_react_agent consume MCP tools with no code changes
 #                     to the reasoning loop — only the tool *source* changes.
 langchain-mcp-adapters
+
+# ── Evaluation ────────────────────────────────────────────────────────────────
+# ragas             : reference-free and reference-based RAG evaluation
+#                     framework.  We use three of its metrics in eval/run_eval.py:
+#                     faithfulness (is every claim in the answer grounded in the
+#                     retrieved context?), answer_relevancy (does the answer
+#                     actually address the question?), and context_recall (did
+#                     the retriever surface the evidence the ground-truth answer
+#                     depends on?).
+ragas
+
+# datasets          : HuggingFace's tabular dataset library.  RAGAS 0.2 accepts
+#                     a `datasets.Dataset` as its evaluation input, so we build
+#                     one in run_eval.py via `Dataset.from_dict(...)`.  Pinned
+#                     explicitly because newer ragas versions no longer list it
+#                     as a hard dependency, and we need a deterministic import.
+datasets
+
+# ── Lint / CI ─────────────────────────────────────────────────────────────────
+# flake8            : style and syntax linter, run from .github/workflows/ci.yml
+#                     with relaxed settings (--max-line-length 120 and E501/W503
+#                     ignored) to catch genuine bugs without fighting the
+#                     project's long explanatory comments.
+flake8
