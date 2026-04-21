@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          pytest --tb=short
+          python -m pytest --tb=short
           status=$?
           if [ "$status" -eq 5 ]; then
             echo "::notice::pytest found no tests to collect — skipping."

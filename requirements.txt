@@ -146,3 +146,11 @@ datasets
 #                     ignored) to catch genuine bugs without fighting the
 #                     project's long explanatory comments.
 flake8
+
+# pytest            : test runner used by the CI pytest step.  Listed here so
+#                     the GitHub Actions runner installs it from requirements.txt
+#                     rather than relying on it being pre-installed on the image.
+#                     The step invokes it as `python -m pytest` to avoid PATH
+#                     ambiguity between the site-packages console script and any
+#                     system pytest.
+pytest
