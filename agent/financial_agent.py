@@ -157,9 +157,9 @@ def search_filings(query: str) -> str:
 
     lines = []
     for i, doc in enumerate(docs, start=1):
-        ticker    = doc.metadata.get("ticker", "unknown")
+        ticker = doc.metadata.get("ticker", "unknown")
         chunk_idx = doc.metadata.get("chunk_idx", "?")
-        snippet   = doc.page_content[:500].replace("\n", " ").strip()
+        snippet = doc.page_content[:500].replace("\n", " ").strip()
         lines.append(f"[{i}] ticker={ticker}  chunk_idx={chunk_idx}\n    {snippet}")
 
     return "\n\n".join(lines)
@@ -230,7 +230,7 @@ def compare_companies(question: str, tickers: str) -> str:
         lines = []
         for i, doc in enumerate(docs, start=1):
             chunk_idx = doc.metadata.get("chunk_idx", "?")
-            snippet   = doc.page_content[:500].replace("\n", " ").strip()
+            snippet = doc.page_content[:500].replace("\n", " ").strip()
             lines.append(f"  [{i}] chunk_idx={chunk_idx}\n      {snippet}")
 
         sections.append(f"=== {ticker} ===\n" + "\n\n".join(lines))

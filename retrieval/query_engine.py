@@ -185,6 +185,7 @@ _HUMAN_TEMPLATE = (
 
 # ── Return type ───────────────────────────────────────────────────────────────
 
+
 @dataclass
 class QueryResult:
     """The output of a single query through the RAG pipeline.
@@ -228,12 +229,12 @@ def _build_context_block(docs: list[Document]) -> str:
     """
     parts = []
     for i, doc in enumerate(docs, start=1):
-        ticker    = doc.metadata.get("ticker", "unknown")
+        ticker = doc.metadata.get("ticker", "unknown")
         chunk_idx = doc.metadata.get("chunk_idx", "?")
         # Header line gives the model enough metadata to produce meaningful
         # citations without adding so much boilerplate that it distracts from
         # the passage content.
-        header  = f"[{i}] ticker={ticker}  chunk_idx={chunk_idx}"
+        header = f"[{i}] ticker={ticker}  chunk_idx={chunk_idx}"
         parts.append(f"{header}\n{doc.page_content.strip()}")
     return "\n\n".join(parts)
 
@@ -376,7 +377,7 @@ if __name__ == "__main__":
     print(f"\nAnswer:\n{result.answer}")
     print(f"\n{'─' * 60}\nSources ({len(result.sources)} chunks retrieved):\n")
     for i, doc in enumerate(result.sources, start=1):
-        ticker    = doc.metadata.get("ticker", "?")
+        ticker = doc.metadata.get("ticker", "?")
         chunk_idx = doc.metadata.get("chunk_idx", "?")
-        snippet   = doc.page_content[:120].replace("\n", " ").strip()
+        snippet = doc.page_content[:120].replace("\n", " ").strip()
         print(f"  [{i}] {ticker} chunk {chunk_idx}: {snippet!r}")

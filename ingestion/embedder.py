@@ -232,8 +232,8 @@ def embed_chunks(
     all_ids: list[str] = []
     total_batches = (len(chunks) + CHROMA_BATCH_SIZE - 1) // CHROMA_BATCH_SIZE
     for batch_num, start in enumerate(range(0, len(chunks), CHROMA_BATCH_SIZE), start=1):
-        batch_texts = chunks[start : start + CHROMA_BATCH_SIZE]
-        batch_metas = metadatas[start : start + CHROMA_BATCH_SIZE] if metadatas else None
+        batch_texts = chunks[start:start + CHROMA_BATCH_SIZE]
+        batch_metas = metadatas[start:start + CHROMA_BATCH_SIZE] if metadatas else None
         logger.info(
             "Upserting batch %d/%d (%d chunks, indices %d–%d) …",
             batch_num, total_batches, len(batch_texts), start, start + len(batch_texts) - 1,

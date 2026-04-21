@@ -124,7 +124,7 @@ def run_pipeline(
     print("\nInitialising embedding model and vector store...")
     embeddings = build_embeddings()
     vectorstore = build_vectorstore(embeddings=embeddings)
-    print(f"  model : text-embedding-3-small")
+    print("  model : text-embedding-3-small")
     print(f"  store : {CHROMA_PERSIST_DIR}\n")
 
     pipeline_start = time.perf_counter()
@@ -159,7 +159,7 @@ def run_pipeline(
             #   e) Collapse whitespace
             # The char count printed here gives a rough cost estimate:
             # ~4 chars/token, $0.02/1M tokens → 4M chars ≈ $0.02 to embed.
-            print(f"  cleaning ...", end="", flush=True)
+            print("  cleaning ...", end="", flush=True)
             t0 = time.perf_counter()
             clean_text = clean_filing(filing_path)
             print(f" {len(clean_text):,} chars  ({time.perf_counter() - t0:.1f}s)")
@@ -168,7 +168,7 @@ def run_pipeline(
             # chunk_text() uses RecursiveCharacterTextSplitter (512 chars,
             # 50-char overlap).  The chunk count * ~128 tokens/chunk gives an
             # estimate of total tokens to be embedded.
-            print(f"  chunking ...", end="", flush=True)
+            print("  chunking ...", end="", flush=True)
             t0 = time.perf_counter()
             chunks = chunk_text(clean_text)
             print(f" {len(chunks):,} chunks  ({time.perf_counter() - t0:.1f}s)")
@@ -180,7 +180,7 @@ def run_pipeline(
             #   - "chunk_idx" : preserves original document order for re-ranking
             # The shared vectorstore means all five companies end up in a single
             # ChromaDB collection, enabling cross-company similarity search.
-            print(f"  embedding ...", end="", flush=True)
+            print("  embedding ...", end="", flush=True)
             t0 = time.perf_counter()
             embed_ticker_chunks(
                 ticker=ticker,
@@ -251,10 +251,10 @@ def _run_verification_search(vectorstore) -> None:
         return
 
     for rank, doc in enumerate(results, start=1):
-        ticker    = doc.metadata.get("ticker", "unknown")
+        ticker = doc.metadata.get("ticker", "unknown")
         chunk_idx = doc.metadata.get("chunk_idx", "?")
         # Flatten newlines so the snippet fits on one readable block.
-        snippet   = doc.page_content[:200].replace("\n", " ").strip()
+        snippet = doc.page_content[:200].replace("\n", " ").strip()
         print(f"  [{rank}] ticker={ticker}  chunk_idx={chunk_idx}")
         print(f"      {snippet!r}")
         print()

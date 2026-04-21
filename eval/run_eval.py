@@ -47,13 +47,16 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Make the repo root importable whether the script is run as
-# `python -m eval.run_eval` or `python eval/run_eval.py`.
+# `python -m eval.run_eval` or `python eval/run_eval.py`.  dotenv is a
+# site-packages import and doesn't depend on this path manipulation, so it
+# stays with the other top-of-file imports; only the agent/ingestion imports
+# that DO depend on it are kept lazy inside the functions that need them.
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
