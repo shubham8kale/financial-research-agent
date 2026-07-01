@@ -10,8 +10,6 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **Full stack:** `Next.js UI → SSE → FastAPI (/query/stream) → LangGraph ReAct agent → ChromaDB + Gemini`
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
 
-See [DEPLOY.md](DEPLOY.md) for the full free-deploy runbook (Vercel + Hugging Face Spaces).
-
 ---
 
 ## Architecture
@@ -252,8 +250,6 @@ The whole stack runs on free tiers:
 
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
 - **Backend → Hugging Face Spaces (Docker SDK).** The [Dockerfile](Dockerfile) rebuilds the Chroma index at build time from the committed filings under `data/sec_filings/` (using local MiniLM embeddings), so the 245 MB index never needs to live in git. Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
-
-Full step-by-step instructions, including the Space README front-matter, are in [DEPLOY.md](DEPLOY.md).
 
 ---
 

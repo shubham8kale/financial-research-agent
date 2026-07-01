@@ -237,3 +237,6 @@ prompt.md
 # regenerated on every run — not source artefacts.  Committing it would churn
 # the history and conflate code changes with eval output changes.
 eval/results.json
+
+# Internal deployment runbook — kept local, not published.
+DEPLOY.md
