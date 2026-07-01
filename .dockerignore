@@ -1,6 +1,26 @@
-.env
+# VCS / CI
 .git
-__pycache__
+.github
 
-.venv
+# Secrets & local env (never bake into the image)
+.env
+*.env.local
+
+# Python caches
+__pycache__
 *.pyc
+*.pyo
+.pytest_cache
+.venv
+
+# Frontend — not part of the backend image (also keeps node_modules out)
+web
+
+# The Chroma index is rebuilt at image-build time (see Dockerfile); never copy a
+# local copy in. The raw filings under data/sec_filings/ ARE included so the
+# build can re-index from them.
+data/chroma_db
+
+# Logs & eval run artifacts
+*.log
+eval/results.json

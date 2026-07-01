@@ -13,6 +13,7 @@
 # while preserving the MCP architecture as the preferred path.
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -22,6 +23,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from langchain_core.messages import ToolMessage
 from pydantic import BaseModel
 
@@ -37,6 +39,19 @@ logger = logging.getLogger(__name__)
 
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8000")
 AGENT_TIMEOUT_SECONDS = 30.0
+
+# Browser origins allowed to call the API (CORS). The Next.js dev server runs on
+# http://localhost:3000; the deployed Vercel domain is supplied at deploy time
+# via FRONTEND_ORIGINS (comma-separated). Server-to-server callers are unaffected
+# by CORS, so restricting this to the known frontends is safe.
+FRONTEND_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "FRONTEND_ORIGINS",
+        "http://localhost:3000,https://your-app.vercel.app",
+    ).split(",")
+    if origin.strip()
+]
 
 
 @asynccontextmanager
@@ -63,7 +78,7 @@ app = FastAPI(title="Financial Research Agent API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -217,6 +232,110 @@ def _final_answer(result: dict) -> str:
     return last.content if isinstance(last.content, str) else str(last.content)
 
 
+# ── Streaming (SSE) helpers ─────────────────────────────────────────────────────
+#
+# STREAMING METHOD (shipped): chunked final answer.
+# We run the agent to completion with ainvoke() — reusing the exact MCP→direct
+# fallback and 30s timeout as /query — then stream the FINAL answer to the client
+# word-by-word as SSE "token" events, followed by one "sources" event and a "done"
+# event. We deliberately did NOT use LangGraph astream_events for per-token LLM
+# streaming: create_react_agent emits model-stream events for *every* LLM turn
+# (including the intermediate tool-deciding turns), and reliably isolating only the
+# final-answer tokens across the Gemini + MCP-fallback paths proved brittle. The
+# chunked approach guarantees the client sees only final-answer text, keeps source
+# extraction identical to /query, and still streams incrementally (live-typing feel).
+
+_WORD_RE = re.compile(r"\S+\s*")
+
+
+def _sse(payload: dict) -> str:
+    """Serialise one event as a single SSE 'data:' line (one JSON object)."""
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+def _chunk_idx_of(source_file: str) -> str:
+    """Recover the chunk index from a 'TICKER_10K_chunk_IDX' source_file string."""
+    return source_file.rsplit("_chunk_", 1)[-1] if "_chunk_" in source_file else ""
+
+
+async def _run_with_fallback(request: Request, question: str):
+    """Run the agent (MCP first, then direct) and return (answer, sources).
+
+    Mirrors /query's fallback order and 30s timeout so the streaming endpoint has
+    identical semantics; only the response transport differs. Propagates
+    asyncio.TimeoutError if the direct agent also times out, or the underlying
+    exception if it fails, so the caller can emit an SSE error event.
+    """
+    payload = {"messages": [("human", question)]}
+    config = {"recursion_limit": 20}
+
+    mcp_exec = getattr(request.app.state, "mcp_agent", None)
+    if mcp_exec is not None:
+        try:
+            result = await asyncio.wait_for(
+                mcp_exec.ainvoke(payload, config=config),
+                timeout=AGENT_TIMEOUT_SECONDS,
+            )
+            answer = _final_answer(result)
+            if answer.strip():
+                logger.info("Stream answered via MCP agent")
+                return answer, _extract_sources(result["messages"])
+            logger.warning("MCP agent returned empty response; falling back")
+        except asyncio.TimeoutError:
+            logger.warning("MCP agent timed out; falling back to direct agent")
+        except Exception as mcp_exc:
+            logger.warning(
+                "MCP agent failed (%s: %s); falling back to direct agent",
+                type(mcp_exc).__name__,
+                mcp_exc,
+            )
+    else:
+        logger.info("No MCP agent available; using direct agent")
+
+    direct_exec = request.app.state.direct_agent
+    result = await asyncio.wait_for(
+        direct_exec.ainvoke(payload, config=config),
+        timeout=AGENT_TIMEOUT_SECONDS,
+    )
+    logger.info("Stream answered via direct agent")
+    return _final_answer(result), _extract_sources(result["messages"])
+
+
+async def _sse_event_stream(request: Request, question: str):
+    """Async generator yielding SSE lines: token* → sources → done (or error)."""
+    try:
+        answer, sources = await _run_with_fallback(request, question)
+    except asyncio.TimeoutError:
+        yield _sse({
+            "type": "error",
+            "message": f"Agent execution timed out after {AGENT_TIMEOUT_SECONDS:.0f} seconds",
+        })
+        return
+    except Exception as exc:
+        logger.exception("Streaming agent failed")
+        yield _sse({"type": "error", "message": f"Agent execution failed: {exc}"})
+        return
+
+    for word in _WORD_RE.findall(answer):
+        yield _sse({"type": "token", "text": word})
+        # Cooperative yield so each token flushes to the client rather than the
+        # whole answer buffering into a single write.
+        await asyncio.sleep(0)
+
+    yield _sse({
+        "type": "sources",
+        "items": [
+            {
+                "ticker": s.ticker,
+                "chunk_idx": _chunk_idx_of(s.source_file),
+                "source": s.source_file,
+            }
+            for s in sources
+        ],
+    })
+    yield _sse({"type": "done"})
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.post("/query", response_model=QueryResponse)
@@ -277,6 +396,30 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             status_code=500,
             detail=f"Agent execution failed: {fallback_exc}",
         ) from fallback_exc
+
+
+@app.post("/query/stream")
+async def query_stream(req: QueryRequest, request: Request):
+    """Stream the agent's final answer as Server-Sent Events (text/event-stream).
+
+    Emits one JSON object per SSE data line:
+      {"type":"token","text":"<delta>"}   repeated — the answer text
+      {"type":"sources","items":[...]}     once, after the tokens
+      {"type":"done"}                       terminal success marker
+      {"type":"error","message":"..."}     terminal error marker
+    See the streaming-helpers comment above for why the final answer is chunked
+    rather than streamed via astream_events.
+    """
+    question = _build_question(req)
+    return StreamingResponse(
+        _sse_event_stream(request, question),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            # Disable proxy buffering (e.g. nginx on Render) so tokens stream.
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/health")

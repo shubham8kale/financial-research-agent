@@ -218,6 +218,11 @@ __marimo__/
 # the downloader to create it first.
 data/*
 !data/.gitkeep
+# Commit the raw 10-K filings so the Docker image can rebuild the vector index
+# at build time (see Dockerfile). Individual files are <100MB (GitHub-safe);
+# the derived Chroma index (chroma_db/, below) stays ignored and is regenerated.
+!data/sec_filings/
+!data/sec_filings/**
 
 # ChromaDB vector store written by ingestion/embedder.py.
 # This is a binary index derived entirely from the SEC filings above; it can
