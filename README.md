@@ -1,6 +1,16 @@
 # Financial Research Agent
 
-An agentic RAG system that answers natural-language questions about SEC 10-K filings with source-grounded citations, exposed through both a FastAPI REST interface and a Model Context Protocol (MCP) server.
+An agentic RAG system that answers natural-language questions about SEC 10-K filings with source-grounded citations, exposed through both a FastAPI REST interface and a Model Context Protocol (MCP) server — with a streamed, full-stack Next.js chat UI on top.
+
+---
+
+## Live demo
+
+- **App:** <!-- LIVE_URL --> _(add the Vercel URL after deploy)_
+- **Full stack:** `Next.js UI → SSE → FastAPI (/query/stream) → LangGraph ReAct agent → ChromaDB + Gemini`
+- **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
+
+See [DEPLOY.md](DEPLOY.md) for the full free-deploy runbook (Vercel + Hugging Face Spaces).
 
 ---
 
@@ -42,6 +52,14 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 
 Requests to `POST /query` try the MCP-backed agent first. If MCP is unreachable or times out, the request falls through to the in-process direct agent so the API stays available during transport outages.
 
+**Frontend (`web/`).** A Next.js + TypeScript chat UI streams answers over Server-Sent Events:
+
+```
+Next.js UI  →  POST /query/stream (SSE)  →  FastAPI  →  LangGraph ReAct agent  →  ChromaDB + Gemini
+```
+
+The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the request POSTs a JSON body) to parse `token` / `sources` / `done` events, rendering the answer live with inline citations. The `/query/stream` endpoint runs the agent to completion (same MCP-first, direct-agent fallback and 30 s timeout as `/query`), then streams the final answer word-by-word — chosen over `astream_events` because isolating only the final-answer tokens across the tool-calling loop proved brittle.
+
 ---
 
 ## Tech stack
@@ -54,9 +72,13 @@ Requests to `POST /query` try the MCP-backed agent first. If MCP is unreachable 
 | LLM | Google Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`) |
 | Tool protocol | Model Context Protocol (MCP), streamable-HTTP transport |
 | API | FastAPI + Uvicorn |
+| Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
+| Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
+| Frontend tests | Vitest + React Testing Library |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.2 (faithfulness, answer_relevancy, context_recall) |
-| CI | GitHub Actions (lint + dry-run on every push/PR) |
+| Hosting | Vercel (frontend) + Hugging Face Spaces (backend), both free tier |
+| CI | GitHub Actions (backend lint + dry-run, frontend lint + tests + build) |
 
 ---
 
@@ -148,6 +170,22 @@ curl -X POST http://localhost:8080/query \
 
 Optional `ticker` field narrows retrieval to a single company.
 
+### `POST /query/stream`
+
+Same request body as `/query`, but streams the answer as Server-Sent Events
+(`text/event-stream`) — this is what the web UI consumes.
+
+```bash
+curl -N -X POST http://localhost:8080/query/stream \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What were Apple total net sales in the most recent fiscal year?", "ticker": "AAPL"}'
+```
+
+Each line is one JSON event: `{"type":"token","text":...}` (repeated),
+then `{"type":"sources","items":[...]}`, then `{"type":"done"}`
+(or `{"type":"error","message":...}`). CORS origins are controlled by the
+`FRONTEND_ORIGINS` env var (comma-separated; defaults include `http://localhost:3000`).
+
 ---
 
 ## Evaluation
@@ -189,14 +227,33 @@ Per-question scores and full agent transcripts are written to `eval/results.json
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and PR to `main`/`master`:
+`.github/workflows/ci.yml` runs on every push and PR to `main`/`master` as two
+parallel jobs:
 
+**Backend (`build`)**
 1. Install `requirements.txt` (CPU PyTorch extra index)
 2. `flake8 .` with `--max-line-length 120 --ignore E501,W503`
 3. `python -m eval.run_eval --dry-run`
 4. `pytest` (exit code 5 = no tests collected is treated as pass)
 
-No secrets are required — the dry-run path makes no LLM calls.
+**Frontend (`frontend`, in `web/`)**
+1. `npm ci`
+2. `npm run lint`
+3. `npm test` (Vitest streaming smoke test)
+4. `npm run build`
+
+No secrets are required — the backend dry-run path makes no LLM calls.
+
+---
+
+## Deploy (free)
+
+The whole stack runs on free tiers:
+
+- **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
+- **Backend → Hugging Face Spaces (Docker SDK).** The [Dockerfile](Dockerfile) rebuilds the Chroma index at build time from the committed filings under `data/sec_filings/` (using local MiniLM embeddings), so the 245 MB index never needs to live in git. Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
+
+Full step-by-step instructions, including the Space README front-matter, are in [DEPLOY.md](DEPLOY.md).
 
 ---
 
@@ -240,3 +297,5 @@ financial-research-agent/
 - **Table chunking.** The recursive character splitter breaks 10-K tables across chunk boundaries, so numeric questions that depend on multi-row context (e.g. segment breakdowns) can retrieve partial rows. A dedicated table-aware splitter (or a layout-preserving parser like Unstructured) would close this gap.
 - **Free-tier rate limits.** The Gemini free tier enforces per-minute RPM/TPM caps. The eval pipeline sleeps 5 s between agent calls to stay under them; a full run still takes ~1 minute for 5 questions. Bulk evaluation needs a paid key or parallel quota buckets (hence the separate `RAGAS_LLM_MODEL` env var).
 - **Same-model judge bias.** Scoring with the same family (Gemini) that generated the answers can inflate faithfulness and relevancy (the judge agrees with its own priors). A cross-family judge (e.g. Claude or an OpenAI model) would give a more independent signal; worth doing before reporting externally.
+- **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
+- **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).
