@@ -1,0 +1,16 @@
+[flake8]
+# Matches the CI lint step (.github/workflows/ci.yml):
+#   E501 (line too long) — many long comment/docstring lines are intentional.
+#   W503 (line break before binary operator) — black-style convention.
+max-line-length = 120
+extend-ignore = E501, W503
+# web/ is the Next.js frontend (TypeScript); its node_modules contains vendored
+# Python files that are not ours to lint. Keep flake8 to the backend.
+exclude =
+    .git,
+    __pycache__,
+    web,
+    build,
+    dist,
+    .venv,
+    venv
