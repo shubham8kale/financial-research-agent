@@ -57,3 +57,41 @@ jobs:
             exit 0
           fi
           exit "$status"
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    # All frontend commands run inside the Next.js app directory.
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          # Cache the npm download cache, keyed on the frontend lockfile.
+          # cache-dependency-path is resolved from the repo root, not the
+          # working-directory default above.
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        # npm ci installs exactly what's in package-lock.json (reproducible).
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        # Validates TypeScript, Tailwind, and the production bundle. Uses the
+        # committed .env defaults; NEXT_PUBLIC_API_BASE_URL is overridden per
+        # environment at deploy time (Vercel).
+        run: npm run build
