@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 # ── Model configuration ───────────────────────────────────────────────────────
 
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash-lite")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
 # Tickers that have been ingested into the vector store.  Used by
 # list_available_companies() so the agent (and its callers) can discover what

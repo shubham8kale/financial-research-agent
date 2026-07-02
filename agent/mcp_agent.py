@@ -76,7 +76,7 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash-lite")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
 # URL of the running MCP server.  Overridable via env so the same agent binary
 # can point at a local dev server or a deployed one without code changes.
