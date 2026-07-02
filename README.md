@@ -6,7 +6,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 
 ## Live demo
 
-- **App:** <!-- LIVE_URL --> _(add the Vercel URL after deploy)_
+- **App:** <https://financial-research-agent-pi.vercel.app>
 - **Full stack:** `Next.js UI → SSE → FastAPI (/query/stream) → LangGraph ReAct agent → ChromaDB + Gemini`
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
 
