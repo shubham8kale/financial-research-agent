@@ -38,7 +38,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8000")
-AGENT_TIMEOUT_SECONDS = 30.0
+# Max seconds for an agent run before we give up. Configurable via env because the
+# right value depends on the host: a fast local box handles 30s, but a free-tier
+# CPU deployment (HF Spaces) needs more headroom for multi-step reasoning +
+# per-call query embedding + Gemini latency. Default 120s for deployed use.
+AGENT_TIMEOUT_SECONDS = float(os.getenv("AGENT_TIMEOUT_SECONDS", "120"))
 
 # Browser origins allowed to call the API (CORS). The Next.js dev server runs on
 # http://localhost:3000; the deployed Vercel domain is supplied at deploy time
@@ -303,8 +307,19 @@ async def _run_with_fallback(request: Request, question: str):
 
 async def _sse_event_stream(request: Request, question: str):
     """Async generator yielding SSE lines: token* → sources → done (or error)."""
+    # Run the agent as a task and emit SSE keepalive comments while it works. The
+    # chunked-answer design produces no output until the agent finishes, so on a
+    # slow free-tier host that silent gap can trip a proxy idle-timeout and drop
+    # the connection. Comment lines (": ...") are ignored by SSE clients.
+    run = asyncio.create_task(_run_with_fallback(request, question))
+    while True:
+        finished, _ = await asyncio.wait({run}, timeout=10)
+        if finished:
+            break
+        yield ": keepalive\n\n"
+
     try:
-        answer, sources = await _run_with_fallback(request, question)
+        answer, sources = run.result()
     except asyncio.TimeoutError:
         yield _sse({
             "type": "error",
@@ -314,6 +329,16 @@ async def _sse_event_stream(request: Request, question: str):
     except Exception as exc:
         logger.exception("Streaming agent failed")
         yield _sse({"type": "error", "message": f"Agent execution failed: {exc}"})
+        return
+
+    # The agent can finish without producing final-answer text (e.g. it exhausted
+    # its tool-call budget). Surface that as an error rather than streaming an
+    # empty message that renders as a blank bubble.
+    if not answer.strip():
+        yield _sse({
+            "type": "error",
+            "message": "The agent didn't produce an answer. Please try rephrasing your question.",
+        })
         return
 
     for word in _WORD_RE.findall(answer):
