@@ -326,9 +326,15 @@ async def _sse_event_stream(request: Request, question: str):
             "message": f"Agent execution timed out after {AGENT_TIMEOUT_SECONDS:.0f} seconds",
         })
         return
-    except Exception as exc:
+    except Exception:
+        # Full traceback goes to the server log only. Never echo exception text to
+        # the client: provider errors embed internal details (model names, quota
+        # ids, endpoints) that shouldn't reach a public, unauthenticated endpoint.
         logger.exception("Streaming agent failed")
-        yield _sse({"type": "error", "message": f"Agent execution failed: {exc}"})
+        yield _sse({
+            "type": "error",
+            "message": "The agent hit an internal error. Please try again shortly.",
+        })
         return
 
     # The agent can finish without producing final-answer text (e.g. it exhausted
@@ -416,10 +422,12 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             detail=f"Agent execution timed out after {AGENT_TIMEOUT_SECONDS:.0f} seconds",
         )
     except Exception as fallback_exc:
+        # Log the full traceback server-side; return a generic message so provider
+        # internals (model names, quota ids) never reach the public endpoint.
         logger.exception("Direct agent failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Agent execution failed: {fallback_exc}",
+            detail="Agent execution failed. Please try again shortly.",
         ) from fallback_exc
 
 
