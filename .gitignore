@@ -240,3 +240,7 @@ eval/results.json
 
 # Internal deployment runbook — kept local, not published.
 DEPLOY.md
+
+# Personal Claude Code permission overrides — machine-local, never shared.
+# (.claude/settings.json, the shared policy, IS tracked deliberately.)
+.claude/settings.local.json
