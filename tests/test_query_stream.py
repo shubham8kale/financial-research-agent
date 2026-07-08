@@ -82,3 +82,41 @@ def test_query_stream_emits_tokens_then_done():
     # the reconstructed answer matches the fake final message.
     answer = "".join(e["text"] for e in events if e["type"] == "token")
     assert "Apple reported strong revenue growth" in answer
+
+
+class _BlockContentAgent:
+    """Fake agent whose final AIMessage content is a LIST of content blocks,
+    matching what newer Gemini models (e.g. gemini-2.5-flash) return."""
+
+    async def ainvoke(self, payload, config=None):
+        return {
+            "messages": [
+                AIMessage(
+                    content=[
+                        {
+                            "type": "text",
+                            "text": "Net sales were $416,161 million.",
+                            "extras": {"signature": "abc123"},
+                        }
+                    ]
+                ),
+            ]
+        }
+
+
+def test_query_stream_flattens_block_content():
+    # Regression: block-list content must stream as plain text, not the raw
+    # Python repr of the list (leaked '[{'type': 'text', ...}]' to users).
+    api_main.app.state.mcp_agent = None
+    api_main.app.state.direct_agent = _BlockContentAgent()
+
+    client = TestClient(api_main.app)
+    resp = client.post(
+        "/query/stream",
+        json={"question": "What was Apple's revenue?", "ticker": "AAPL"},
+    )
+
+    events = _parse_sse(resp.text)
+    answer = "".join(e["text"] for e in events if e["type"] == "token")
+    assert answer == "Net sales were $416,161 million."
+    assert "signature" not in answer and "[{" not in answer
