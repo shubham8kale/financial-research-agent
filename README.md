@@ -9,6 +9,14 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **App:** <https://financial-research-agent-pi.vercel.app>
 - **Full stack:** `Next.js UI → SSE → FastAPI (/query/stream) → LangGraph ReAct agent → ChromaDB + Gemini`
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
+- **The deployed demo is pinned to an earlier revision of this repo.** The backend lives in
+  its own Hugging Face Space repository, last updated **8 July 2026**, and is redeployed
+  deliberately rather than on every push. It runs `gemini-2.5-flash`; `main` now defaults to
+  `gemini-3.1-flash-lite`, and this week's changes — the terminal-failure guard, pinned
+  dependencies, and the evaluation harness rework — are **not** on the deployed Space yet.
+  So the live demo and the code you are reading are not the same revision. Numbers in
+  [eval/EVALUATION.md](eval/EVALUATION.md) always name the exact agent model they were
+  measured on.
 
 ---
 
@@ -67,7 +75,7 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | Orchestration | LangChain, LangGraph (`create_react_agent`) |
 | Vector store | ChromaDB (embedded, persistent SQLite + binary index) |
 | Embeddings | HuggingFace `sentence-transformers/all-MiniLM-L6-v2` (local, 384-dim) |
-| LLM | Google Gemini, set by `LLM_MODEL` (agent default `gemini-2.5-flash`; `retrieval/query_engine.py` default `gemini-2.5-flash-lite`) |
+| LLM | Google Gemini, set by `LLM_MODEL`. Default `gemini-3.1-flash-lite` across the agent, MCP agent and query engine |
 | Tool protocol | Model Context Protocol (MCP), streamable-HTTP transport |
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
@@ -192,51 +200,36 @@ then `{"type":"sources","items":[...]}`, then `{"type":"done"}`
 
 ## Evaluation
 
-Full method, findings and limitations: **[eval/EVALUATION.md](eval/EVALUATION.md)**.
-Per-item evidence — every answer, every retrieved context, every score — is
-committed under [eval/results/](eval/results/) and can be opened directly.
+66 labelled questions over five FY2025 10-K filings, six question types, scored
+with RAGAS. **Full method, findings and limitations:
+[eval/EVALUATION.md](eval/EVALUATION.md).** Per-item evidence — every answer,
+every retrieved context, every score — is committed under
+[eval/results/](eval/results/).
 
-### The honest headline
+Two runs of the same 66 items, **agent model the only variable**. Terminal
+failures (empty answer or recursion limit) are counted as 0 in both, not excluded.
 
-**n = 8. This is a smoke test, not a benchmark.**
-
-The full **66-item** labelled benchmark is committed at
-[eval/benchmark.csv](eval/benchmark.csv) and is runnable as-is. It was not run in
-full because of free-tier quota, not because of the harness: the Gemini free tier
-allows **20 requests per day, per model, per project** (measured from live 429
-response bodies — Google no longer publishes per-model free-tier numbers). At
-~2.3 agent calls per item, 66 items is roughly **nine days** of generation. The
-reported run is the 8 items that fit one day's bucket.
-
-| Metric | Score | n | NaN |
+| | agent `gemini-2.5-flash-lite` | agent `gemini-3.1-flash-lite` | change |
 |---|---|---|---|
-| faithfulness | 0.955 | 8 | 0 |
-| answer_relevancy | 0.903 | 8 | 0 |
-| context_recall | 0.813 | 8 | 0 |
+| faithfulness | 0.7136 | **0.8813** | +0.1677 |
+| answer relevancy | 0.5547 | **0.7625** | +0.2078 |
+| context recall | 0.6364 | **0.6970** | +0.0606 |
+| terminal failures | **12 / 66** (10 empty, 2 recursion) | **6 / 66** (0 empty, 6 recursion) | |
 
-Agent `gemini-2.5-flash`, judge `openai/gpt-oss-120b` (Groq), k=5, RAGAS 0.4.3,
-prompt version `sha256:d1bedac20eb2`. **100 % metric coverage** — no mean above
-is taken over a partial column. Four of the six question-type strata are n = 1;
-the per-type table in EVALUATION.md marks them as anecdotal.
+Judge `gemini-3.6-flash`, k=5, prompt `sha256:d1bedac20eb2`, RAGAS 0.4.3, 100%
+metric coverage on both runs.
 
-Every score is comparable **only** within that pinned judge model ID. Free-tier
-judge models get retired without notice, and this project already lost one
-mid-flight.
+**What the numbers hide, and why the evaluation record matters more than the
+table.** On the earlier model, 10 of 66 items returned an *empty* answer — and
+RAGAS scored those `NaN` and then dropped them from the mean, reporting
+faithfulness as 0.8411 instead of 0.7136. The system's worst items were improving
+its score. The API served them as HTTP 200 and the streaming endpoint rendered
+them as blank messages with source citations attached. That is now a named
+terminal-failure state guarded at every layer, with 17 tests.
 
-### What the run actually found
-
-- A `multi_hop` item failed at **retrieval**, then answered fluently and wrongly
-  from boilerplate it did retrieve (context_recall 0.00). Fluent wrongness on a
-  missed retrieval is the failure mode that matters most here.
-- **Retrieval varies with the agent model** even at fixed k, embeddings and
-  index — the agent composes its own search query, so the query text is model
-  output. Running the same 8 items on a second model changed the retrieved
-  passages on 7 of 8.
-- An earlier run's `faithfulness 0.00` turned out to be LangGraph exhausting
-  `recursion_limit`, not a retrieval failure. The harness now separates the two.
-- `answer_relevancy` is **not reproducible to the third decimal**: RAGAS
-  overrides the judge temperature to 0.3 for metrics that request n > 1
-  generations.
+Four of six question-type strata are n ≤ 8 and `multi_hop` is a single item, so
+the per-type breakdown in EVALUATION.md is anecdote, not measurement. n = 66
+establishes no statistical significance.
 
 ### Metrics
 
@@ -253,22 +246,18 @@ python -m eval.run_eval --dry-run
 # The 5-item smoke benchmark, end to end.
 python -m eval.run_eval --smoke --judge-provider groq
 
-# The reported 8-item run.
-python -m eval.run_eval   --ids qa_0001,qa_0005,qa_0023,qa_0047,qa_0060,qa_0064,qa_0019,qa_0037   --judge-provider groq --label smoke8
+# The reported 66-item run.
+LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval   --judge-provider google --judge-model gemini-3.6-flash --label rerun66
 
-# The full 66. Expect it to stop on a quota wall, write what completed, and
-# print the command to resume — that is the designed behaviour.
-python -m eval.run_eval --judge-provider groq
+# Cross-family re-score from cache — zero generation calls.
+LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval   --score-only --judge-provider groq --label crossjudge20
 ```
 
-The run is **resumable and checkpointed after every item**, keyed on
-`(item id, agent model, prompt version)`. A quota wall costs one item, not the
-run. `--score-only` re-judges cached answers with a different judge at zero
-generation cost; `--generate-only` accumulates generation across days, since
-agent and judge quotas sit in independently-resetting buckets.
-
-A partial run **withholds aggregates** — in stdout and in the JSON — so a
-stopped run can never be mistaken for a finished one.
+The run is **checkpointed and resumable**, keyed on
+`(item id, agent model, prompt version)`, so a quota wall costs one item rather
+than a run. `--score-only` re-judges cached answers with a different judge at zero
+generation cost. A partial run **withholds aggregates** — in stdout and in the
+JSON — so a stopped run cannot be mistaken for a finished one.
 
 ### Judge configuration
 
@@ -279,11 +268,10 @@ The agent model comes from `LLM_MODEL`. The judge is selected explicitly:
 | `--judge-provider google` | Google | `RAGAS_LLM_MODEL` | `GEMINI_API_KEY` |
 | `--judge-provider groq` | Groq | `RAGAS_JUDGE_MODEL` | `RAGAS_JUDGE_API_KEY` |
 
-Credentials are read from the environment only, never accepted as flags. The
-reported run judges on Groq because 66 items needs ~396 judge calls, which will
-not fit a 20/day Gemini bucket — and because a Groq judge against a Gemini agent
-is cross-family, which addresses the same-model judge bias this README used to
-list as an open weakness.
+Credentials are read from the environment only, never accepted as flags. A
+cross-family judge check (Groq `gpt-oss-120b` re-scoring the same outputs) is run
+as standard practice — see EVALUATION.md finding 3 for what it did and did not
+show.
 
 ---
 
@@ -357,7 +345,7 @@ financial-research-agent/
 ## Known limitations
 
 - **Table chunking.** The recursive character splitter breaks 10-K tables across chunk boundaries, so numeric questions that depend on multi-row context (e.g. segment breakdowns) can retrieve partial rows. A dedicated table-aware splitter (or a layout-preserving parser like Unstructured) would close this gap.
-- **Free-tier quota is the binding constraint on evaluation size.** The Gemini free tier allows **20 requests per day, per model, per project** — measured from live 429 bodies, since Google no longer publishes per-model free-tier numbers. At ~2.3 agent calls per item the committed 66-item benchmark is ~9 days of generation, which is why the reported evaluation is n = 8. Groq's free tier for the judge is token-bound (8k TPM / 200k TPD). The harness is checkpointed and resumable specifically so a multi-day run is viable; see [eval/EVALUATION.md](eval/EVALUATION.md).
+- **n = 66 establishes no statistical significance**, and four of six question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 5 and 9.
 - **Judge bias is mitigated but not measured.** The reported run uses a Groq `gpt-oss-120b` judge against a Gemini agent, so it is already cross-family — the same-model bias this section previously flagged does not apply to it. What is still missing is a *quantified* comparison: re-judging the same cached answers with a Gemini judge to measure how much the two disagree. That was scoped and not run (it needs a full day's Gemini bucket). Every number is currently one judge's opinion, with no inter-judge agreement measured.
 - **`answer_relevancy` is not reproducible to the third decimal.** RAGAS overrides the judge's temperature to 0.3 for any metric requesting n > 1 generations, which `answer_relevancy` always does. `faithfulness` and `context_recall` are stable run-to-run; small `answer_relevancy` differences are noise.
 - **`context_recall` is measured over context blobs, not chunks.** The eval harness captures each tool observation as one context string, and an observation already concatenates all k = 5 passages. That makes `context_recall` coarser than a per-chunk measurement would be — a blob containing one relevant passage among five scores as recalled.
