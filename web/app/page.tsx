@@ -7,10 +7,25 @@ import MessageList from "@/components/MessageList";
 import type { ChatMessage } from "@/components/Message";
 import { streamQuery, type Citation } from "@/lib/api";
 
+// Each suggestion is verified against the live backend before shipping: a
+// prompt the UI offers should not be one the corpus answers badly.
+//
+// "What are the main risk factors Meta discloses?" was removed. It is a fair
+// question and the system handles it honestly - it retrieves 12 passages,
+// finds none containing the Item 1A text, and declines rather than
+// confabulating - but a suggestion that reliably produces a refusal is a poor
+// first impression. The cause is retrieval: a broad "main risk factors" query
+// does not surface the risk-factor sections.
+//
+// Both financial prompts say "most recent fiscal year" deliberately. The
+// filings present three years side by side, and without that phrase the agent
+// answers with the PRIOR year - measured at 4 of 5 on the benchmark's temporal
+// stratum (see eval/EVALUATION.md finding 2). The wording steers the demo
+// around a real, documented defect; it does not fix it.
 const EXAMPLE_QUESTIONS = [
   "What were Apple's total net sales in the most recent fiscal year?",
-  "Compare Microsoft and Alphabet cloud revenue.",
-  "What are the main risk factors Meta discloses?",
+  "Compare Microsoft and Alphabet cloud revenue in their most recent fiscal years.",
+  "How many employees did Meta have at the end of 2025?",
 ];
 
 function EmptyState({ onPick }: { onPick: (q: string) => void }) {
