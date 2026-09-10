@@ -96,8 +96,9 @@ cp .env.example .env
 
 # 4. Build the vector index (first run only)
 #    Reads the 10-K filings already committed under data/sec_filings/ — no SEC
-#    download needed. Embeds 67,521 chunks locally on CPU: allow 20-40 minutes
-#    and ~360 MB of disk. Only re-run this if data/chroma_db/ is missing.
+#    download needed. Embeds 67,521 chunks locally on CPU. Measured on a cold
+#    clone: 25 minutes, 67,521 chunks, ~370 MB on disk. Only re-run this if
+#    data/chroma_db/ is missing.
 python -m ingestion.pipeline
 
 # 5. Ask the agent a question
@@ -312,7 +313,7 @@ No secrets are required — the backend dry-run path makes no LLM calls.
 The whole stack runs on free tiers:
 
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
-- **Backend → Hugging Face Spaces (Docker SDK).** The [Dockerfile](Dockerfile) rebuilds the Chroma index at build time from the committed filings under `data/sec_filings/` (using local MiniLM embeddings), so the 359 MB index never needs to live in git. Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
+- **Backend → Hugging Face Spaces (Docker SDK).** The [Dockerfile](Dockerfile) rebuilds the Chroma index at build time from the committed filings under `data/sec_filings/` (using local MiniLM embeddings), so the ~360-370 MB index never needs to live in git. Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
 
 ---
 
