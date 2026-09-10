@@ -9,14 +9,17 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **App:** <https://financial-research-agent-pi.vercel.app>
 - **Full stack:** `Next.js UI → SSE → FastAPI (/query/stream) → LangGraph ReAct agent → ChromaDB + Gemini`
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
-- **The deployed demo is pinned to an earlier revision of this repo.** The backend lives in
-  its own Hugging Face Space repository, last updated **8 July 2026**, and is redeployed
-  deliberately rather than on every push. It runs `gemini-2.5-flash`; `main` now defaults to
-  `gemini-3.1-flash-lite`, and this week's changes — the terminal-failure guard, pinned
-  dependencies, and the evaluation harness rework — are **not** on the deployed Space yet.
-  So the live demo and the code you are reading are not the same revision. Numbers in
-  [eval/EVALUATION.md](eval/EVALUATION.md) always name the exact agent model they were
-  measured on.
+- **The deployed backend is a separate repository, redeployed deliberately.** It lives in
+  its own Hugging Face Space repo rather than being built from this one on every push, so
+  the two can drift. Its application code is currently **in sync with `main`** — same
+  agent, API, retrieval and ingestion modules, same `gemini-3.1-flash-lite` default, same
+  terminal-failure guard, same pinned dependencies. What deliberately differs is the
+  deployment machinery: the Space ships a **prebuilt Chroma index via Git LFS**, because
+  re-embedding 67K chunks at image-build time exceeds Hugging Face's build timeout on the
+  free CPU builder, whereas this repo's Dockerfile rebuilds the index and gitignores it.
+  Because sync is manual, treat the live demo's revision as unverified unless you check it
+  — numbers in [eval/EVALUATION.md](eval/EVALUATION.md) always name the exact agent model
+  they were measured on.
 
 ---
 

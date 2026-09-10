@@ -484,9 +484,13 @@ Including the ones that weaken the numbers above.
     preview models are retired without notice — this project lost its agent model
     mid-work (finding 5) and had a judge model change behaviour mid-project. A
     future re-run against a different judge is a new baseline, not a continuation.
-12. **The deployed demo is not this system.** The Hugging Face Space is a separate
-    repository pinned to an earlier revision (8 July 2026) running
-    `gemini-2.5-flash`, without the terminal-failure guard. See the README.
+12. **The deployed demo is a manually synced copy.** The Hugging Face Space is a
+    separate repository, not built from this one on every push. Its application
+    code currently matches `main`, including the agent model and the
+    terminal-failure guard, but the deployment machinery differs by design (it
+    ships a prebuilt Chroma index via Git LFS). Because the sync is manual it can
+    drift again, so the revision serving any given demo session is not guaranteed
+    to be the revision measured here. See the README.
 13. **Open dependency advisories are tracked rather than auto-patched.** The
     remaining npm advisories are test-runner devDependencies that never reach the
     production bundle; the four open ChromaDB advisories have no patched release
