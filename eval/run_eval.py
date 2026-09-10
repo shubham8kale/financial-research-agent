@@ -16,10 +16,10 @@
 #
 # DESIGN: WHY THIS HARNESS IS RESUMABLE
 # -------------------------------------
-# A full 66-item run makes roughly 150 agent calls and 396 judge calls, against
-# free-tier quotas measured in TENS of requests per day (see the quota section
-# below).  Any real run therefore spans multiple days and multiple quota resets,
-# so a 429 partway through must not discard the work that already succeeded:
+# A full-benchmark run makes roughly 160 agent calls and 425 judge calls.  On the
+# free tier that meant TENS of requests per day (see the quota section below) and
+# a run spanning days; on a paid tier it is one sitting.  Either way a 429 or a
+# crash partway through must not discard the work that already succeeded:
 #
 #   1. Agent outputs are written to eval/cache/agent_outputs.json after EVERY
 #      item, keyed by (item id, agent model id, prompt version).  A rerun skips
@@ -53,10 +53,11 @@
 #   Groq free tier   : gpt-oss-120b — 30 RPM, 1,000 RPD, 8,000 TPM, 200,000 TPD.
 #
 # Consequences that shape this harness:
-#   * ~150 agent calls for 66 items = ~9 days of Gemini generation.  The full
-#     66-item benchmark is committed and runnable, but a single-sitting 66-item
-#     run is not possible on the free tier.  Reported runs use a stratified
-#     subset; the harness reports n on every row so subset size is never hidden.
+#   * ~150 agent calls for 66 items = ~9 days of Gemini generation.  This is why
+#     the first reported run was n=8 rather than the full benchmark.  The
+#     constraint was later lifted by billing activation; the figures above are
+#     kept because they are why this harness is checkpointed at all.  The harness
+#     reports n on every row so a subset is never mistaken for the whole set.
 #   * The judge is pointed at Groq by default in reported runs precisely because
 #     396 judge calls will not fit in a 20/day Gemini bucket.
 #   * Scores are only ever comparable within a pinned judge model id — free-tier
@@ -119,7 +120,7 @@ logger = logging.getLogger(__name__)
 # ── Paths & constants ────────────────────────────────────────────────────────
 
 EVAL_DIR = Path(__file__).resolve().parent
-BENCHMARK_FILE = EVAL_DIR / "benchmark.csv"            # 66 labelled items
+BENCHMARK_FILE = EVAL_DIR / "benchmark.csv"            # 71 labelled items
 SMOKE_BENCHMARK_FILE = EVAL_DIR / "benchmark_smoke.csv"  # 5 items, CI + --dry-run
 RESULTS_DIR = EVAL_DIR / "results"
 CACHE_FILE = EVAL_DIR / "cache" / "agent_outputs.json"
@@ -192,9 +193,16 @@ RAGAS_SEED = 42
 
 METRIC_NAMES = ("faithfulness", "answer_relevancy", "context_recall")
 
-# Question-type strata present in the 66-item benchmark, in reporting order.
+# Question-type strata present in the benchmark, in reporting order.
+# "temporal" asks a question with the fiscal year deliberately unstated: the
+# filings present three years side by side, so the prior-year figure is equally
+# retrievable and is the plausible wrong answer. It measures whether the agent
+# honours its own prompt rule to use the most recent data when the year is
+# ambiguous — a failure mode observed on the deployed demo and previously
+# unmeasured by any item in the benchmark.
 QUESTION_TYPES = (
     "single_hop", "numerical", "multi_hop", "comparative", "negative", "list",
+    "temporal",
 )
 
 # A stratum this thin cannot support a claim.  Rows at or below this n are

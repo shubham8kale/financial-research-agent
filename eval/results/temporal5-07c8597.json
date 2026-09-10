@@ -1,0 +1,306 @@
+{
+  "schema_version": 2,
+  "run_id": "temporal5-07c8597",
+  "label": "temporal5",
+  "timestamp": "2026-09-10T22:11:34+00:00",
+  "git_commit": "07c8597",
+  "git_dirty": true,
+  "config": {
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "judge_model": "gemini-3.6-flash",
+    "judge_provider": "google",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.2,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "prompt_version": "sha256:d1bedac20eb2",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 2,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_n": 5,
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ]
+  },
+  "run_status": {
+    "complete": true,
+    "n_requested": 5,
+    "n_generated": 5,
+    "n_scored": 5,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "judge_diagnostics": {
+    "executor_failures": {},
+    "judge_calls": 30,
+    "judge_input_tokens": 33862,
+    "judge_output_tokens": 15505
+  },
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 5,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    },
+    "answer_relevancy": {
+      "n_scored": 5,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    },
+    "context_recall": {
+      "n_scored": 5,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    }
+  },
+  "aggregates": {
+    "overall": {
+      "n_items": 5,
+      "faithfulness": {
+        "mean": 0.8,
+        "mean_failures_as_zero": 0.8,
+        "n_scored": 5,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      },
+      "answer_relevancy": {
+        "mean": 0.8467,
+        "mean_failures_as_zero": 0.8467,
+        "n_scored": 5,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      },
+      "context_recall": {
+        "mean": 0.8,
+        "mean_failures_as_zero": 0.8,
+        "n_scored": 5,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      }
+    },
+    "by_question_type": {
+      "temporal": {
+        "n_items": 5,
+        "faithfulness": {
+          "mean": 0.8,
+          "mean_failures_as_zero": 0.8,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.8467,
+          "mean_failures_as_zero": 0.8467,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 0.8,
+          "mean_failures_as_zero": 0.8,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      }
+    }
+  },
+  "aggregates_withheld_reason": null,
+  "results": [
+    {
+      "id": "qa_0067",
+      "question_type": "temporal",
+      "ticker": "MSFT",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Microsoft's Intelligent Cloud segment revenue?",
+      "ground_truth": "Intelligent Cloud revenue was $106,265 million for fiscal year 2025, the most recent year in the filing (fiscal 2024: $87,464 million).",
+      "answer": "For the fiscal year ended June 30, 2024, Microsoft's Intelligent Cloud segment revenue was $109,433 million. For the fiscal year ended June 30, 2023, the revenue for this segment was $88,523 million.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=4796\n    \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(3)\", \"Publisher\": \"FASB\", \"URI\": \"https://asc.fasb.org/1943274/2147478666/740-323-65-2\" }, \"r531\": { \"role\": \"http://www.xbrl.org/2003/role/disclosureRef\", \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(4)\", \"Publisher\": \"FASB\",\n\n[2] ticker=MSFT  chunk_idx=6825\n    \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(3)\", \"Publisher\": \"FASB\", \"URI\": \"https://asc.fasb.org/1943274/2147478666/740-323-65-2\" }, \"r649\": { \"role\": \"http://www.xbrl.org/2003/role/disclosureRef\", \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(4)\", \"Publisher\": \"FASB\",\n\n[3] ticker=META  chunk_idx=8781\n    \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(3)\", \"Publisher\": \"FASB\", \"URI\": \"https://asc.fasb.org/1943274/2147478666/740-323-65-2\" }, \"r576\": { \"role\": \"http://www.xbrl.org/2003/role/disclosureRef\", \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(g)(4)\", \"Publisher\": \"FASB\",\n\n[4] ticker=AAPL  chunk_idx=4794\n    \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(d)(1)\", \"Publisher\": \"FASB\", \"URI\": \"https://asc.fasb.org/1943274/2147478666/740-323-65-2\" }, \"r528\": { \"role\": \"http://www.xbrl.org/2003/role/disclosureRef\", \"Topic\": \"740\", \"SubTopic\": \"323\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"65\", \"Paragraph\": \"2\", \"Subparagraph\": \"(d)(2)\", \"Publisher\": \"FASB\",\n\n[5] ticker=AAPL  chunk_idx=4722\n    \"Topic\": \"606\", \"SubTopic\": \"10\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"50\", \"Paragraph\": \"12\", \"Subparagraph\": \"(e)\", \"Publisher\": \"FASB\", \"URI\": \"https://asc.fasb.org/1943274/2147479806/606-10-50-12\" }, \"r412\": { \"role\": \"http://www.xbrl.org/2003/role/disclosureRef\", \"Topic\": \"606\", \"SubTopic\": \"10\", \"Name\": \"Accounting Standards Codification\", \"Section\": \"50\", \"Paragraph\": \"13\", \"Subparagraph\": \"(b)(2)\", \"Publisher\": \"FASB\",",
+        "[1] ticker=MSFT  chunk_idx=916\n    Unearned revenue by segment was as follows:     (In millions)              June 30,  2025  2024        Productivity and Business Processes     $  50,567  $  43,599  Intelligent Cloud  14,022  13,683  More Personal Computing  2,676     2,902                       Total  $  67,265  $  60,184          We have recast certain prior period amounts to conform to the way we internally manage and monitor our business. Refer to Note 1 – Accounting Policies for further information.  76  PART II Item 8\n\n[2] ticker=MSFT  chunk_idx=4420\n    Revenue  $ 281,724  $ 245,122  $ 211,915  Cost of revenue  87,831  74,114  65,863  Operating expenses  65,365  61,575  57,529  Operating income  128,528  109,433  88,523  Productivity and Business Processes           Segment Reporting Information [Line Items]           Revenue  120,810  106,820  94,151  Cost of revenue  22,422  19,611  17,202  Operating expenses  28,615  27,548  26,875  Operating income  69,773  59,661  50,074  Intelligent Cloud           Segment Reporting Information [Line Item\n\n[3] ticker=MSFT  chunk_idx=141\n    Intelligent Cloud Our Intelligent Cloud segment consists of our public, private, and hybrid server products and cloud services that power modern business and developers. This segment primarily comprises: •\n\n[4] ticker=MSFT  chunk_idx=970\n    Intelligent Cloud Our Intelligent Cloud segment consists of our public, private, and hybrid server products and cloud services that power modern business and developers. This segment primarily comprises: •\n\n[5] ticker=MSFT  chunk_idx=2834\n    Intelligent Cloud Our Intelligent Cloud segment consists of our public, private, and hybrid server products and cloud services that power modern business and developers. This segment primarily comprises: •"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T22:08:27+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.8700598066845999,
+        "context_recall": 0.0
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google",
+      "scored_at": "2026-09-10T22:11:34+00:00"
+    },
+    {
+      "id": "qa_0068",
+      "question_type": "temporal",
+      "ticker": "GOOGL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Google Cloud revenues?",
+      "ground_truth": "Google Cloud revenues were $58,705 million for the year ended December 31, 2025, the most recent year in the filing (2024: $43,229 million).",
+      "answer": "Google Cloud revenues for the fiscal year ended December 31, 2024, were $43,229 million.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== GOOGL ===\n  [1] chunk_idx=423\n      Google Cloud Google Cloud revenues increased $15.5 billion from 2024 to 2025, primarily driven by growth in Google Cloud Platform largely from infrastructure and platform services. Revenues by Geography The following table presents revenues by geography as a percentage of revenues, determined based on the addresses of our customers:   Year Ended December 31,   2024 2025 United States 49  % 48  % EMEA (1) 29  % 29  % APAC (1) 16  % 17  % Other Americas (1) 6  % 6  % Hedging gains (losses) 0  % 0\n\n  [2] chunk_idx=416\n      Financial Results Revenues The following table presents revenues by type (in millions): Year Ended December 31, 2024 2025 Google Search & other $ 198,084  $ 224,532  YouTube ads 36,147  40,367  Google Network 30,359  29,792  Google advertising 264,590  294,691  Google subscriptions, platforms, and devices 40,340  48,030  Google Services total 304,930  342,721  Google Cloud 43,229  58,705  Other Bets 1,648  1,537  Hedging gains (losses) 211  (127) Total revenues $ 350,018  $ 402,836  Google Servi\n\n  [3] chunk_idx=874\n      Year Ended December 31, 2023 2024 2025 Revenues: Google Services $ 272,543   $ 304,930   $ 342,721   Google Cloud 33,088   43,229   58,705   Other Bets 1,527   1,648   1,537   Hedging gains (losses) 236   211   ( 127 ) Total revenues $ 307,394   $ 350,018   $ 402,836   Operating income (loss): Google Services $ 95,858   $ 121,263   $ 139,404   Google Cloud 1,716   6,112   13,910   Other Bets ( 4,095 ) ( 4,444 ) ( 7,515 ) Alphabet-level activities ( 9,186 ) ( 10,541 ) ( 16,760 ) Total income from\n\n  [4] chunk_idx=435\n      Google Cloud Google Cloud operating income increased $7.8 billion from 2024 to 2025. The increase in operating income was primarily driven by an increase in revenues, partially offset by increases in usage costs for technical infrastructure and employee compensation expenses. Other Bets\n\n  [5] chunk_idx=3285\n      The following table presents revenue, profitability, and expense information about our segments (in millions): Year Ended December 31, 2023 2024 2025 Revenues: Google Services $ 272,543  $ 304,930  $ 342,721  Google Cloud 33,088  43,229  58,705  Other Bets 1,527  1,648  1,537  Hedging gains (losses) 236  211  (127) Total revenues $ 307,394  $ 350,018  $ 402,836  Operating income (loss): Google Services $ 95,858  $ 121,263  $ 139,404  Google Cloud 1,716  6,112  13,910  Other Bets (4,095) (4,444)"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T22:08:34+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8523470934105916,
+        "context_recall": 1.0
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google",
+      "scored_at": "2026-09-10T22:11:34+00:00"
+    },
+    {
+      "id": "qa_0069",
+      "question_type": "temporal",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "True",
+      "question": "Compare Microsoft's Intelligent Cloud revenue with Alphabet's Google Cloud revenue.",
+      "ground_truth": "For their most recent fiscal years, Microsoft's Intelligent Cloud revenue was $106,265 million (fiscal 2025) and Alphabet's Google Cloud revenue was $58,705 million (year ended December 31, 2025).",
+      "answer": "For the most recent fiscal year, the revenue for Microsoft's Intelligent Cloud segment and Alphabet's Google Cloud segment is as follows:\n\n*   **Microsoft Intelligent Cloud:** For the fiscal year ended June 30, 2025, the Intelligent Cloud segment reported revenue of $106,265 million.\n*   **Alphabet Google Cloud:** For the fiscal year ended December 31, 2025, the Google Cloud segment reported revenue of $58,705 million.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== MSFT ===\n  [1] chunk_idx=916\n      Unearned revenue by segment was as follows:     (In millions)              June 30,  2025  2024        Productivity and Business Processes     $  50,567  $  43,599  Intelligent Cloud  14,022  13,683  More Personal Computing  2,676     2,902                       Total  $  67,265  $  60,184          We have recast certain prior period amounts to conform to the way we internally manage and monitor our business. Refer to Note 1 – Accounting Policies for further information.  76  PART II Item 8\n\n  [2] chunk_idx=4420\n      Revenue  $ 281,724  $ 245,122  $ 211,915  Cost of revenue  87,831  74,114  65,863  Operating expenses  65,365  61,575  57,529  Operating income  128,528  109,433  88,523  Productivity and Business Processes           Segment Reporting Information [Line Items]           Revenue  120,810  106,820  94,151  Cost of revenue  22,422  19,611  17,202  Operating expenses  28,615  27,548  26,875  Operating income  69,773  59,661  50,074  Intelligent Cloud           Segment Reporting Information [Line Item\n\n  [3] chunk_idx=2845\n      Operating Income     $  69,773        $  59,661        $  50,074                                                                             Intelligent Cloud                                                                          Revenue  $  106,265     $  87,464     $  72,944     Cost of revenue     40,171  29,611     24,109  Operating expenses     21,505        20,040        20,424\n\n  [4] chunk_idx=3241\n      Operating Income     $  69,773        $  59,661        $  50,074                                                                             Intelligent Cloud                                                                          Revenue  $  106,265     $  87,464     $  72,944     Cost of revenue     40,171  29,611     24,109  Operating expenses     21,505        20,040        20,424\n\n  [5] chunk_idx=558\n      $  69,773  $  59,661  17%                                   Intelligent Cloud                                                           Revenue  $  106,265  $  87,464     21%     Cost of revenue     40,171     29,611     36%     Operating expenses     21,505     20,040     7%                                                                                   Operating Income     $  44,589        $  37,813           18%\n\n=== GOOGL ===\n  [1] chunk_idx=423\n      Google Cloud Google Cloud revenues increased $15.5 billion from 2024 to 2025, primarily driven by growth in Google Cloud Platform largely from infrastructure and platform services. Revenues by Geography The following table presents revenues by geography as a percentage of revenues, determined based on the addresses of our customers:   Year Ended December 31,   2024 2025 United States 49  % 48  % EMEA (1) 29  % 29  % APAC (1) 16  % 17  % Other Americas (1) 6  % 6  % Hedging gains (losses) 0  % 0\n\n  [2] chunk_idx=4688\n      45,124  44,560  46,224  Other costs and expenses  158,193  139,107  130,461  Total costs and expenses  203,317  183,667  176,685  Google Cloud           Segment Reporting Information [Line Items]           Revenue from contract with customers  58,705  43,229  33,088  Employee compensation expenses  22,078  20,519  19,054  Other costs and expenses  22,717  16,598  12,318  Total costs and expenses  44,795  37,117  31,372  Other Bets           Segment Reporting Information [Line Items]\n\n  [3] chunk_idx=3285\n      The following table presents revenue, profitability, and expense information about our segments (in millions): Year Ended December 31, 2023 2024 2025 Revenues: Google Services $ 272,543  $ 304,930  $ 342,721  Google Cloud 33,088  43,229  58,705  Other Bets 1,527  1,648  1,537  Hedging gains (losses) 236  211  (127) Total revenues $ 307,394  $ 350,018  $ 402,836  Operating income (loss): Google Services $ 95,858  $ 121,263  $ 139,404  Google Cloud 1,716  6,112  13,910  Other Bets (4,095) (4,444)\n\n  [4] chunk_idx=4689\n      Revenue from contract with customers  1,537  1,648  1,527  Operating Segments | Google Services           Segment Reporting Information [Line Items]           Total income from operations  139,404  121,263  95,858  Operating Segments | Google Cloud           Segment Reporting Information [Line Items]           Total income from operations  13,910  6,112  1,716  Operating Segments | Other Bets           Segment Reporting Information [Line Items]           Total income from operations  (7,515)\n\n  [5] chunk_idx=416\n      Financial Results Revenues The following table presents revenues by type (in millions): Year Ended December 31, 2024 2025 Google Search & other $ 198,084  $ 224,532  YouTube ads 36,147  40,367  Google Network 30,359  29,792  Google advertising 264,590  294,691  Google subscriptions, platforms, and devices 40,340  48,030  Google Services total 304,930  342,721  Google Cloud 43,229  58,705  Other Bets 1,648  1,537  Hedging gains (losses) 211  (127) Total revenues $ 350,018  $ 402,836  Google Servi"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T22:08:42+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.7565893200585153,
+        "context_recall": 1.0
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google",
+      "scored_at": "2026-09-10T22:11:34+00:00"
+    },
+    {
+      "id": "qa_0070",
+      "question_type": "temporal",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, the most recent year in the filing (fiscal 2024: $391,035 million).",
+      "answer": "Apple's total net sales for fiscal year 2024 were $391,035 million.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285\n\n[2] ticker=AAPL  chunk_idx=311\n    $ 416,161  6  % $ 391,035  2  % $ 383,285  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. iPhone iPhone net sales increased during 2025 compared to 2024 due to higher net sales of Pro models. Mac Mac net sales increased during 2025 compared to 2024 primarily due to higher net sales of laptops and desktops. iPad\n\n[3] ticker=AAPL  chunk_idx=485\n    ) $ 114,301   Apple Inc. | 2025 Form 10-K | 47 The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790   $ 142,196   $ 138,573   China (1) 64,377   66,952   72,559   Other countries 199,994   181,887   172,153   Total net sales $\n\n[4] ticker=AAPL  chunk_idx=318\n    Selling, General and Administrative The growth in selling, general and administrative expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and variable selling expenses. Apple Inc. | 2025 Form 10-K | 24 Provision for Income Taxes Provision for income taxes, effective tax rate and statutory federal income tax rate for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Provision for income taxes $ 20,719  $ 29,749  $ 16,741\n\n[5] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T22:08:48+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9102179055821727,
+        "context_recall": 1.0
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google",
+      "scored_at": "2026-09-10T22:11:34+00:00"
+    },
+    {
+      "id": "qa_0071",
+      "question_type": "temporal",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were AWS's net sales?",
+      "ground_truth": "AWS net sales were $128,725 million in 2025, the most recent year in the filing (2024: $107,556 million).",
+      "answer": "For the fiscal year ended December 31, 2024, AWS net sales were $107,556 million.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== AMZN ===\n  [1] chunk_idx=317\n      Year Ended December 31,   2024 2025 Net Sales: North America $ 387,497  $ 426,305  International 142,906  161,894  AWS 107,556  128,725  Consolidated $ 637,959  $ 716,924  Year-over-year Percentage Growth: North America 10  % 10  % International 9  13  AWS 19  20  Consolidated 11  12  Year-over-year Percentage Growth, excluding the effect of foreign exchange rates: North America 10  % 10  % International 10  10  AWS 19  20  Consolidated 11  12  Net Sales Mix: North America 61  % 59  % Internatio\n\n  [2] chunk_idx=1975\n      $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21\n\n  [3] chunk_idx=2473\n      Information on reportable segments and reconciliation to consolidated net income is as follows (in millions):     Year Ended December 31,   2023 2024 2025 North America Net sales $ 352,828  $ 387,497  $ 426,305  Operating expenses 337,951  362,530  396,686  Operating income $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128\n\n  [4] chunk_idx=713\n      Operating income $ 14,877   $ 24,967   $ 29,619   International Net sales $ 131,200   $ 142,906   $ 161,894   Operating expenses 133,856   139,114   157,144   Operating income (loss) $ ( 2,656 ) $ 3,792   $ 4,750   AWS Net sales $ 90,757   $ 107,556   $ 128,725   Operating expenses 66,126   67,722   83,119   Operating income $ 24,631   $ 39,834   $ 45,606   Consolidated Net sales $ 574,785   $ 637,959   $ 716,924   Operating expenses 537,933   569,366   636,949   Operating income 36,852   68,593\n\n  [5] chunk_idx=2474\n      AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21  17,336  Provision for income taxes (7,120) (9,265) (19,087) Equity-method investment activity, net of tax (12) (101) (554) Net income $ 30,425  $ 59,248  $ 77,670"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T22:08:56+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8444109528688921,
+        "context_recall": 1.0
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google",
+      "scored_at": "2026-09-10T22:11:34+00:00"
+    }
+  ]
+}

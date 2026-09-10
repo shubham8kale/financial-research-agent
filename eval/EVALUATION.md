@@ -2,10 +2,16 @@
 
 ## Summary
 
-A 66-item labelled benchmark over five FY2025 SEC 10-K filings, six question
+A 71-item labelled benchmark over five FY2025 SEC 10-K filings, seven question
 types, scored with RAGAS on faithfulness, answer relevancy and context recall.
 Every item's answer, retrieved contexts and scores are committed under
 [`results/`](results/) and can be opened directly.
+
+The two full before/after runs below cover items 1–66. The five `temporal`
+items (67–71) were added afterwards, in response to a failure seen on the
+deployed demo, and were run separately — see finding 2. Each results file
+records the exact item ids it covers, so no run is ever reported as broader
+than it was.
 
 **Three things matter here.**
 
@@ -93,7 +99,7 @@ both moved modestly: +0.08 and +0.12 faithfulness.
 
 **Almost all of the headline gain is the elimination of terminal failures, not
 better answers on items that already worked.** That is visible in the agent-effect
-comparison in finding 4: on 8 items held under a single judge, changing the agent
+comparison in finding 5: on 8 items held under a single judge, changing the agent
 moved faithfulness by only −0.045.
 
 ### Where the remaining failures are
@@ -112,7 +118,7 @@ the whole argument for the guard.
 
 `context_recall` barely moved (+0.06) and `single_hop` recall actually fell
 (−0.059), which is expected: retrieval, embeddings, index and k never changed. The
-only reason it moves at all is finding 2.
+only reason it moves at all is finding 3.
 
 ---
 
@@ -180,7 +186,66 @@ check passed it straight through. Users would have seen that placeholder rendere
 as a real answer with source chips. Same absent concept, opposite symptom, and it
 was on `/query/stream`, not the less-used JSON route.
 
-### 2. Retrieval quality varies with the agent model at fixed k, embeddings and index
+### 2. Faithfulness cannot detect a right-figure-wrong-year answer
+
+Added after the 66-item runs, because the deployed demo was seen answering a
+cloud-revenue comparison with both companies' **prior-year** figures. No item in
+the benchmark asked a question with the fiscal year unstated, so the behaviour
+was entirely unmeasured. Five `temporal` items now do
+([`results/temporal5`](results/temporal5-07c8597.json), agent
+`gemini-3.1-flash-lite`, judge `gemini-3.6-flash`).
+
+**4 of 5 answered with the prior year.**
+
+| id | question | answered | correct |
+|---|---|---|---|
+| qa_0067 | Microsoft Intelligent Cloud revenue | $109,433M — wrong line item *and* wrong year | $106,265M (FY2025) |
+| qa_0068 | Google Cloud revenues | $43,229M (2024) | $58,705M (2025) |
+| qa_0069 | Compare MSFT vs Alphabet cloud revenue | correct year | — |
+| qa_0070 | Apple total net sales | $391,035M (FY2024) | $416,161M (FY2025) |
+| qa_0071 | AWS net sales | $107,556M (2024) | $128,725M (2025) |
+
+The agent's own system prompt instructs it to "search for the most recent data
+available" when a query is ambiguous about the fiscal year. It does not.
+
+**The measurement finding is the more important half.** Look at what the metrics
+said about those four wrong answers:
+
+| | faithfulness | answer_relevancy |
+|---|---|---|
+| qa_0067 (wrong figure + wrong year) | 0.00 | 0.87 |
+| qa_0068 (prior year) | **1.00** | 0.85 |
+| qa_0070 (prior year) | **1.00** | 0.91 |
+| qa_0071 (prior year) | **1.00** | 0.84 |
+
+**Faithfulness scored a perfect 1.00 on three of the four wrong answers, and
+answer_relevancy never dropped below 0.84 on any of them.** Both metrics are
+working exactly as defined. The prior-year figure *is* in the retrieved context,
+so an answer quoting it is genuinely faithful to its source; and it *is*
+topically responsive, so it is genuinely relevant. The answer is simply to a
+different question than the one asked.
+
+Only `context_recall` caught anything, and only on qa_0067 (0.00), where the
+retrieved passage did not contain the ground-truth figure at all.
+
+This is a blind spot in the metric suite, not a bug in it. Faithfulness answers
+"is this grounded in what was retrieved?" — a question that a confidently wrong
+year passes. Nothing in faithfulness, relevancy or recall asks "is this the
+figure the question was about?" On a financial-research system, where quoting
+last year's revenue as this year's is precisely the error that matters,
+**the headline metrics would have reported this system as performing well.**
+
+The temporal stratum exists so that failure is at least visible as a stratum
+score. Closing it properly needs a metric with access to the ground-truth value
+— an exact-match check on the expected figure — which is a measurement change
+rather than a tuning change and is not attempted here.
+
+Note qa_0069 answered with the correct year, while the same comparison put to
+the deployed demo answered with prior-year figures for both companies. That is
+finding 3 again: the agent composes its own query, and the behaviour is not
+stable across runs. At n=5 this stratum is anecdote, not measurement.
+
+### 3. Retrieval quality varies with the agent model at fixed k, embeddings and index
 
 The agent writes its own search queries inside the ReAct loop, so query text is
 model output. Running 8 identical items on two agent models — same retriever, same
@@ -207,7 +272,7 @@ is part of it, it is currently unmeasured and untuned, and it is the largest
 uncontrolled variable behind every number in this document. Measuring query
 stability is item 2 on the [roadmap](../ROADMAP.md).
 
-### 3. Cross-family judging is worth adopting as standard practice — on a signal, not a proof
+### 4. Cross-family judging is worth adopting as standard practice — on a signal, not a proof
 
 The same 20 agent outputs, scored by two judges from different model families
 (`gemini-3.6-flash` and Groq `openai/gpt-oss-120b`), zero new generation calls:
@@ -238,7 +303,7 @@ It does not justify the claim that the Gemini judge is biased.
 Useful negative control: the six recursion-limit items scored 0.0 under **both**
 judges, identically.
 
-### 4. Separating judge effect from agent effect
+### 5. Separating judge effect from agent effect
 
 The 8-item and 66-item runs differ in agent model, judge model *and* item set, so
 their headline numbers are not directly comparable. Holding the judge fixed (Groq)
@@ -257,7 +322,7 @@ that already worked — consistent with the per-stratum deltas above.
 
 Caveat: these 8 were the original smoke set, not a random draw.
 
-### 5. A repo verified reproducible on Monday was unreproducible on Tuesday
+### 6. A repo verified reproducible on Monday was unreproducible on Tuesday
 
 **9 September 2026.** Cold-clone check passed: fresh `git clone`, README followed
 verbatim, ingestion built the index in 1,531 s producing **exactly 67,521 chunks**,
@@ -291,7 +356,7 @@ annotated rather than rewritten; and a reproducibility claim is dated, because
 "verified reproducible" without a date is a claim about a moment presented as a
 property.
 
-### 6. `answer_relevancy` is not deterministic at temperature 0
+### 7. `answer_relevancy` is not deterministic at temperature 0
 
 `ragas.llms.base.BaseRagasLLM.get_temperature` returns `0.3` whenever `n > 1`, and
 `LangchainLLMWrapper.agenerate_text()` **overwrites the model's configured
@@ -318,7 +383,7 @@ for an `n = 3` request and returned it malformed, producing NaN. `bypass_n=True`
 now makes RAGAS issue N separate single-candidate requests rather than trusting a
 provider to honour `n`, so that degradation cannot recur silently on any provider.
 
-### 7. A throttled harness can fabricate its own missing data
+### 8. A throttled harness can fabricate its own missing data
 
 An early run scored faithfulness on only 5 of 8 items. The cause was `TimeoutError`
 inside `ragas.executor` at its default 180 s per-job timeout: faithfulness makes
@@ -338,7 +403,7 @@ could not score an item — and those mean opposite things.
 Validated under real load: the Groq cross-judge pass absorbed **42 rate-limit
 429s** with zero NaN and 100% coverage.
 
-### 8. `context_recall` is coarser than it looks
+### 9. `context_recall` is coarser than it looks
 
 `_extract_contexts()` captures each tool observation as **one** context string, and
 an observation already concatenates all k = 5 passages into ~2,100–2,600
@@ -351,7 +416,7 @@ retrieval-variant comparison. It is item 1 on the [roadmap](../ROADMAP.md), and 
 is the reason no hybrid-retrieval comparison has been attempted: the instrument
 cannot currently separate two retrieval strategies.
 
-### 9. My own free-tier quota estimate was wrong by ~50×
+### 10. My own free-tier quota estimate was wrong by ~50×
 
 The initial survey estimated Gemini's free tier at ~1,000 requests/day and
 projected a 66-item run at 45–60 minutes. The real ceiling was **20 requests per
@@ -416,7 +481,7 @@ of 512 chars / 50 overlap, RAGAS 0.4.3 with seed 42, `max_workers` 2, 900 s
 per-job timeout, `bypass_n=True`.
 
 **Seeds do not make this deterministic and no configuration would.** RAGAS's
-`seed=42` governs its own sampling, not an LLM judge's output. See finding 6.
+`seed=42` governs its own sampling, not an LLM judge's output. See finding 7.
 
 **The harness is checkpointed and resumable.** Agent outputs are cached after every
 item, keyed on `(item id, agent model, prompt version)`, so a quota wall costs one
@@ -472,17 +537,17 @@ Including the ones that weaken the numbers above.
    shares the retriever's blind spots.
 6. **No retrieval-variant comparison.** One k, one chunk size, one splitter, one
    strategy. Nothing was varied, so nothing here says any of those choices is good
-   — and finding 8 explains why a variant comparison is not yet measurable.
+   — and finding 9 explains why a variant comparison is not yet measurable.
 7. **The judge-bias result is n = 3** on the comparative stratum. A signal, not a
-   proof (finding 3).
-8. **`answer_relevancy` is not reproducible to the third decimal** (finding 6).
+   proof (finding 4).
+8. **`answer_relevancy` is not reproducible to the third decimal** (finding 7).
 9. **`context_recall` is measured over observation-sized blobs**, not individual
-   chunks (finding 8), making it coarser than a reader would assume.
+   chunks (finding 9), making it coarser than a reader would assume.
 10. **Single judge per run**, with no inter-judge agreement measured beyond the
     20-item cross-family check. Every headline number is one model's opinion.
 11. **Scores are comparable only within a pinned judge model id.** Free-tier and
     preview models are retired without notice — this project lost its agent model
-    mid-work (finding 5) and had a judge model change behaviour mid-project. A
+    mid-work (finding 6) and had a judge model change behaviour mid-project. A
     future re-run against a different judge is a new baseline, not a continuation.
 12. **The deployed demo is a manually synced copy.** The Hugging Face Space is a
     separate repository, not built from this one on every push. Its application
