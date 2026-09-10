@@ -28,6 +28,11 @@ from langchain_core.messages import ToolMessage
 from pydantic import BaseModel
 
 from agent import financial_agent, mcp_agent
+from agent.financial_agent import (
+    OUTCOME_EMPTY_ANSWER,
+    OUTCOME_RECURSION_LIMIT,
+    classify_terminal_state,
+)
 
 load_dotenv()
 
@@ -222,6 +227,34 @@ def _extract_sources(messages) -> List[SourceChunk]:
     return unique
 
 
+# Messages shown to callers for each terminal failure.  Deliberately generic:
+# they describe what happened to the request, never which model or provider was
+# involved (see SECURITY.md — provider internals must not reach public routes).
+_TERMINAL_DETAIL = {
+    OUTCOME_EMPTY_ANSWER: (
+        "The agent did not produce an answer for this question. This is a known "
+        "failure mode on some models; please retry or rephrase."
+    ),
+    OUTCOME_RECURSION_LIMIT: (
+        "The agent exhausted its step budget before answering. Try a narrower "
+        "question, or one covering fewer companies."
+    ),
+}
+
+
+def _terminal_http_error(outcome: str) -> HTTPException:
+    """Map a named terminal failure to a 502.
+
+    502 rather than 500: the agent ran without raising, but its upstream model
+    returned something unusable.  Serving it as a 200 with an empty ``answer``
+    is what this guard exists to prevent — a blank response rendered as a
+    successful one is indistinguishable, to a caller, from "the filings say
+    nothing", which is a materially different claim.
+    """
+    return HTTPException(status_code=502, detail=_TERMINAL_DETAIL.get(
+        outcome, "The agent did not produce a usable answer."))
+
+
 def _build_question(req: QueryRequest) -> str:
     if req.ticker:
         return f"{req.question} (company: {req.ticker.upper()})"
@@ -301,10 +334,10 @@ async def _run_with_fallback(request: Request, question: str):
                 timeout=AGENT_TIMEOUT_SECONDS,
             )
             answer = _final_answer(result)
-            if answer.strip():
+            if not classify_terminal_state(answer):
                 logger.info("Stream answered via MCP agent")
                 return answer, _extract_sources(result["messages"])
-            logger.warning("MCP agent returned empty response; falling back")
+            logger.warning("MCP agent produced no usable answer; falling back")
         except asyncio.TimeoutError:
             logger.warning("MCP agent timed out; falling back to direct agent")
         except Exception as mcp_exc:
@@ -357,13 +390,23 @@ async def _sse_event_stream(request: Request, question: str):
         })
         return
 
-    # The agent can finish without producing final-answer text (e.g. it exhausted
-    # its tool-call budget). Surface that as an error rather than streaming an
-    # empty message that renders as a blank bubble.
-    if not answer.strip():
+    # The agent can finish without producing a usable answer, in two distinct
+    # ways, and BOTH must be errors rather than content:
+    #
+    #   empty_answer     streams as a blank bubble with sources attached, which
+    #                    reads to a user as "the filings say nothing" — a
+    #                    materially different and false claim.
+    #   recursion_limit  is NOT empty; LangGraph substitutes its own placeholder
+    #                    string, which previously streamed through as if it were
+    #                    the model's considered answer.
+    outcome = classify_terminal_state(answer)
+    if outcome:
+        logger.warning("Stream terminal failure: %s", outcome)
         yield _sse({
             "type": "error",
-            "message": "The agent didn't produce an answer. Please try rephrasing your question.",
+            "outcome": outcome,
+            "message": _TERMINAL_DETAIL.get(
+                outcome, "The agent did not produce a usable answer."),
         })
         return
 
@@ -403,8 +446,11 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
                 timeout=AGENT_TIMEOUT_SECONDS,
             )
             answer = _final_answer(result)
-            if not answer.strip():
-                raise RuntimeError("MCP agent returned an empty response")
+            mcp_outcome = classify_terminal_state(answer)
+            if mcp_outcome:
+                # Fall through to the direct agent: a terminal failure on the MCP
+                # path is exactly the case the fallback exists for.
+                raise RuntimeError(f"MCP agent terminal failure: {mcp_outcome}")
             logger.info("Query answered via MCP agent")
             return QueryResponse(
                 answer=answer,
@@ -431,11 +477,18 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             timeout=AGENT_TIMEOUT_SECONDS,
         )
         answer = _final_answer(result)
+        outcome = classify_terminal_state(answer)
+        if outcome:
+            logger.warning("Direct agent terminal failure: %s", outcome)
+            raise _terminal_http_error(outcome)
         logger.info("Query answered via direct agent")
         return QueryResponse(
             answer=answer,
             sources=_extract_sources(result["messages"]),
         )
+    except HTTPException:
+        # Already a deliberate, classified failure — do not re-wrap it as a 500.
+        raise
     except asyncio.TimeoutError:
         raise HTTPException(
             status_code=504,

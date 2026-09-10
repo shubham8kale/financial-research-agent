@@ -206,10 +206,15 @@ THIN_STRATUM_N = 4
 # headline number — the column is too incomplete to summarise.
 MIN_METRIC_COVERAGE = 0.90
 
-# LangGraph emits this when the tool-calling loop exhausts recursion_limit.
-# Recording it matters: such an item is an agent-capability failure, not a
-# retrieval failure, and the two should not be pooled silently.
-RECURSION_LIMIT_MARKER = "need more steps to process this request"
+# Terminal-failure vocabulary lives in agent/financial_agent.py so the agent,
+# both API routes and this harness classify an identical string identically.
+# Imported lazily (inside _record) to keep module import free of langchain.
+#
+# Why this matters here specifically: RAGAS scores a terminal failure as NaN on
+# faithfulness and then EXCLUDES it from the mean, so the ten worst items in the
+# 66-item run silently raised the reported score. Recording the outcome by name
+# is what lets the report separate "the judge could not score this" from "the
+# system produced nothing to score".
 
 # Substrings that identify a provider quota / rate-limit refusal across the
 # providers this harness talks to (Google api_core, Groq, generic HTTP 429).
@@ -339,8 +344,8 @@ def _extract_contexts(messages) -> list[str]:
     return contexts
 
 
-def run_agent_capture(question: str) -> tuple[str, list[str], int]:
-    """Invoke the direct agent; return (final_answer, contexts, n_llm_messages).
+def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
+    """Invoke the direct agent; return (final_answer, contexts, n_messages, diag).
 
     We call ``build_agent_executor`` + ``.invoke`` directly (rather than the
     higher-level ``run_agent`` helper) because we need access to the full
@@ -368,7 +373,23 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int]:
         else:
             final_answer = str(final_answer)
     contexts = _extract_contexts(messages)
-    return final_answer, contexts, len(messages)
+
+    # Provenance for the empty-answer case.  An empty final answer is
+    # indistinguishable, in the stored record, between "the model deliberately
+    # said nothing", "the response was truncated" and "we failed to extract the
+    # text".  finish_reason separates them, so it is recorded rather than
+    # inferred later from a zero-length string.
+    last = messages[-1]
+    diag = {
+        "finish_reason": (getattr(last, "response_metadata", None) or {}).get("finish_reason"),
+        "final_content_type": type(last.content).__name__,
+        "answer_is_empty": not final_answer.strip(),
+    }
+    if not final_answer.strip():
+        # Keep a bounded repr so a degenerate response can be inspected later
+        # without re-running the item (and re-paying for it).
+        diag["empty_content_repr"] = repr(last.content)[:300]
+    return final_answer, contexts, len(messages), diag
 
 
 # ── Agent-output cache ───────────────────────────────────────────────────────
@@ -442,11 +463,18 @@ def metric_coverage(rows: list[dict]) -> dict[str, dict]:
     """
     out = {}
     for m in METRIC_NAMES:
-        vals = [r.get("scores", {}).get(m) for r in rows]
-        scored = [v for v in vals if _is_number(v)]
+        vals = [(r, r.get("scores", {}).get(m)) for r in rows]
+        scored = [v for _, v in vals if _is_number(v)]
+        nan_rows = [r for r, v in vals if not _is_number(v)]
+        # Split NaN by cause. A NaN because the system produced nothing to score
+        # is a SYSTEM failure; a NaN with no terminal failure attached is an
+        # unexplained JUDGE failure. Pooling them hides which one you have.
+        nan_terminal = sum(1 for r in nan_rows if r.get("terminal_failure"))
         out[m] = {
             "n_scored": len(scored),
-            "n_nan": len(vals) - len(scored),
+            "n_nan": len(nan_rows),
+            "n_nan_terminal_failure": nan_terminal,
+            "n_nan_unexplained": len(nan_rows) - nan_terminal,
             "coverage": round(len(scored) / len(vals), 4) if vals else 0.0,
         }
     return out
@@ -463,10 +491,23 @@ def _mean_block(rows: list[dict]) -> dict:
     for m in METRIC_NAMES:
         vals = [r.get("scores", {}).get(m) for r in rows]
         scored = [float(v) for v in vals if _is_number(v)]
+        # Two framings, both reported, because they answer different questions:
+        #   mean                 RAGAS default - averages only items it scored.
+        #   mean_failures_as_zero  counts a terminal failure as 0 instead of
+        #                        dropping it. On the 66-item run these differ by
+        #                        0.13 on faithfulness, and the first one flatters
+        #                        the system by excluding its worst items.
+        n_terminal = sum(
+            1 for r in rows
+            if r.get("terminal_failure") and not _is_number(r.get("scores", {}).get(m))
+        )
+        denom = len(scored) + n_terminal
         block[m] = {
             "mean": round(sum(scored) / len(scored), 4) if scored else None,
+            "mean_failures_as_zero": round(sum(scored) / denom, 4) if denom else None,
             "n_scored": len(scored),
             "n_nan": len(vals) - len(scored),
+            "n_terminal_failure": n_terminal,
         }
     return block
 
@@ -554,6 +595,20 @@ def print_report(payload: dict) -> None:
     print("\n--- Overall ---")
     print(header)
     _print_metric_row("all", agg["overall"])
+
+    # The same row with terminal failures counted as 0 rather than dropped.
+    ov = agg["overall"]
+    if any(ov[m]["n_terminal_failure"] for m in METRIC_NAMES):
+        cells = []
+        for m in METRIC_NAMES:
+            d = ov[m]
+            n = d["n_scored"] + d["n_terminal_failure"]
+            cells.append(f"{_fmt(d['mean_failures_as_zero'])} [n={n}]")
+        print("  " + f"{'all (fail=0)':<12} " + "   ".join(f"{c:<24}" for c in cells))
+        print("\n  'fail=0' counts each terminal failure (empty answer / recursion")
+        print("  limit) as 0 instead of excluding it. Prefer it as the headline: the")
+        print("  default RAGAS mean drops exactly the items where the system")
+        print("  produced nothing, which raises the score it is meant to measure.")
 
     print("\n--- By question type ---")
     print(header)
@@ -823,7 +878,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         logger.info("[%d/%d] %s — running agent: %s",
                     i, len(benchmark), item_id, row["question"][:70])
         try:
-            answer, contexts, n_messages = run_agent_capture(row["question"])
+            answer, contexts, n_messages, diag = run_agent_capture(row["question"])
         except Exception as exc:  # noqa: BLE001 — any agent failure must be classified
             if _is_quota_error(exc):
                 # Do NOT record a stub: a quota refusal says nothing about the
@@ -845,7 +900,8 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
             continue
 
         record = _record(row, agent_model, prompt_version,
-                         answer=answer, contexts=contexts, n_messages=n_messages)
+                         answer=answer, contexts=contexts, n_messages=n_messages,
+                         diag=diag)
         records.append(record)
 
         # Checkpoint after EVERY item — this is what makes a quota wall cost
@@ -865,7 +921,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
     return records, stop_reason
 
 
-def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, error=None):
+def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, error=None, diag=None):
     """Build one per-item result record.
 
     Every row carries its own full provenance — item id, stratum, model ids, k
@@ -873,8 +929,9 @@ def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, e
     in isolation, pulled into a table, or compared against a row from a
     different run.
     """
-    from agent.financial_agent import TOP_K
+    from agent.financial_agent import TOP_K, OUTCOME_RECURSION_LIMIT, classify_terminal_state
 
+    terminal_failure = classify_terminal_state(answer)
     return {
         "id": row["id"],
         "question_type": row.get("question_type", ""),
@@ -888,13 +945,15 @@ def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, e
         "contexts": contexts,
         "n_contexts": len(contexts),
         "n_agent_messages": n_messages,
-        "recursion_limit_hit": RECURSION_LIMIT_MARKER in (answer or "").lower(),
+        "terminal_failure": terminal_failure,
+        "recursion_limit_hit": terminal_failure == OUTCOME_RECURSION_LIMIT,
         "agent_model": agent_model,
         "agent_provider": "google",
         "k": TOP_K,
         "prompt_version": prompt_version,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "error": error,
+        **(diag or {}),
     }
 
 

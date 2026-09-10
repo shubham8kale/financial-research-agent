@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 # ── Model configuration ───────────────────────────────────────────────────────
 
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
 
 # Tickers that have been ingested into the vector store.  Used by
 # list_available_companies() so the agent (and its callers) can discover what
@@ -110,6 +110,86 @@ def _get_vectorstore():
         logger.info("Initialising ChromaDB vectorstore …")
         _vectorstore = build_vectorstore()
     return _vectorstore
+
+
+# ── Terminal failure states ───────────────────────────────────────────────────
+#
+# A tool-calling loop can stop for reasons that are NOT an answer, and both of
+# them were observed in evaluation on this corpus:
+#
+#   empty_answer     The model returns a final AIMessage with empty content and
+#                    no tool call.  finish_reason is STOP — the API deliberately
+#                    returned nothing.  Measured at 10/66 items (15%) on
+#                    gemini-2.5-flash-lite; 0/10 on gemini-3.1-flash-lite and
+#                    gemini-3.6-flash at the same prompt, k and retrieval.
+#   recursion_limit  The graph exhausts recursion_limit before the model emits a
+#                    final answer, and LangGraph returns its own placeholder
+#                    string instead.
+#
+# Neither is a usable answer, and neither used to be detected anywhere: the
+# agent returned the empty string, the API served it as a 200, and the eval
+# harness handed it to RAGAS, which scored faithfulness as NaN and then EXCLUDED
+# it from the mean — so the system's worst failures silently raised its score.
+#
+# Naming them here, once, gives every layer the same vocabulary.
+
+RECURSION_LIMIT_MARKER = "need more steps to process this request"
+
+OUTCOME_EMPTY_ANSWER = "empty_answer"
+OUTCOME_RECURSION_LIMIT = "recursion_limit"
+
+
+class AgentTerminalFailure(RuntimeError):
+    """The agent stopped without producing a usable answer.
+
+    Carries ``outcome`` so callers can branch on the specific failure without
+    string-matching an error message.
+    """
+
+    outcome = "unknown"
+
+
+class EmptyAnswerError(AgentTerminalFailure):
+    """The agent's final message contained no text."""
+
+    outcome = OUTCOME_EMPTY_ANSWER
+
+
+class RecursionLimitError(AgentTerminalFailure):
+    """The agent exhausted its step budget before answering."""
+
+    outcome = OUTCOME_RECURSION_LIMIT
+
+
+def classify_terminal_state(answer: str | None) -> str | None:
+    """Return a named terminal-failure outcome for *answer*, or None if usable.
+
+    Deliberately operates on the flattened answer text rather than on the
+    message list, so that every caller — the agent entry point, both API
+    routes, and the eval harness — classifies the identical string the user
+    would otherwise have been shown.
+    """
+    text = (answer or "").strip()
+    if not text:
+        return OUTCOME_EMPTY_ANSWER
+    if RECURSION_LIMIT_MARKER in text.lower():
+        return OUTCOME_RECURSION_LIMIT
+    return None
+
+
+def raise_for_terminal_state(answer: str | None) -> str:
+    """Return *answer* unchanged, or raise the matching AgentTerminalFailure."""
+    outcome = classify_terminal_state(answer)
+    if outcome == OUTCOME_EMPTY_ANSWER:
+        raise EmptyAnswerError(
+            "The agent returned an empty final answer (model stopped without "
+            "producing text)."
+        )
+    if outcome == OUTCOME_RECURSION_LIMIT:
+        raise RecursionLimitError(
+            "The agent exhausted its step budget before producing an answer."
+        )
+    return answer
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
@@ -369,7 +449,9 @@ def run_agent(question: str) -> str:
         # limit=20 allows up to ~10 tool calls before the graph stops.
         config={"recursion_limit": 20},
     )
-    return result["messages"][-1].content
+    # Guard the public entry point: a non-answer is raised as a named failure
+    # rather than returned as a string that looks like a result.
+    return raise_for_terminal_state(result["messages"][-1].content)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
