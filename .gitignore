@@ -236,7 +236,10 @@ prompt.md
 # results.json contains run-specific answer/context/score payloads that are
 # regenerated on every run — not source artefacts.  Committing it would churn
 # the history and conflate code changes with eval output changes.
+# Eval working artifacts. NOTE: eval/results/ is deliberately NOT ignored —
+# committed per-item results are the evidence a reviewer opens (see eval/EVALUATION.md).
 eval/results.json
+eval/cache/
 
 # Internal deployment runbook — kept local, not published.
 DEPLOY.md
@@ -244,3 +247,5 @@ DEPLOY.md
 # Personal Claude Code permission overrides — machine-local, never shared.
 # (.claude/settings.json, the shared policy, IS tracked deliberately.)
 .claude/settings.local.json
+# Local build brief (planning doc, not shipped)
+_brief/

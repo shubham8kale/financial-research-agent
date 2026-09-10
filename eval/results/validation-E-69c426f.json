@@ -1,0 +1,443 @@
+{
+  "schema_version": 2,
+  "run_id": "validation-E-69c426f",
+  "label": "validation-E",
+  "timestamp": "2026-09-10T02:48:21+00:00",
+  "git_commit": "69c426f",
+  "git_dirty": true,
+  "config": {
+    "agent_model": "gemini-3.1-flash-lite-preview",
+    "agent_provider": "google",
+    "judge_model": "openai/gpt-oss-120b",
+    "judge_provider": "groq",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.1,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "prompt_version": "sha256:d1bedac20eb2",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 4,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_n": 8,
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ]
+  },
+  "run_status": {
+    "complete": true,
+    "n_requested": 8,
+    "n_generated": 8,
+    "n_scored": 8,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 5,
+      "n_nan": 3,
+      "coverage": 0.625
+    },
+    "answer_relevancy": {
+      "n_scored": 8,
+      "n_nan": 0,
+      "coverage": 1.0
+    },
+    "context_recall": {
+      "n_scored": 8,
+      "n_nan": 0,
+      "coverage": 1.0
+    }
+  },
+  "aggregates": {
+    "overall": {
+      "n_items": 8,
+      "faithfulness": {
+        "mean": 1.0,
+        "n_scored": 5,
+        "n_nan": 3
+      },
+      "answer_relevancy": {
+        "mean": 0.8533,
+        "n_scored": 8,
+        "n_nan": 0
+      },
+      "context_recall": {
+        "mean": 1.0,
+        "n_scored": 8,
+        "n_nan": 0
+      }
+    },
+    "by_question_type": {
+      "single_hop": {
+        "n_items": 2,
+        "faithfulness": {
+          "mean": 1.0,
+          "n_scored": 2,
+          "n_nan": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.9689,
+          "n_scored": 2,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 2,
+          "n_nan": 0
+        }
+      },
+      "numerical": {
+        "n_items": 2,
+        "faithfulness": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 1
+        },
+        "answer_relevancy": {
+          "mean": 0.9665,
+          "n_scored": 2,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 2,
+          "n_nan": 0
+        }
+      },
+      "multi_hop": {
+        "n_items": 1,
+        "faithfulness": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.4531,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        }
+      },
+      "comparative": {
+        "n_items": 1,
+        "faithfulness": {
+          "mean": null,
+          "n_scored": 0,
+          "n_nan": 1
+        },
+        "answer_relevancy": {
+          "mean": 0.8851,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        }
+      },
+      "negative": {
+        "n_items": 1,
+        "faithfulness": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.895,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        }
+      },
+      "list": {
+        "n_items": 1,
+        "faithfulness": {
+          "mean": null,
+          "n_scored": 0,
+          "n_nan": 1
+        },
+        "answer_relevancy": {
+          "mean": 0.7221,
+          "n_scored": 1,
+          "n_nan": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "n_scored": 1,
+          "n_nan": 0
+        }
+      }
+    }
+  },
+  "aggregates_withheld_reason": null,
+  "results": [
+    {
+      "id": "qa_0001",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "For what fiscal year period does Apple's 10-K cover in this filing?",
+      "ground_truth": "fiscal year ended September 27, 2025",
+      "answer": "Apple's 10-K filing covers the fiscal year ended September 27, 2025.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=761\n    I, Kevan Parekh, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple\n\n[2] ticker=AAPL  chunk_idx=758\n    I, Timothy D. Cook, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Ap\n\n[3] ticker=AAPL  chunk_idx=14\n    DOCUMENTS INCORPORATED BY REFERENCE Portions of the Registrant’s definitive proxy statement relating to its 2026 annual meeting of shareholders are incorporated by reference into Part III of this Annual Report on Form 10-K where indicated. The Registrant’s definitive proxy statement will be filed with the U.S. Securities and Exchange Commission within 120 days after the end of the fiscal year to which this report relates. Apple Inc. Form 10-K For the Fiscal Year Ended September 27, 2025 TABLE OF\n\n[4] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[5] ticker=AAPL  chunk_idx=354\n    Apple Inc. | 2025 Form 10-K | 27 Item 8.    Financial Statements and Supplementary Data Index to Consolidated Financial Statements Page Consolidated Statements of Operations for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 29 Consolidated Statements of Comprehensive Income for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 30 Consolidated Balance Sheets as of September 27, 2025 and September 28, 2024 31"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:39:18+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9590112067379448,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0005",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales for fiscal 2025, and what was the year-over-year percentage change?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, a 6% increase from $391,035 million in fiscal 2024.",
+      "answer": "Apple's total net sales for fiscal 2025 were $416,161 million. The year-over-year percentage change from fiscal 2024 was 6%.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=311\n    $ 416,161  6  % $ 391,035  2  % $ 383,285  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. iPhone iPhone net sales increased during 2025 compared to 2024 due to higher net sales of Pro models. Mac Mac net sales increased during 2025 compared to 2024 primarily due to higher net sales of laptops and desktops. iPad\n\n[2] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285\n\n[3] ticker=AAPL  chunk_idx=318\n    Selling, General and Administrative The growth in selling, general and administrative expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and variable selling expenses. Apple Inc. | 2025 Form 10-K | 24 Provision for Income Taxes Provision for income taxes, effective tax rate and statutory federal income tax rate for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Provision for income taxes $ 20,719  $ 29,749  $ 16,741\n\n[4] ticker=AAPL  chunk_idx=310\n    Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586  4  % $ 201,183  —  % $ 200,583  Mac 33,708  12  % 29,984  2  % 29,357  iPad 28,023  5  % 26,694  (6) % 28,300  Wearables, Home and Accessories 35,686  (4) % 37,005  (7) % 39,845  Services  (1) 109,158  14  % 96,169  13  % 85,200  Total net sales $ 416,161  6  % $ 391,035  2  % $ 383,285  (1)\n\n[5] ticker=AAPL  chunk_idx=313\n    Apple Inc. | 2025 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Gross margin: Products $ 112,887  $ 109,633  $ 108,803  Services 82,314  71,050  60,345  Total gross margin $ 195,201  $ 180,683  $ 169,148  Gross margin percentage: Products 36.8 % 37.2 % 36.5 % Services 75.4 % 73.9 % 70.8 % Total gross margin percentage 46.9 % 46.2 % 44.1 % Products Gross Margin"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:39:26+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": 0.9842036744940543,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0023",
+      "question_type": "list",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Name two of the three reportable operating segments Amazon uses to report financial performance.",
+      "ground_truth": "North America and International (the third is AWS).",
+      "answer": "Amazon organizes its operations into three segments: North America, International, and Amazon Web Services (AWS).",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=31\n    in the Company’s other reportable segments. Although the reportable segments provide similar hardware and software products and similar services, each one is managed separately to better align with the location of the Company’s customers and distribution partners and the unique market dynamics of each geographic region.\n\n[2] ticker=AMZN  chunk_idx=19\n    We have organized our operations into three segments: North America, International, and Amazon Web Services (“AWS”). These segments reflect the way the Company evaluates its business performance and manages its operations. Information on our net sales is contained in Item 8 of Part II, “Financial Statements and Supplementary Data — Note 10 — Segment Information.” Consumers\n\n[3] ticker=AMZN  chunk_idx=5643\n    \"http://www.amazon.com/role/SegmentInformationReportableSegmentsandReconciliationtoConsolidatedNetIncomeDetails\" ], \"lang\": { \"en-us\": { \"role\": { \"terseLabel\": \"Schedule of Segment Reporting Information, by Segment [Table]\", \"label\": \"Schedule of Segment Reporting Information, by Segment [Table]\", \"documentation\": \"Disclosure of information about profit (loss) and total assets by reportable segment.\" } } }, \"auth_ref\": [ \"r32\", \"r33\", \"r34\" ] },\n\n[4] ticker=MSFT  chunk_idx=533\n    Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing. The segment amounts included in MD&A are presented on a basis consistent with our internal management reporting.\n\n[5] ticker=AMZN  chunk_idx=3966\n    Operating Segments | International           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  81,984  69,487  69,718  Operating Segments | AWS           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  252,588  155,953  108,533  Corporate           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  $ 247,818  $ 189,334  $ 153,574  X  - Definition Amount of asset recognized for present right to economic benefi"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:39:34+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": 0.7220583710924352,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0047",
+      "question_type": "multi_hop",
+      "ticker": "META",
+      "section": "risk_factors",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "According to Meta's risk factors, what key personnel do Meta's operations depend on, and what risks to that person are highlighted?",
+      "ground_truth": "Meta depends on Mark Zuckerberg; risks highlighted include his participation in high-risk activities such as combat sports, extreme sports, and recreational aviation, which carry the risk of serious injury and death.",
+      "answer": "Meta's operations depend on the continued services and performance of its key personnel, specifically identifying Mark Zuckerberg.\n\nThe company highlights that Mr. Zuckerberg participates in various high-risk activities, including combat sports, extreme sports, and recreational aviation. These activities carry the risk of serious injury and death. Meta notes that if Mr. Zuckerberg were to become unavailable for any reason, there could be a material adverse impact on the company's operations.",
+      "contexts": [
+        "[1] ticker=AMZN  chunk_idx=149\n    and other technical staff (including for artificial intelligence and machine learning technologies). In addition, changes we make to our current and future work environments may not meet the needs or expectations of our employees or may be perceived as less favorable compared to other companies’ policies, which could negatively impact our ability to hire and retain qualified personnel. The loss of any of our executive officers or other key employees, the failure to successfully transition key ro\n\n[2] ticker=AMZN  chunk_idx=150\n    to successfully transition key roles, or the inability to hire, train, retain, and manage qualified personnel, could harm our business.\n\n[3] ticker=AMZN  chunk_idx=147\n    The Loss of Key Senior Management Personnel or the Failure to Hire and Retain Highly Skilled and Other Personnel Could Negatively Affect Our Business\n\n[4] ticker=META  chunk_idx=430\n    The loss of one or more of our key personnel, or our failure to attract and retain other highly qualified personnel in the future, could harm our business.\n\n[5] ticker=AMZN  chunk_idx=151\n    We also rely on a significant number of personnel to operate our stores, fulfillment network, and data centers and carry out our other operations. Failure to successfully hire, train, manage, and retain sufficient personnel to meet our needs can strain our operations, increase payroll and other costs, and harm our business and reputation. In addition, changes in laws and regulations applicable to employees, independent contractors, and temporary personnel could increase our payroll costs, decrea",
+        "[1] ticker=META  chunk_idx=431\n    We currently depend on the continued services and performance of our key personnel, including Mark Zuckerberg. Mr. Zuckerberg and certain other members of management participate in various high-risk activities, such as combat sports, extreme sports, and recreational aviation, which carry the risk of serious injury and death. If Mr. Zuckerberg were to become unavailable for any reason, there could be a material adverse impact on our operations. The loss of other key personnel, including members o\n\n[2] ticker=META  chunk_idx=440\n    officer, Mr. Zuckerberg owes a fiduciary duty to our stockholders and must act in good faith in a manner he reasonably believes to be in the best interests of our stockholders. As a stockholder, even a controlling stockholder, Mr. Zuckerberg is entitled to vote his shares in his own interests, which may not always be in the interests of our stockholders generally.\n\n[3] ticker=META  chunk_idx=1429\n    X 32.1# Certification of Mark Zuckerberg, Chief Executive Officer, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002. X 32.2# Certification of Susan Li, Chief Financial Officer, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002. X 97.1 Compensation Recoupment Policy. 10-K 001-35551 97.1 February 2, 2024 101.INS\n\n[4] ticker=META  chunk_idx=1428\n    X 31.1 Certification of Mark Zuckerberg, Chief Executive Officer, pursuant to Rule 13a-14(a)/15d-14(a), as adopted pursuant to Section 302 of the Sarbanes-Oxley Act of 2002. X 31.2 Certification of Susan Li, Chief Financial Officer, pursuant to Rule 13a-14(a)/15d-14(a), as adopted pursuant to Section 302 of the Sarbanes-Oxley Act of 2002. X 32.1#\n\n[5] ticker=META  chunk_idx=1496\n    /s/ MARK ZUCKERBERG Mark Zuckerberg Chairman and Chief Executive Officer (Principal Executive Officer)"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:39:47+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.4531422424644367,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0060",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Which company among Apple, Amazon, Alphabet, Meta, and Microsoft reported the highest net income in its most recent fiscal year according to these 10-K filings?",
+      "ground_truth": "Alphabet, with net income of $132,170 million for the year ended December 31, 2025.",
+      "answer": "Based on the most recent fiscal year data available in the provided 10-K filings, Alphabet reported the highest net income.\n\nThe net income figures for the most recent fiscal year for each company are as follows:\n\n*   **Alphabet:** $132,170 million (fiscal year 2025)\n*   **Microsoft:** $88,308 million (fiscal year 2024)\n*   **Amazon:** $77,670 million (fiscal year 2025)\n*   **Meta:** $60,458 million (fiscal year 2025)\n*   **Apple:** The provided filings do not explicitly state a single \"net income\" figure for the most recent fiscal year (2025) in the retrieved excerpts.",
+      "contexts": [
+        "=== AAPL ===\n  [1] chunk_idx=1904\n      Total net sales $ 416,161  $ 391,035  $ 383,285  Portion of total net sales that was included in deferred revenue as of the beginning of the period $ 8,229  $ 7,728  $ 8,169  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.\n\n  [2] chunk_idx=2258\n      Total net sales $ 416,161  $ 391,035  $ 383,285  Portion of total net sales that was included in deferred revenue as of the beginning of the period $ 8,229  $ 7,728  $ 8,169  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.\n\n  [3] chunk_idx=2353\n      The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790  $ 142,196  $ 138,573  China (1) 64,377  66,952  72,559  Other countries 199,994  181,887  172,153  Total net sales $ 416,161  $ 391,035  $ 383,285  2025 2024 Long-lived ass\n\n  [4] chunk_idx=317\n      29,915  Percentage of total net sales 8 % 8 % 8 % Selling, general and administrative $ 27,601  6  % $ 26,097  5  % $ 24,932  Percentage of total net sales 7 % 7 % 7 % Total operating expenses $ 62,151  8  % $ 57,467  5  % $ 54,847  Percentage of total net sales 15 % 15 % 14 % Research and Development The growth in R&D expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and infrastructure-related costs. Selling, General and Administrative\n\n  [5] chunk_idx=2257\n      The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586  $ 201,183  $ 200,583  Mac 33,708  29,984  29,357  iPad 28,023  26,694  28,300  Wearables, Home and Accessories 35,686  37,005  39,845  Services  (1) 109,158  96,169  85,200  Total net sales $ 416,161  $ 391,035  $ 383,285\n\n=== AMZN ===\n  [1] chunk_idx=3865\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Segment Reporting Information [Line Items]           Net sales  $ 716,924  $ 637,959  $ 574,785  Operating expenses  636,949  569,366  537,933  Operating Income (Loss)  79,975  68,593  36,852  Total non-operating income  17,336  21  705  Provision for income taxes  (19,087)  (9,265)  (7,120)  Equity-method investment activity, net of tax  (554)  (101)  (12)  Net income  77,670  59,248  30,425  North America\n\n  [2] chunk_idx=2481\n      Net Sales Attributed to Countries that Represent a Significant Portion of Consolidated Net Sales  Net sales attributed to countries that represent a significant portion of consolidated net sales are as follows (in millions):   Year Ended December 31,   2023 2024 2025 United States $ 395,637  $ 438,015  $ 489,657  Germany 37,588  40,856  45,900  United Kingdom 33,591  37,855  43,212  Japan 26,002  27,401  30,688  Rest of world 81,967  93,832  107,467  Consolidated $ 574,785  $ 637,959  $ 716,924\n\n  [3] chunk_idx=714\n      Operating income 36,852   68,593   79,975   Total non-operating income 705   21   17,336   Provision for income taxes ( 7,120 ) ( 9,265 ) ( 19,087 ) Equity-method investment activity, net of tax ( 12 ) ( 101 ) ( 554 ) Net income $ 30,425   $ 59,248   $ 77,670   68 Table of Contents Net sales by groups of similar products and services, which also have similar economic characteristics, is as follows (in millions):     Year Ended December 31,   2023 2024 2025 Net Sales: Online stores (1) $ 231,872\n\n  [4] chunk_idx=678\n      2 ) and $ 1,327 5   ( 4,273 ) End of year balance, net of tax of $( 2,054 ) and $( 9,481 ) 6,139   30,170 Other: Beginning of year balance, net of tax of $( 1 ) and $ 0 6 1 Other, net of tax of $ 1 and $( 1 ) ( 5 ) 7 End of year balance, net of tax of $ 0 and $( 1 ) 1   8 Total ending accumulated other comprehensive income (loss), net of tax of $( 1,762 ) and $( 9,384 ) $ ( 34 ) $ 28,230   Note 9 —  INCOME TAXES In 2023, 2024, and 2025, we recorded a net tax provision of $ 7.1 billion, $ 9.3 bil\n\n  [5] chunk_idx=1976\n      Total non-operating income 705  21  17,336  Provision for income taxes (7,120) (9,265) (19,087) Equity-method investment activity, net of tax (12) (101) (554) Net income $ 30,425  $ 59,248  $ 77,670  Net sales by groups of similar products and services, which also have similar economic characteristics, is as follows (in millions):     Year Ended December 31,   2023 2024 2025 Net Sales: Online stores (1) $ 231,872  $ 247,029  $ 269,287  Physical stores (2) 20,030  21,215  22,561\n\n=== GOOGL ===\n  [1] chunk_idx=1957\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Income Statement [Abstract]           Revenues  $ 402,836  $ 350,018  $ 307,394  Costs and expenses:           Cost of revenues  162,535  146,306  133,332  Research and development  61,087  49,326  45,427  Sales and marketing  28,693  27,808  27,917  General and administrative  21,482  14,188  16,425  Total costs and expenses  273,797  237,628  223,101  Income from operations  129,039  112,390  84,293  Other income (expense), net  29,\n\n  [2] chunk_idx=553\n      Research and development 45,427   49,326   61,087   Sales and marketing 27,917   27,808   28,693   General and administrative 16,425   14,188   21,482   Total costs and expenses 223,101   237,628   273,797   Income from operations 84,293   112,390   129,039   Other income (expense), net 1,424   7,425   29,787   Income before income taxes 85,717   119,815   158,826   Provision for income taxes 11,922   19,697   26,656   Net income $ 73,795   $ 100,118   $ 132,170   Basic net income per share (Not\n\n  [3] chunk_idx=3215\n      Other income (expense), net $ 1,424  $ 7,425  $ 29,787  (1)     Interest expense is net of interest capitalized of $181 million, $194 million, and $447 million for the years ended December 31, 2023, 2024, and 2025, respectively.\n\n  [4] chunk_idx=445\n      Year Ended December 31,   2024 2025 Net cash provided by operating activities $ 125,299  $ 164,713  Net cash used in investing activities $ (45,536) $ (120,291) Net cash used in financing activities $ (79,733) $ (37,388) Cash Provided by Operating Activities\n\n  [5] chunk_idx=2567\n      2023 2024 2025 Interest income $ 3,865  $ 4,482  $ 4,337  Interest expense (1) (308) (268) (736) Foreign currency exchange gain (loss), net (1,238) (409) (382) Gain (loss) on debt securities, net (1,215) (1,043) 540  Gain (loss) on equity securities, net 392  3,714  24,080  Income (loss) and impairment from equity method investments, net (628) (188) 281  Other 556  1,137  1,667  Other income (expense), net $ 1,424  $ 7,425  $ 29,787  (1)\n\n=== META ===\n  [1] chunk_idx=1349\n      Interest and Other Income, Net The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123   $ 2,517   $ 1,639   Interest expense ( 1,165 ) ( 715 ) ( 446 ) Foreign currency exchange gains (losses), net 352   ( 690 ) ( 366 ) Other income (expense), net 1,346   171   ( 150 ) Total interest and other income, net $ 2,656   $ 1,283   $ 677   Note 14.\n\n  [2] chunk_idx=889\n      46,751  Interest and other income, net 2,656  1,283  677  Income before provision for income taxes 85,932  70,663  47,428  Provision for income taxes 25,474  8,303  8,330  Net income $ 60,458  $ 62,360  $ 39,098  The following table sets forth our consolidated statements of income data (as a percentage of revenue) (1) : Year Ended December 31, 2025 2024 2023 Revenue 100  % 100  % 100  % Costs and expenses: Cost of revenue 18  18  19  Research and development 29  27  29  Marketing and sales 6  7\n\n  [3] chunk_idx=5572\n      Schedule of Interest and Other Income, Net  The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123  $ 2,517  $ 1,639  Interest expense (1,165) (715) (446) Foreign currency exchange gains (losses), net 352  (690) (366) Other income (expense), net 1,346  171  (150) Total interest and other income, net $ 2,656  $ 1,283  $ 677   X  - References No definition available.  + Details  Name:\n\n  [4] chunk_idx=888\n      The following table sets forth our consolidated statements of income data (in millions): Year Ended December 31, 2025 2024 2023 Revenue $ 200,966  $ 164,501  $ 134,902  Costs and expenses:   Cost of revenue 36,175  30,161  25,959  Research and development 57,372  43,873  38,483  Marketing and sales 11,991  11,347  12,301  General and administrative 12,152  9,740  11,408  Total costs and expenses 117,690  95,121  88,151  Income from operations 83,276  69,380  46,751  Interest and other income, ne\n\n  [5] chunk_idx=5103\n      Interest and Other Income, Net  Interest and Other Income, Net The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123  $ 2,517  $ 1,639  Interest expense (1,165) (715) (446) Foreign currency exchange gains (losses), net 352  (690) (366) Other income (expense), net 1,346  171  (150) Total interest and other income, net $ 2,656  $ 1,283  $ 677   X  - References No definition available.  + Details  Nam\n\n=== MSFT ===\n  [1] chunk_idx=561\n      $  128,528        $  109,433           17%                                              Reportable Segments Fiscal Year 2025 Compared with Fiscal Year 2024  Productivity and Business Processes\n\n  [2] chunk_idx=863\n      2024  2023  Revenue  $  247,442  $  219,790  Net income  88,308  71,383  Diluted earnings per share  11.82  9.55\n\n  [3] chunk_idx=2656\n      2024  2023  Revenue  $  247,442  $  219,790  Net income  88,308  71,383  Diluted earnings per share  11.82  9.55\n\n  [4] chunk_idx=2644\n      Total, net  $  204,966  $  135,591          During fiscal years 2025, 2024, and 2023, depreciation expense was $ 22.0 billion, $ 15.2 billion, and $ 11.0 billion,  respectively.\n\n  [5] chunk_idx=984\n      88,523                                              No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:    (In millions)                 Year Ended June 30,  2025  2024  2023           United States  (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:40:02+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": 0.8850556735369329,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0064",
+      "question_type": "negative",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "What was Apple's revenue from the Vision Pro product line in fiscal 2025, as reported in its 10-K?",
+      "ground_truth": "The 10-K does not disclose a separate revenue figure for the Vision Pro product line; Apple reports Wearables, Home and Accessories as a combined category.",
+      "answer": "Apple's 10-K filing for fiscal year 2025 does not provide a separate revenue figure for the Vision Pro product line. The company reports net sales by the following categories: iPhone, Mac, iPad, Wearables, Home and Accessories, and Services.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285\n\n[2] ticker=AAPL  chunk_idx=299\n    Product, Service and Software Announcements The Company announces new product, service and software offerings at various times during the year. Significant announcements during fiscal year 2025 included the following: First Quarter 2025: • MacBook Pro • Mac mini • iMac • iPad mini Second Quarter 2025: • iPhone 16e • iPad Air • iPad • MacBook Air • Mac Studio Third Quarter 2025: • iOS 26, macOS Tahoe 26, iPadOS 26, watchOS 26, visionOS 26 and tvOS 26 Fourth Quarter 2025: •\n\n[3] ticker=AAPL  chunk_idx=311\n    $ 416,161  6  % $ 391,035  2  % $ 383,285  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. iPhone iPhone net sales increased during 2025 compared to 2024 due to higher net sales of Pro models. Mac Mac net sales increased during 2025 compared to 2024 primarily due to higher net sales of laptops and desktops. iPad\n\n[4] ticker=AAPL  chunk_idx=397\n    The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, “Segment Information and Geographic Data” for 2025, 2024 and 2023, except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales. As of September 27, 2025 and September 28, 2024, the Company had total deferred revenue of $ 13.7 billion and $ 12.8  billion, respectively. As of September 27, 2025, the Company expects  66\n\n[5] ticker=AAPL  chunk_idx=310\n    Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586  4  % $ 201,183  —  % $ 200,583  Mac 33,708  12  % 29,984  2  % 29,357  iPad 28,023  5  % 26,694  (6) % 28,300  Wearables, Home and Accessories 35,686  (4) % 37,005  (7) % 39,845  Services  (1) 109,158  14  % 96,169  13  % 85,200  Total net sales $ 416,161  6  % $ 391,035  2  % $ 383,285  (1)"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:40:09+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8950199310850109,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0019",
+      "question_type": "numerical",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was AWS's net sales in 2025?",
+      "ground_truth": "$128,725 million",
+      "answer": "AWS's net sales for the year ended December 31, 2025, were $128,725 million.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== AMZN ===\n  [1] chunk_idx=317\n      Year Ended December 31,   2024 2025 Net Sales: North America $ 387,497  $ 426,305  International 142,906  161,894  AWS 107,556  128,725  Consolidated $ 637,959  $ 716,924  Year-over-year Percentage Growth: North America 10  % 10  % International 9  13  AWS 19  20  Consolidated 11  12  Year-over-year Percentage Growth, excluding the effect of foreign exchange rates: North America 10  % 10  % International 10  10  AWS 19  20  Consolidated 11  12  Net Sales Mix: North America 61  % 59  % Internatio\n\n  [2] chunk_idx=1975\n      $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21\n\n  [3] chunk_idx=2473\n      Information on reportable segments and reconciliation to consolidated net income is as follows (in millions):     Year Ended December 31,   2023 2024 2025 North America Net sales $ 352,828  $ 387,497  $ 426,305  Operating expenses 337,951  362,530  396,686  Operating income $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128\n\n  [4] chunk_idx=2474\n      AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21  17,336  Provision for income taxes (7,120) (9,265) (19,087) Equity-method investment activity, net of tax (12) (101) (554) Net income $ 30,425  $ 59,248  $ 77,670\n\n  [5] chunk_idx=713\n      Operating income $ 14,877   $ 24,967   $ 29,619   International Net sales $ 131,200   $ 142,906   $ 161,894   Operating expenses 133,856   139,114   157,144   Operating income (loss) $ ( 2,656 ) $ 3,792   $ 4,750   AWS Net sales $ 90,757   $ 107,556   $ 128,725   Operating expenses 66,126   67,722   83,119   Operating income $ 24,631   $ 39,834   $ 45,606   Consolidated Net sales $ 574,785   $ 637,959   $ 716,924   Operating expenses 537,933   569,366   636,949   Operating income 36,852   68,593"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:40:20+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9488866016129059,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    },
+    {
+      "id": "qa_0037",
+      "question_type": "single_hop",
+      "ticker": "META",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Where is Meta's principal executive office located?",
+      "ground_truth": "1 Meta Way, Menlo Park, California 94025",
+      "answer": "Meta's principal executive offices are located at 1 Meta Way, Menlo Park, California 94025.",
+      "contexts": [
+        "[1] ticker=META  chunk_idx=1\n    __________________________ Meta Platforms, Inc.  (Exact name of registrant as specified in its charter)  __________________________ Delaware 20-1665019 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification Number) 1 Meta Way ,  Menlo Park ,  California  94025  (Address of principal executive offices and Zip Code)  ( 650 )  543-4800\n\n[2] ticker=META  chunk_idx=114\n    Corporate Information We were incorporated in Delaware in July 2004. We completed our initial public offering in May 2012 and our Class A common stock is currently listed on the Nasdaq Global Select Market under the symbol \"META.\" Our principal executive offices are located at 1 Meta Way, Menlo Park, California 94025, and our telephone number is (650) 543-4800.\n\n[3] ticker=AMZN  chunk_idx=733\n    our principal executive officer and principal financial officer, as appropriate to allow timely decisions regarding required disclosure.\n\n[4] ticker=MSFT  chunk_idx=581\n    General and Administrative\n\n[5] ticker=GOOGL  chunk_idx=1\n    ___________________________________________ Alphabet Inc.  (Exact name of registrant as specified in its charter) ___________________________________________ Delaware 61-1767919 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) 1600 Amphitheatre Parkway  Mountain View ,  CA  94043  (Address of principal executive offices, including zip code) ( 650 )  253-0000"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite-preview",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T02:40:27+00:00",
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9788129222826473,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T02:48:21+00:00"
+    }
+  ]
+}

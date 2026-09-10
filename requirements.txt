@@ -4,14 +4,14 @@
 # langchain         : the main orchestration framework; provides chains,
 #                     retrievers, and memory abstractions that wire everything
 #                     together without boilerplate.
-langchain
+langchain==1.2.15
 
 # langchain-huggingface: official LangChain integration for Hugging Face
 #                     models.  Provides HuggingFaceEmbeddings, which wraps
 #                     sentence-transformers for local (no-API-key) embedding.
 #                     Split from langchain-community in LangChain v0.2 so that
 #                     HF-specific updates ship independently of the core.
-langchain-huggingface
+langchain-huggingface==1.2.1
 
 # sentence-transformers: the underlying library that loads and runs the
 #                     all-MiniLM-L6-v2 model (and any other SBERT-family
@@ -19,63 +19,63 @@ langchain-huggingface
 #                     Hub on first use and caches them locally (~80 MB for
 #                     MiniLM-L6).  No GPU or API key required — inference
 #                     runs on CPU out of the box.
-sentence-transformers
+sentence-transformers==5.4.0
 
 # langchain-community: third-party loaders, retrievers, and vector-store
 #                     wrappers (e.g. Chroma) that the community maintains.
 #                     Separating "core" from "community" lets LangChain evolve
 #                     the stable API without breaking experimental integrations.
-langchain-community
+langchain-community==0.4.1
 
 # langchain-text-splitters: text splitting utilities extracted from langchain
 #                     core in v0.2.  RecursiveCharacterTextSplitter now lives
 #                     here rather than in `langchain.text_splitter`.  Kept as a
 #                     separate package so splitter improvements can be shipped
 #                     independently of the core orchestration framework.
-langchain-text-splitters
+langchain-text-splitters==1.1.1
 
 # ── Vector store ───────────────────────────────────────────────────────────────
 # chromadb          : an open-source, embedded vector database that runs
 #                     locally with no external service. Ideal for prototyping
 #                     because there is nothing to deploy; swap for Pinecone /
 #                     Weaviate when you need cloud scale.
-chromadb
+chromadb==1.5.7
 
 # ── Tokenisation ───────────────────────────────────────────────────────────────
 # tiktoken          : OpenAI's fast BPE tokeniser. We use it in the chunker to
 #                     measure chunk sizes in *tokens* rather than characters,
 #                     which is what the model's context window actually counts.
-tiktoken
+tiktoken==0.12.0
 
 # ── HTTP / data fetching ───────────────────────────────────────────────────────
 # requests          : de-facto standard HTTP library; used for any supplemental
 #                     REST calls (e.g. fetching market data from a public API).
-requests
+requests==2.33.1
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 # python-dotenv     : loads variables from a .env file into os.environ so that
 #                     secrets (API keys) never have to be hard-coded in source.
-python-dotenv
+python-dotenv==1.2.2
 
 # ── SEC filing ingestion ───────────────────────────────────────────────────────
 # sec-edgar-downloader: a thin wrapper around the SEC EDGAR full-text search
 #                     API. Handles rate limiting, retry logic, and filing
 #                     navigation so our downloader.py stays focused on business
 #                     logic rather than HTTP plumbing.
-sec-edgar-downloader
+sec-edgar-downloader==5.1.0
 
 # ── HTML parsing / cleaning ────────────────────────────────────────────────────
 # beautifulsoup4    : HTML/XML parsing library used by cleaner.py to strip all
 #                     markup from SEC iXBRL filings.  BeautifulSoup handles
 #                     malformed tags, HTML entities, and mixed SGML/HTML
 #                     conventions that are common in EDGAR full-submission files.
-beautifulsoup4
+beautifulsoup4==4.14.3
 
 # lxml              : fast C-based XML/HTML parser used as BeautifulSoup's
 #                     backend.  Chosen over the built-in html.parser for its
 #                     speed (~5-10× faster) on the large (500 K+ token) filings
 #                     we ingest, and for its tolerance of malformed markup.
-lxml
+lxml==6.0.3
 
 # ── LLM provider — Google Gemini ──────────────────────────────────────────────
 # langchain-google-genai: LangChain's official integration for Google's
@@ -84,25 +84,25 @@ lxml
 #                     chat-model interface (invoke, stream, batch).  Kept as a
 #                     separate package so switching to a different provider
 #                     (Anthropic, Mistral) only requires swapping this dependency.
-langchain-google-genai
+langchain-google-genai==4.2.1
 
 # google-generativeai: the underlying Google GenAI Python SDK that
 #                     langchain-google-genai calls under the hood.  Pinned
 #                     explicitly so we control the SDK version independently
 #                     of LangChain's minimum requirement.
-google-generativeai
+google-generativeai==0.8.6
 
 # ── API layer ──────────────────────────────────────────────────────────────────
 # fastapi           : async web framework for exposing the agent as a REST API.
 #                     Chosen for its automatic OpenAPI docs (great for demos)
 #                     and native async support, which avoids blocking when
 #                     awaiting LLM responses.
-fastapi
+fastapi==0.135.3
 
 # uvicorn           : ASGI server that runs the FastAPI app. The standard
 #                     production-grade choice; supports hot-reload in dev with
 #                     --reload flag.
-uvicorn
+uvicorn==0.44.0
 
 # ── MCP server ─────────────────────────────────────────────────────────────────
 # mcp[cli]          : Anthropic's Model Context Protocol Python SDK.  The [cli]
@@ -111,7 +111,7 @@ uvicorn
 #                     provides FastMCP (high-level server API), the Context type
 #                     for lifespan-state injection, and transport implementations
 #                     (stdio, SSE, streamable-http).
-mcp[cli]
+mcp[cli]==1.27.0
 
 # ── MCP client adapter for LangGraph ──────────────────────────────────────────
 # langchain-mcp-adapters: bridges MCP servers and LangChain/LangGraph. Provides
@@ -121,7 +121,7 @@ mcp[cli]
 #                     LangChain StructuredTool. That lets LangGraph's
 #                     create_react_agent consume MCP tools with no code changes
 #                     to the reasoning loop — only the tool *source* changes.
-langchain-mcp-adapters
+langchain-mcp-adapters==0.2.2
 
 # ── Evaluation ────────────────────────────────────────────────────────────────
 # ragas             : reference-free and reference-based RAG evaluation
@@ -131,21 +131,21 @@ langchain-mcp-adapters
 #                     actually address the question?), and context_recall (did
 #                     the retriever surface the evidence the ground-truth answer
 #                     depends on?).
-ragas
+ragas==0.4.3
 
 # datasets          : HuggingFace's tabular dataset library.  RAGAS 0.2 accepts
 #                     a `datasets.Dataset` as its evaluation input, so we build
 #                     one in run_eval.py via `Dataset.from_dict(...)`.  Pinned
 #                     explicitly because newer ragas versions no longer list it
 #                     as a hard dependency, and we need a deterministic import.
-datasets
+datasets==4.8.4
 
 # ── Lint / CI ─────────────────────────────────────────────────────────────────
 # flake8            : style and syntax linter, run from .github/workflows/ci.yml
 #                     with relaxed settings (--max-line-length 120 and E501/W503
 #                     ignored) to catch genuine bugs without fighting the
 #                     project's long explanatory comments.
-flake8
+flake8==7.3.0
 
 # pytest            : test runner used by the CI pytest step.  Listed here so
 #                     the GitHub Actions runner installs it from requirements.txt
@@ -153,4 +153,4 @@ flake8
 #                     The step invokes it as `python -m pytest` to avoid PATH
 #                     ambiguity between the site-packages console script and any
 #                     system pytest.
-pytest
+pytest==9.1.1
