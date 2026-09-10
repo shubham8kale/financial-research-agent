@@ -54,6 +54,7 @@ from ingestion.embedder import (
     build_vectorstore,
     embed_ticker_chunks,
     CHROMA_PERSIST_DIR,
+    EMBEDDING_MODEL,
 )
 from ingestion.downloader import TARGET_TICKERS, DATA_DIR
 
@@ -124,7 +125,7 @@ def run_pipeline(
     print("\nInitialising embedding model and vector store...")
     embeddings = build_embeddings()
     vectorstore = build_vectorstore(embeddings=embeddings)
-    print("  model : text-embedding-3-small")
+    print(f"  model : {EMBEDDING_MODEL}  (local, no API key required)")
     print(f"  store : {CHROMA_PERSIST_DIR}\n")
 
     pipeline_start = time.perf_counter()
@@ -157,8 +158,8 @@ def run_pipeline(
             #   c) BeautifulSoup tag removal (HTML, XBRL, CSS, JS)
             #   d) Skip XBRL preamble lines (~760 identifier-only lines)
             #   e) Collapse whitespace
-            # The char count printed here gives a rough cost estimate:
-            # ~4 chars/token, $0.02/1M tokens → 4M chars ≈ $0.02 to embed.
+            # The char count printed here indicates how much work follows:
+            # embedding runs locally on CPU, so the cost is wall-clock time, not dollars.
             print("  cleaning ...", end="", flush=True)
             t0 = time.perf_counter()
             clean_text = clean_filing(filing_path)
