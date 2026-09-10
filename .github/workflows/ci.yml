@@ -69,10 +69,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Node 22, not 20: vitest 4 requires >=20.19 and fails to load its own
+          # config on older 20.x with ERR_REQUIRE_ESM. Node 20 also reached
+          # end-of-life in April 2026. Keep this in step with the engines field
+          # in web/package.json.
+          node-version: "22"
           # Cache the npm download cache, keyed on the frontend lockfile.
           # cache-dependency-path is resolved from the repo root, not the
           # working-directory default above.

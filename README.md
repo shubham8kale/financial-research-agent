@@ -293,7 +293,7 @@ parallel jobs:
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
 2. `npm run lint`
-3. `npm test` (2 Vitest tests on the SSE streaming client)
+3. `npm test` (2 Vitest tests on the SSE streaming client; Node 22 — vitest 4 requires >=20.19)
 4. `npm run build`
 
 No secrets are required — the backend dry-run path makes no LLM calls.
