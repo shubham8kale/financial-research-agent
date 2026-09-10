@@ -1,0 +1,975 @@
+{
+  "schema_version": 2,
+  "run_id": "crossjudge20-af83fa6",
+  "label": "crossjudge20",
+  "timestamp": "2026-09-10T20:04:08+00:00",
+  "git_commit": "af83fa6",
+  "git_dirty": true,
+  "config": {
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "judge_model": "openai/gpt-oss-120b",
+    "judge_provider": "groq",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.1,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "prompt_version": "sha256:d1bedac20eb2",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 2,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_n": 20,
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ]
+  },
+  "run_status": {
+    "complete": true,
+    "n_requested": 20,
+    "n_generated": 20,
+    "n_scored": 20,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "judge_diagnostics": {
+    "executor_failures": {},
+    "judge_calls": 121,
+    "judge_input_tokens": 142289,
+    "judge_output_tokens": 39237
+  },
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 20,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    },
+    "answer_relevancy": {
+      "n_scored": 20,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    },
+    "context_recall": {
+      "n_scored": 20,
+      "n_nan": 0,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 0,
+      "coverage": 1.0
+    }
+  },
+  "aggregates": {
+    "overall": {
+      "n_items": 20,
+      "faithfulness": {
+        "mean": 0.7726,
+        "mean_failures_as_zero": 0.7726,
+        "n_scored": 20,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      },
+      "answer_relevancy": {
+        "mean": 0.75,
+        "mean_failures_as_zero": 0.75,
+        "n_scored": 20,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      },
+      "context_recall": {
+        "mean": 0.725,
+        "mean_failures_as_zero": 0.725,
+        "n_scored": 20,
+        "n_nan": 0,
+        "n_terminal_failure": 0
+      }
+    },
+    "by_question_type": {
+      "single_hop": {
+        "n_items": 5,
+        "faithfulness": {
+          "mean": 0.8,
+          "mean_failures_as_zero": 0.8,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.7472,
+          "mean_failures_as_zero": 0.7472,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 0.8,
+          "mean_failures_as_zero": 0.8,
+          "n_scored": 5,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      },
+      "numerical": {
+        "n_items": 6,
+        "faithfulness": {
+          "mean": 0.6667,
+          "mean_failures_as_zero": 0.6667,
+          "n_scored": 6,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.6547,
+          "mean_failures_as_zero": 0.6547,
+          "n_scored": 6,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 0.6667,
+          "mean_failures_as_zero": 0.6667,
+          "n_scored": 6,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      },
+      "multi_hop": {
+        "n_items": 1,
+        "faithfulness": {
+          "mean": 1.0,
+          "mean_failures_as_zero": 1.0,
+          "n_scored": 1,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.4149,
+          "mean_failures_as_zero": 0.4149,
+          "n_scored": 1,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "mean_failures_as_zero": 1.0,
+          "n_scored": 1,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      },
+      "comparative": {
+        "n_items": 3,
+        "faithfulness": {
+          "mean": 0.7381,
+          "mean_failures_as_zero": 0.7381,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.8306,
+          "mean_failures_as_zero": 0.8306,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 1.0,
+          "mean_failures_as_zero": 1.0,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      },
+      "negative": {
+        "n_items": 2,
+        "faithfulness": {
+          "mean": 0.619,
+          "mean_failures_as_zero": 0.619,
+          "n_scored": 2,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.8784,
+          "mean_failures_as_zero": 0.8784,
+          "n_scored": 2,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 0.25,
+          "mean_failures_as_zero": 0.25,
+          "n_scored": 2,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      },
+      "list": {
+        "n_items": 3,
+        "faithfulness": {
+          "mean": 1.0,
+          "mean_failures_as_zero": 1.0,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "answer_relevancy": {
+          "mean": 0.8911,
+          "mean_failures_as_zero": 0.8911,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        },
+        "context_recall": {
+          "mean": 0.6667,
+          "mean_failures_as_zero": 0.6667,
+          "n_scored": 3,
+          "n_nan": 0,
+          "n_terminal_failure": 0
+        }
+      }
+    }
+  },
+  "aggregates_withheld_reason": null,
+  "results": [
+    {
+      "id": "qa_0001",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "For what fiscal year period does Apple's 10-K cover in this filing?",
+      "ground_truth": "fiscal year ended September 27, 2025",
+      "answer": "Apple's 10-K filing covers the fiscal year ended September 27, 2025.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=761\n    I, Kevan Parekh, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple\n\n[2] ticker=AAPL  chunk_idx=758\n    I, Timothy D. Cook, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Ap\n\n[3] ticker=AAPL  chunk_idx=14\n    DOCUMENTS INCORPORATED BY REFERENCE Portions of the Registrant’s definitive proxy statement relating to its 2026 annual meeting of shareholders are incorporated by reference into Part III of this Annual Report on Form 10-K where indicated. The Registrant’s definitive proxy statement will be filed with the U.S. Securities and Exchange Commission within 120 days after the end of the fiscal year to which this report relates. Apple Inc. Form 10-K For the Fiscal Year Ended September 27, 2025 TABLE OF\n\n[4] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[5] ticker=AAPL  chunk_idx=354\n    Apple Inc. | 2025 Form 10-K | 27 Item 8.    Financial Statements and Supplementary Data Index to Consolidated Financial Statements Page Consolidated Statements of Operations for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 29 Consolidated Statements of Comprehensive Income for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 30 Consolidated Balance Sheets as of September 27, 2025 and September 28, 2024 31"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:29:17+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9590112067379448,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0002",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Where is Apple's principal executive office located?",
+      "ground_truth": "One Apple Park Way, Cupertino, California 95014",
+      "answer": "Apple's principal executive offices are located at One Apple Park Way, Cupertino, California 95014.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=1\n    TRANSITION REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934 For the transition period from               to               . Commission File Number:  001-36743 Apple Inc. (Exact name of Registrant as specified in its charter) California 94-2404110 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) One Apple Park Way Cupertino ,  California 95014 (Address of principal executive offices) (Zip Code) ( 408 )  996-1010\n\n[2] ticker=AAPL  chunk_idx=763\n    Date: October 31, 2025 By: /s/ Kevan Parekh Kevan Parekh Senior Vice President, Chief Financial Officer A signed original of this written statement required by Section 906 has been provided to Apple Inc. and will be retained by Apple Inc. and furnished to the Securities and Exchange Commission or its staff upon request.\n\n[3] ticker=AAPL  chunk_idx=562\n    None. Apple Inc. | 2025 Form 10-K | 57 SIGNATURES Pursuant to the requirements of Section 13 or 15(d) of the Securities Exchange Act of 1934, the Registrant has duly caused this report to be signed on its behalf by the undersigned, thereunto duly authorized. Date: October 31, 2025 Apple Inc. By: /s/ Kevan Parekh Kevan Parekh Senior Vice President, Chief Financial Officer Power of Attorney\n\n[4] ticker=AAPL  chunk_idx=541\n    8-K 4.1 7/31/15 Apple Inc. | 2025 Form 10-K | 54 Incorporated by Reference Exhibit Number Exhibit Description Form Exhibit Filing Date/ Period End Date 4.9 Officer’s Certificate of the Registrant, dated as of September 17, 2015, including forms of global notes representing the 1.375% Notes due 2024 and 2.000% Notes due 2027. 8-K 4.1 9/17/15 4.10\n\n[5] ticker=AAPL  chunk_idx=554\n    8-K 4.1 5/12/25 4.30* Apple Inc. Deferred Compensation Plan. S-8 4.1 8/23/18 10.1* Apple Inc. Employee Stock Purchase Plan, as amended  as of  Novem ber 6, 2024 . 10-Q 10.1 12/28/24 10.2* Form of Indemnification Agreement between the Registrant and each director and executive officer of the Registrant. 10-Q 10.2 6/27/09 10.3* Apple Inc. Non-Employee Director Stock Plan, as amended November  6 ,  2024 . 10-Q 10.2 12/28/24 10.4*"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:29:23+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9772893610720209,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0003",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "In what state is Apple incorporated?",
+      "ground_truth": "California",
+      "answer": "Sorry, need more steps to process this request.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[2] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[3] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[4] ticker=AAPL  chunk_idx=730\n    Document Exhibit 23.1 Consent of Independent Registered Public Accounting Firm We consent to the incorporation by reference in the following Registration Statements: (1) Registration Statement (Form S-3 ASR No. 333-282937) of Apple Inc., (2) Registration Statement (Form S-8 No. 333-290545) pertaining to Apple Inc. 2022 Employee Stock Plan, (3) Registration Statement (Form S-8 No. 333-195509) pertaining to Apple Inc. 2014 Employee Stock Plan and Apple Inc. 2022 Employee Stock Plan, (4)\n\n[5] ticker=AAPL  chunk_idx=59\n    Apple Inc. | 2025 Form 10-K | 3",
+        "[1] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[2] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[3] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[4] ticker=AAPL  chunk_idx=59\n    Apple Inc. | 2025 Form 10-K | 3\n\n[5] ticker=AAPL  chunk_idx=38\n    Apple Inc. | 2025 Form 10-K | 2",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[3] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[4] ticker=AAPL  chunk_idx=728\n    Nevada, U.S. iTunes K.K. Japan * Pursuant to Item 601(b)(21)(ii) of Regulation S-K, the names of other subsidiaries of Apple Inc. are omitted because, considered in the aggregate, they would not constitute a significant subsidiary as of the end of the year covered by this report.\n\n[5] ticker=AAPL  chunk_idx=59\n    Apple Inc. | 2025 Form 10-K | 3",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=AAPL  chunk_idx=227\n    Apple Inc. | 2025 Form 10-K | 14 The Company’s business is subject to a variety of U.S. and international laws, rules, policies and other obligations regarding the collection, use, protection and transfer of personal data.\n\n[3] ticker=AAPL  chunk_idx=344\n    Apple Inc. | 2025 Form 10-K | 26 Legal and Other Contingencies\n\n[4] ticker=AAPL  chunk_idx=211\n    Apple Inc. | 2025 Form 10-K | 13 The technology industry, including, in some instances, the Company, is subject to intense media, political and regulatory scrutiny, which exposes the Company to increasing regulation, government investigations, legal actions and penalties.\n\n[5] ticker=AAPL  chunk_idx=273\n    Apple Inc. | 2025 Form 10-K | 17 Item 3.    Legal Proceedings Digital Markets Act Investigations",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=AAPL  chunk_idx=728\n    Nevada, U.S. iTunes K.K. Japan * Pursuant to Item 601(b)(21)(ii) of Regulation S-K, the names of other subsidiaries of Apple Inc. are omitted because, considered in the aggregate, they would not constitute a significant subsidiary as of the end of the year covered by this report.\n\n[3] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[4] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[5] ticker=AAPL  chunk_idx=476\n    Substantially all of the Company’s hardware products are manufactured by outsourcing partners that are located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam. Apple Inc. | 2025 Form 10-K | 46 Note 13 –  Segment Information and Geographic Data The Company manages its business primarily on a geographic basis. The Company’s CEO is its CODM.",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=AAPL  chunk_idx=227\n    Apple Inc. | 2025 Form 10-K | 14 The Company’s business is subject to a variety of U.S. and international laws, rules, policies and other obligations regarding the collection, use, protection and transfer of personal data.\n\n[3] ticker=AAPL  chunk_idx=211\n    Apple Inc. | 2025 Form 10-K | 13 The technology industry, including, in some instances, the Company, is subject to intense media, political and regulatory scrutiny, which exposes the Company to increasing regulation, government investigations, legal actions and penalties.\n\n[4] ticker=AAPL  chunk_idx=344\n    Apple Inc. | 2025 Form 10-K | 26 Legal and Other Contingencies\n\n[5] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.",
+        "[1] ticker=AAPL  chunk_idx=728\n    Nevada, U.S. iTunes K.K. Japan * Pursuant to Item 601(b)(21)(ii) of Regulation S-K, the names of other subsidiaries of Apple Inc. are omitted because, considered in the aggregate, they would not constitute a significant subsidiary as of the end of the year covered by this report.\n\n[2] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[3] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[4] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[5] ticker=AAPL  chunk_idx=344\n    Apple Inc. | 2025 Form 10-K | 26 Legal and Other Contingencies",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=GOOGL  chunk_idx=311\n    As a Delaware corporation, we are also subject to certain Delaware anti-takeover provisions. Under Delaware law, a corporation may not engage in a business combination with any holder of 15% or more of its outstanding voting stock unless the holder has held the stock for three years or, among other things, the Board of Directors has approved the transaction. Our Board of Directors could rely on Delaware law to prevent or delay an acquisition of us.  General Risks\n\n[3] ticker=META  chunk_idx=630\n    Our status as a Delaware corporation and the anti-takeover provisions of the Delaware General Corporation Law may discourage, delay, or prevent a change in control by prohibiting us from engaging in a business combination with an interested stockholder for a period of three years after the person becomes an interested stockholder, even if a change of control would be beneficial to our existing stockholders. In addition, our current certificate of incorporation and bylaws contain provisions that\n\n[4] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[5] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.",
+        "[1] ticker=AAPL  chunk_idx=726\n    Document Exhibit 21.1 Subsidiaries of Apple Inc.* Jurisdiction of Incorporation Apple Asia Limited Hong Kong Apple Asia LLC Delaware, U.S. Apple Canada Inc. Canada Apple Computer Trading (Shanghai) Co., Ltd. China Apple Distribution International Limited Ireland Apple India Private Limited India Apple Insurance Company, Inc. Arizona, U.S. Apple Japan, Inc. Japan Apple Korea Limited South Korea Apple Operations International Limited Ireland Apple Operations Limited Ireland\n\n[2] ticker=AAPL  chunk_idx=759\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[3] ticker=AAPL  chunk_idx=762\n    and results of operations of Apple Inc. at the dates and for the periods indicated.\n\n[4] ticker=AAPL  chunk_idx=245\n    Apple Inc. | 2025 Form 10-K | 15\n\n[5] ticker=AAPL  chunk_idx=59\n    Apple Inc. | 2025 Form 10-K | 3"
+      ],
+      "n_contexts": 9,
+      "n_agent_messages": 20,
+      "terminal_failure": "recursion_limit",
+      "recursion_limit_hit": true,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:29:36+00:00",
+      "error": null,
+      "finish_reason": null,
+      "final_content_type": "str",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_recall": 0.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0037",
+      "question_type": "single_hop",
+      "ticker": "META",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Where is Meta's principal executive office located?",
+      "ground_truth": "1 Meta Way, Menlo Park, California 94025",
+      "answer": "Meta's principal executive offices are located at 1 Meta Way, Menlo Park, California 94025.",
+      "contexts": [
+        "[1] ticker=META  chunk_idx=1\n    __________________________ Meta Platforms, Inc.  (Exact name of registrant as specified in its charter)  __________________________ Delaware 20-1665019 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification Number) 1 Meta Way ,  Menlo Park ,  California  94025  (Address of principal executive offices and Zip Code)  ( 650 )  543-4800\n\n[2] ticker=META  chunk_idx=114\n    Corporate Information We were incorporated in Delaware in July 2004. We completed our initial public offering in May 2012 and our Class A common stock is currently listed on the Nasdaq Global Select Market under the symbol \"META.\" Our principal executive offices are located at 1 Meta Way, Menlo Park, California 94025, and our telephone number is (650) 543-4800.\n\n[3] ticker=AMZN  chunk_idx=733\n    our principal executive officer and principal financial officer, as appropriate to allow timely decisions regarding required disclosure.\n\n[4] ticker=MSFT  chunk_idx=581\n    General and Administrative\n\n[5] ticker=GOOGL  chunk_idx=1\n    ___________________________________________ Alphabet Inc.  (Exact name of registrant as specified in its charter) ___________________________________________ Delaware 61-1767919 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) 1600 Amphitheatre Parkway  Mountain View ,  CA  94043  (Address of principal executive offices, including zip code) ( 650 )  253-0000"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:33:17+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9788129222826473,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0046",
+      "question_type": "single_hop",
+      "ticker": "META",
+      "section": "business",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "What is Meta AI, as described in Meta's 10-K?",
+      "ground_truth": "Meta AI is an assistant that's available across Meta's apps, as a stand-alone app, on AI glasses, and on the web — designed to help people learn, get things done, create content, and connect with others.",
+      "answer": "Meta AI is an assistant available across Meta's apps, as a stand-alone app, on its AI glasses, and on the web. It is designed to help people learn, get things done, create content, and connect with others.",
+      "contexts": [
+        "[1] ticker=META  chunk_idx=58\n    • Messenger.  Messenger is a simple yet powerful messaging application for people to connect with friends, family, communities, and businesses across platforms and devices through text, audio, and video calls. • Meta AI. Meta AI is an assistant that's available across our apps, as a stand-alone app, on our AI glasses, and on the web. It's designed to help people learn, get things done, create content, and connect with others to make the most of every moment. • Threads.\n\n[2] ticker=META  chunk_idx=79\n    including as part of efforts to innovate through the development and application of AI and other new technologies as well as efforts to develop the metaverse.\n\n[3] ticker=META  chunk_idx=115\n    Meta, the Meta logo, Meta Quest, Meta Horizon, Facebook, Instagram, WhatsApp, Reels, and our other registered or common law trademarks, service marks, or trade names appearing in this Annual Report on Form 10-K are the property of Meta Platforms, Inc. or its affiliates. Other trademarks, service marks, or trade names appearing in this Annual Report on Form 10‑K are the property of their respective owners. 10 Table of Contents Available Information\n\n[4] ticker=META  chunk_idx=103\n    We value our investment in growing and keeping a highly skilled workforce. We aim to make AI utilization core to the way we operate by providing our personnel access to AI tools and training programs. We provide our employees with regular performance reviews twice a year as we believe it is an important part of how we support their growth and career development while also recognizing and rewarding their impact at Meta. We also offer career development opportunities and work experience programs t\n\n[5] ticker=MSFT  chunk_idx=440\n    • The introduction of new features, products, services, or terms of service that customers, users, or partners do not like. • Public scrutiny of our decisions regarding user privacy, data practices, content, or development and deployment of AI.  • Data security breaches, cybersecurity incidents, responsible AI failures, compliance failures, or actions of partners or individual employees."
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:11:59+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8207201619007898,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0004",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "human_capital",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Approximately how many full-time equivalent employees did Apple have as of September 27, 2025?",
+      "ground_truth": "approximately 166,000",
+      "answer": "As of September 27, 2025, Apple had approximately 166,000 full-time equivalent employees.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=67\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[3] ticker=AAPL  chunk_idx=354\n    Apple Inc. | 2025 Form 10-K | 27 Item 8.    Financial Statements and Supplementary Data Index to Consolidated Financial Statements Page Consolidated Statements of Operations for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 29 Consolidated Statements of Comprehensive Income for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 30 Consolidated Balance Sheets as of September 27, 2025 and September 28, 2024 31\n\n[4] ticker=AAPL  chunk_idx=227\n    Apple Inc. | 2025 Form 10-K | 14 The Company’s business is subject to a variety of U.S. and international laws, rules, policies and other obligations regarding the collection, use, protection and transfer of personal data.\n\n[5] ticker=AAPL  chunk_idx=38\n    Apple Inc. | 2025 Form 10-K | 2"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:29:42+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9953369840100313,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0005",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales for fiscal 2025, and what was the year-over-year percentage change?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, a 6% increase from $391,035 million in fiscal 2024.",
+      "answer": "Apple's total net sales for fiscal 2025 were $416,161 million. The year-over-year percentage change from fiscal 2024 was 6%.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=311\n    $ 416,161  6  % $ 391,035  2  % $ 383,285  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. iPhone iPhone net sales increased during 2025 compared to 2024 due to higher net sales of Pro models. Mac Mac net sales increased during 2025 compared to 2024 primarily due to higher net sales of laptops and desktops. iPad\n\n[2] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285\n\n[3] ticker=AAPL  chunk_idx=318\n    Selling, General and Administrative The growth in selling, general and administrative expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and variable selling expenses. Apple Inc. | 2025 Form 10-K | 24 Provision for Income Taxes Provision for income taxes, effective tax rate and statutory federal income tax rate for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Provision for income taxes $ 20,719  $ 29,749  $ 16,741\n\n[4] ticker=AAPL  chunk_idx=310\n    Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586  4  % $ 201,183  —  % $ 200,583  Mac 33,708  12  % 29,984  2  % 29,357  iPad 28,023  5  % 26,694  (6) % 28,300  Wearables, Home and Accessories 35,686  (4) % 37,005  (7) % 39,845  Services  (1) 109,158  14  % 96,169  13  % 85,200  Total net sales $ 416,161  6  % $ 391,035  2  % $ 383,285  (1)\n\n[5] ticker=AAPL  chunk_idx=313\n    Apple Inc. | 2025 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Gross margin: Products $ 112,887  $ 109,633  $ 108,803  Services 82,314  71,050  60,345  Total gross margin $ 195,201  $ 180,683  $ 169,148  Gross margin percentage: Products 36.8 % 37.2 % 36.5 % Services 75.4 % 73.9 % 70.8 % Total gross margin percentage 46.9 % 46.2 % 44.1 % Products Gross Margin"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:29:49+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9842036744940543,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0011",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "How much cash did Apple generate from operating activities in fiscal 2025?",
+      "ground_truth": "$111,482 million",
+      "answer": "Sorry, need more steps to process this request.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[3] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[4] ticker=META  chunk_idx=932\n    Cash provided by operating activities during 2025 mostly consisted of $60.46 billion net income adjusted for certain non-cash items, such as $20.43 billion of share-based compensation expense, $18.74 billion of deferred income taxes, and $18.62 billion of depreciation and amortization expense. The increase in cash flows from operating activities during 2025 compared to 2024, was primarily due to an increase in cash collections from our customers driven by the increase in revenue and lower cash p\n\n[5] ticker=AAPL  chunk_idx=318\n    Selling, General and Administrative The growth in selling, general and administrative expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and variable selling expenses. Apple Inc. | 2025 Form 10-K | 24 Provision for Income Taxes Provision for income taxes, effective tax rate and statutory federal income tax rate for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Provision for income taxes $ 20,719  $ 29,749  $ 16,741",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AAPL  chunk_idx=487\n    We have audited the accompanying consolidated balance sheets of Apple Inc. (the “Company”) as of September 27, 2025 and September 28, 2024, the related consolidated statements of operations, comprehensive income, shareholders’ equity and cash flows for each of the three years in the period ended September 27, 2025, and the related notes (collectively referred to as the “financial statements”). In our opinion, the financial statements present fairly, in all material respects, the financial positi\n\n[3] ticker=AMZN  chunk_idx=972\n    Statement of Cash Flows [Abstract]  Statement of Cash Flows [Abstract]  Company Selected Measure Amount  Company Selected Measure Amount  2028  Lessee, Operating Lease, Liability, to be Paid, Year Three  November 2025 Senior Unsecured Notes  2025 Notes issuance of $15.0 billion  November 2025 Senior Unsecured Notes [Member]  November 2025 Senior Unsecured Notes  Cash and time deposits  Cash  Comprehensive income  Comprehensive Income (Loss), Net of Tax, Attributable to Parent\n\n[4] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[5] ticker=AAPL  chunk_idx=354\n    Apple Inc. | 2025 Form 10-K | 27 Item 8.    Financial Statements and Supplementary Data Index to Consolidated Financial Statements Page Consolidated Statements of Operations for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 29 Consolidated Statements of Comprehensive Income for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 30 Consolidated Balance Sheets as of September 27, 2025 and September 28, 2024 31",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AAPL  chunk_idx=299\n    Product, Service and Software Announcements The Company announces new product, service and software offerings at various times during the year. Significant announcements during fiscal year 2025 included the following: First Quarter 2025: • MacBook Pro • Mac mini • iMac • iPad mini Second Quarter 2025: • iPhone 16e • iPad Air • iPad • MacBook Air • Mac Studio Third Quarter 2025: • iOS 26, macOS Tahoe 26, iPadOS 26, watchOS 26, visionOS 26 and tvOS 26 Fourth Quarter 2025: •\n\n[3] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[4] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26\n\n[5] ticker=AAPL  chunk_idx=85\n    Apple Inc. | 2025 Form 10-K | 5 The Company’s business can be impacted by political events, trade and other international disputes, geopolitical tensions, conflict, terrorism, natural disasters, public health issues, industrial accidents and other business interruptions.",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[3] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[4] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26\n\n[5] ticker=META  chunk_idx=932\n    Cash provided by operating activities during 2025 mostly consisted of $60.46 billion net income adjusted for certain non-cash items, such as $20.43 billion of share-based compensation expense, $18.74 billion of deferred income taxes, and $18.62 billion of depreciation and amortization expense. The increase in cash flows from operating activities during 2025 compared to 2024, was primarily due to an increase in cash collections from our customers driven by the increase in revenue and lower cash p",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[3] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26\n\n[4] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[5] ticker=AAPL  chunk_idx=433\n    1,804 ) ( 3,080 ) ( 3,644 ) Total 9,683   2,491   5,801   State: Current 1,680   1,726   1,570   Deferred ( 139 ) ( 298 ) ( 49 ) Total 1,541   1,428   1,521   Foreign: Current 8,891   25,483   8,750   Deferred 604   347   669   Total 9,495   25,830   9,419   Provision for income taxes $ 20,719   $ 29,749   $ 16,741   Foreign pretax earnings were $ 82.0 billion, $ 77.3 billion and $ 72.9 billion in 2025, 2024 and 2023, respectively. Apple Inc. | 2025 Form 10-K | 40",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[3] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[4] ticker=META  chunk_idx=932\n    Cash provided by operating activities during 2025 mostly consisted of $60.46 billion net income adjusted for certain non-cash items, such as $20.43 billion of share-based compensation expense, $18.74 billion of deferred income taxes, and $18.62 billion of depreciation and amortization expense. The increase in cash flows from operating activities during 2025 compared to 2024, was primarily due to an increase in cash collections from our customers driven by the increase in revenue and lower cash p\n\n[5] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[3] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[4] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26\n\n[5] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[3] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally\n\n[4] ticker=META  chunk_idx=932\n    Cash provided by operating activities during 2025 mostly consisted of $60.46 billion net income adjusted for certain non-cash items, such as $20.43 billion of share-based compensation expense, $18.74 billion of deferred income taxes, and $18.62 billion of depreciation and amortization expense. The increase in cash flows from operating activities during 2025 compared to 2024, was primarily due to an increase in cash collections from our customers driven by the increase in revenue and lower cash p\n\n[5] ticker=AAPL  chunk_idx=400\n    Apple Inc. | 2025 Form 10-K | 36 Note 4 –  Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost Unrealized Gains Unrealized Losses Fair Value Cash and Cash Equivalents Current Marketable Securities Non-Current Marketable Securities Cash $ 28,267   $ —  $ —  $ 28,267   $ 28,26",
+        "[1] ticker=AAPL  chunk_idx=369\n    Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943   $ 30,737   $ 24,977   Operating activities: Net income 112,010   93,736   96,995   Adjustments to reconcile net income to cash generated by operating activities: Depreciation and amortization 11,698   11,445   11,519\n\n[2] ticker=AAPL  chunk_idx=487\n    We have audited the accompanying consolidated balance sheets of Apple Inc. (the “Company”) as of September 27, 2025 and September 28, 2024, the related consolidated statements of operations, comprehensive income, shareholders’ equity and cash flows for each of the three years in the period ended September 27, 2025, and the related notes (collectively referred to as the “financial statements”). In our opinion, the financial statements present fairly, in all material respects, the financial positi\n\n[3] ticker=AMZN  chunk_idx=972\n    Statement of Cash Flows [Abstract]  Statement of Cash Flows [Abstract]  Company Selected Measure Amount  Company Selected Measure Amount  2028  Lessee, Operating Lease, Liability, to be Paid, Year Three  November 2025 Senior Unsecured Notes  2025 Notes issuance of $15.0 billion  November 2025 Senior Unsecured Notes [Member]  November 2025 Senior Unsecured Notes  Cash and time deposits  Cash  Comprehensive income  Comprehensive Income (Loss), Net of Tax, Attributable to Parent\n\n[4] ticker=AMZN  chunk_idx=365\n    “Net cash provided by (used in) operating activities,” for 2024 and 2025 (in millions):\n\n[5] ticker=AMZN  chunk_idx=294\n    Cash provided by (used in) operating activities was $115.9 billion and $139.5 billion in 2024 and 2025. Our operating cash flows result primarily from cash received from our consumer, seller, developer, enterprise, and content creator customers, and advertisers, offset by cash payments we make for products and services, employee compensation, payment processing and related transaction costs, operating leases, and interest payments. Cash received from our customers and other activities generally"
+      ],
+      "n_contexts": 9,
+      "n_agent_messages": 20,
+      "terminal_failure": "recursion_limit",
+      "recursion_limit_hit": true,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:30:30+00:00",
+      "error": null,
+      "finish_reason": null,
+      "final_content_type": "str",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": -0.0,
+        "context_recall": 0.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0019",
+      "question_type": "numerical",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was AWS's net sales in 2025?",
+      "ground_truth": "$128,725 million",
+      "answer": "AWS's net sales for the year ended December 31, 2025, were $128,725 million.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== AMZN ===\n  [1] chunk_idx=317\n      Year Ended December 31,   2024 2025 Net Sales: North America $ 387,497  $ 426,305  International 142,906  161,894  AWS 107,556  128,725  Consolidated $ 637,959  $ 716,924  Year-over-year Percentage Growth: North America 10  % 10  % International 9  13  AWS 19  20  Consolidated 11  12  Year-over-year Percentage Growth, excluding the effect of foreign exchange rates: North America 10  % 10  % International 10  10  AWS 19  20  Consolidated 11  12  Net Sales Mix: North America 61  % 59  % Internatio\n\n  [2] chunk_idx=1975\n      $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21\n\n  [3] chunk_idx=2473\n      Information on reportable segments and reconciliation to consolidated net income is as follows (in millions):     Year Ended December 31,   2023 2024 2025 North America Net sales $ 352,828  $ 387,497  $ 426,305  Operating expenses 337,951  362,530  396,686  Operating income $ 14,877  $ 24,967  $ 29,619  International Net sales $ 131,200  $ 142,906  $ 161,894  Operating expenses 133,856  139,114  157,144  Operating income (loss) $ (2,656) $ 3,792  $ 4,750  AWS Net sales $ 90,757  $ 107,556  $ 128\n\n  [4] chunk_idx=2474\n      AWS Net sales $ 90,757  $ 107,556  $ 128,725  Operating expenses 66,126  67,722  83,119  Operating income $ 24,631  $ 39,834  $ 45,606  Consolidated Net sales $ 574,785  $ 637,959  $ 716,924  Operating expenses 537,933  569,366  636,949  Operating income 36,852  68,593  79,975  Total non-operating income 705  21  17,336  Provision for income taxes (7,120) (9,265) (19,087) Equity-method investment activity, net of tax (12) (101) (554) Net income $ 30,425  $ 59,248  $ 77,670\n\n  [5] chunk_idx=713\n      Operating income $ 14,877   $ 24,967   $ 29,619   International Net sales $ 131,200   $ 142,906   $ 161,894   Operating expenses 133,856   139,114   157,144   Operating income (loss) $ ( 2,656 ) $ 3,792   $ 4,750   AWS Net sales $ 90,757   $ 107,556   $ 128,725   Operating expenses 66,126   67,722   83,119   Operating income $ 24,631   $ 39,834   $ 45,606   Consolidated Net sales $ 574,785   $ 637,959   $ 716,924   Operating expenses 537,933   569,366   636,949   Operating income 36,852   68,593"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:31:27+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9488866016129059,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0030",
+      "question_type": "numerical",
+      "ticker": "GOOGL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Alphabet's total revenues for the year ended December 31, 2025?",
+      "ground_truth": "$402,836 million",
+      "answer": "Alphabet's total revenues for the year ended December 31, 2025, were $402,836 million.",
+      "contexts": [
+        "[1] ticker=AMZN  chunk_idx=3951\n    12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Segment Reporting, Revenue Reconciling Item           Net sales  $ 716,924  $ 637,959  $ 574,785  United States           Segment Reporting, Revenue Reconciling Item           Net sales  489,657  438,015  395,637  Germany           Segment Reporting, Revenue Reconciling Item           Net sales  45,900  40,856  37,588  United Kingdom           Segment Reporting, Revenue Reconciling Item           Net sales  43,212  37,855  33,591  Jap\n\n[2] ticker=GOOGL  chunk_idx=667\n    Deferred Revenues We record deferred revenues when cash payments are received or due in advance of our performance, including amounts which are refundable. Deferred revenues primarily relate to Google Cloud and Google subscriptions, platforms, and devices. Total deferred revenue as of December 31, 2024 was $ 6.0 billion, of which $ 4.6 billion was  60.   Table of Contents Alphabet Inc. recognized as revenues for the year ended December 31, 2025. Total deferred revenue as of December 31, 2025 was\n\n[3] ticker=GOOGL  chunk_idx=474\n    Alphabet Inc. Taxes As of  December 31, 2025 , we had long-term income taxes payable of $9.5 billion primarily related to unrecognized tax benefits. The timing and amount of any payment related to these unrecognized tax benefits are uncertain and cannot be estimated. Purchase Commitments and Other Contractual Obligations\n\n[4] ticker=GOOGL  chunk_idx=2421\n    v3.25.4  Revenues  12 Months Ended  Dec. 31, 2025  Revenue from Contract with Customer [Abstract]     Revenues\n\n[5] ticker=MSFT  chunk_idx=2746\n    Year Ended June 30, 2025           Balance, beginning of period     $  60,184  Deferral of revenue     186,957  Recognition of unearned revenue     ( 179,876  )                          Balance, end of period     $  67,265",
+        "[1] ticker=GOOGL  chunk_idx=943\n    Restated 2021 Stock Plan, and (14) Registration Statement (Form S-3 No. 333-286752) of Alphabet Inc., of our reports dated February 4, 2026, with respect to the consolidated financial statements of Alphabet Inc. and the effectiveness of internal control over financial reporting of Alphabet Inc. included in this Annual Report (Form 10-K) of Alphabet Inc. for the year ended December 31, 2025. /s/ Ernst & Young LLP San Jose, California February 4, 2026\n\n[2] ticker=GOOGL  chunk_idx=474\n    Alphabet Inc. Taxes As of  December 31, 2025 , we had long-term income taxes payable of $9.5 billion primarily related to unrecognized tax benefits. The timing and amount of any payment related to these unrecognized tax benefits are uncertain and cannot be estimated. Purchase Commitments and Other Contractual Obligations\n\n[3] ticker=GOOGL  chunk_idx=552\n    ) ( 1,916 ) Retained earnings 245,084   324,055   Total stockholders’ equity 325,084   415,265   Total liabilities and stockholders’ equity $ 450,256   $ 595,281   See accompanying notes. 48.   Table of Contents Alphabet Inc. Alphabet Inc. CONSOLIDATED STATEMENTS OF INCOME (in millions, except per share amounts)   Year Ended December 31,   2023 2024 2025 Revenues $ 307,394   $ 350,018   $ 402,836   Costs and expenses: Cost of revenues 133,332   146,306   162,535   Research and development 45,427\n\n[4] ticker=GOOGL  chunk_idx=667\n    Deferred Revenues We record deferred revenues when cash payments are received or due in advance of our performance, including amounts which are refundable. Deferred revenues primarily relate to Google Cloud and Google subscriptions, platforms, and devices. Total deferred revenue as of December 31, 2024 was $ 6.0 billion, of which $ 4.6 billion was  60.   Table of Contents Alphabet Inc. recognized as revenues for the year ended December 31, 2025. Total deferred revenue as of December 31, 2025 was\n\n[5] ticker=GOOGL  chunk_idx=2421\n    v3.25.4  Revenues  12 Months Ended  Dec. 31, 2025  Revenue from Contract with Customer [Abstract]     Revenues"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:11:31+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9999999999999997,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0054",
+      "question_type": "numerical",
+      "ticker": "MSFT",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Microsoft's operating income in fiscal 2025?",
+      "ground_truth": "$128,528 million",
+      "answer": "Sorry, need more steps to process this request.",
+      "contexts": [
+        "[1] ticker=MSFT  chunk_idx=1605\n    Form 10-K of Microsoft Corporation for the year ended June 30, 2025.\n\n[2] ticker=MSFT  chunk_idx=518\n    Highlights from fiscal year 2025 compared with fiscal year 2024 included: • Microsoft Cloud revenue increased 23% to $168.9 billion. • Microsoft 365 Commercial products and cloud services revenue increased 14% driven by Microsoft 365 Commercial cloud revenue growth of 15%. • Microsoft 365 Consumer products and cloud services revenue increased 11% driven by Microsoft 365 Consumer cloud revenue growth of 11%. • LinkedIn revenue increased 9%. •\n\n[3] ticker=AMZN  chunk_idx=344\n    Other Operating Expense (Income), Net Other operating expense (income), net was $763 million and $4.6 billion during 2024 and 2025. The increase in 2025 was primarily related to the settlement of a lawsuit with the Federal Trade Commission (the “FTC”) in Q3 2025, and also included the resolution of tax disputes associated with our stores business in Italy, and physical stores and other asset impairments. Operating Income  Operating income by segment is as follows (in millions): Year Ended Decemb\n\n[4] ticker=MSFT  chunk_idx=991\n    (In millions)                 June 30,  2025  2024  2023           United States  $  230,069  $  186,106  $  114,380  Other countries  141,833  115,263  72,859                                               Total  $  371,902  $  301,369  $  187,239              85  PART II Item 8    REPORT OF INDEPENDENT REGIST ERED PUBLIC ACCOUNTING FIRM To the Stockholders and the Board of Directors of Microsoft Corporation\n\n[5] ticker=MSFT  chunk_idx=2874\n    In August 2024, we announced changes to the composition of our segments. These changes align our segments with how we currently manage our business, most notably bringing the commercial components of Microsoft 365 together in the Productivity and Business Processes segment. Beginning in fiscal year 2025, the information that our chief operating decision maker is regularly provided and reviews for purposes of allocating resources and assessing performance reflects these segment changes. Prior per",
+        "[1] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[2] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[4] ticker=AMZN  chunk_idx=552\n    recognized in “Other income (expense), net” on our consolidated statements of operations. In Q2 2025, we invested $\n\n[5] ticker=META  chunk_idx=1082\n    (expense), net on our consolidated statements of income.",
+        "[1] ticker=MSFT  chunk_idx=1605\n    Form 10-K of Microsoft Corporation for the year ended June 30, 2025.\n\n[2] ticker=AMZN  chunk_idx=344\n    Other Operating Expense (Income), Net Other operating expense (income), net was $763 million and $4.6 billion during 2024 and 2025. The increase in 2025 was primarily related to the settlement of a lawsuit with the Federal Trade Commission (the “FTC”) in Q3 2025, and also included the resolution of tax disputes associated with our stores business in Italy, and physical stores and other asset impairments. Operating Income  Operating income by segment is as follows (in millions): Year Ended Decemb\n\n[3] ticker=MSFT  chunk_idx=2846\n    Operating Income  $  44,589     $  37,813     $  28,411                                                     More Personal Computing                                                                             Revenue     $  54,649        $  50,838        $  44,820     Cost of revenue        25,238           24,892           24,552     Operating expenses        15,245           13,987           10,230\n\n[4] ticker=MSFT  chunk_idx=3242\n    Operating Income  $  44,589     $  37,813     $  28,411                                                     More Personal Computing                                                                             Revenue     $  54,649        $  50,838        $  44,820     Cost of revenue        25,238           24,892           24,552     Operating expenses        15,245           13,987           10,230\n\n[5] ticker=MSFT  chunk_idx=518\n    Highlights from fiscal year 2025 compared with fiscal year 2024 included: • Microsoft Cloud revenue increased 23% to $168.9 billion. • Microsoft 365 Commercial products and cloud services revenue increased 14% driven by Microsoft 365 Commercial cloud revenue growth of 15%. • Microsoft 365 Consumer products and cloud services revenue increased 11% driven by Microsoft 365 Consumer cloud revenue growth of 11%. • LinkedIn revenue increased 9%. •",
+        "[1] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[2] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[4] ticker=AMZN  chunk_idx=543\n    “Other income (expense), net” on our consolidated statements of operations.\n\n[5] ticker=AMZN  chunk_idx=1725\n    “Other income (expense), net” on our consolidated statements of operations.",
+        "[1] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[2] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[4] ticker=AAPL  chunk_idx=533\n    29 Consolidated Statements of Comprehensive Income for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 30 Consolidated Balance Sheets as of September 27, 2025 and September 28, 2024 31 Consolidated Statements of Shareholders’ Equity for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 32 Consolidated Statements of Cash Flows for the years ended September 27, 2025, September 28, 2024 and September 30, 2023 33\n\n[5] ticker=META  chunk_idx=888\n    The following table sets forth our consolidated statements of income data (in millions): Year Ended December 31, 2025 2024 2023 Revenue $ 200,966  $ 164,501  $ 134,902  Costs and expenses:   Cost of revenue 36,175  30,161  25,959  Research and development 57,372  43,873  38,483  Marketing and sales 11,991  11,347  12,301  General and administrative 12,152  9,740  11,408  Total costs and expenses 117,690  95,121  88,151  Income from operations 83,276  69,380  46,751  Interest and other income, ne",
+        "[1] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[2] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[4] ticker=META  chunk_idx=888\n    The following table sets forth our consolidated statements of income data (in millions): Year Ended December 31, 2025 2024 2023 Revenue $ 200,966  $ 164,501  $ 134,902  Costs and expenses:   Cost of revenue 36,175  30,161  25,959  Research and development 57,372  43,873  38,483  Marketing and sales 11,991  11,347  12,301  General and administrative 12,152  9,740  11,408  Total costs and expenses 117,690  95,121  88,151  Income from operations 83,276  69,380  46,751  Interest and other income, ne\n\n[5] ticker=AAPL  chunk_idx=1958\n    Consolidated Financial Statement Details The following tables show the Company’s consolidated financial statement details as of September 27, 2025 and September 28, 2024 (in millions): Other Non-Current Assets 2025 2024 Deferred tax assets $ 20,777  $ 19,499  Other non-current assets 62,950  55,335  Total other non-current assets $ 83,727  $ 74,834  Other Current Liabilities 2025 2024 Income taxes payable $ 13,016  $ 26,601  Accrued distribution and marketing 8,919  7,679  Other current liabilit",
+        "[1] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[2] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[4] ticker=AMZN  chunk_idx=543\n    “Other income (expense), net” on our consolidated statements of operations.\n\n[5] ticker=AMZN  chunk_idx=1725\n    “Other income (expense), net” on our consolidated statements of operations.",
+        "[1] ticker=AMZN  chunk_idx=344\n    Other Operating Expense (Income), Net Other operating expense (income), net was $763 million and $4.6 billion during 2024 and 2025. The increase in 2025 was primarily related to the settlement of a lawsuit with the Federal Trade Commission (the “FTC”) in Q3 2025, and also included the resolution of tax disputes associated with our stores business in Italy, and physical stores and other asset impairments. Operating Income  Operating income by segment is as follows (in millions): Year Ended Decemb\n\n[2] ticker=MSFT  chunk_idx=2846\n    Operating Income  $  44,589     $  37,813     $  28,411                                                     More Personal Computing                                                                             Revenue     $  54,649        $  50,838        $  44,820     Cost of revenue        25,238           24,892           24,552     Operating expenses        15,245           13,987           10,230\n\n[3] ticker=MSFT  chunk_idx=3242\n    Operating Income  $  44,589     $  37,813     $  28,411                                                     More Personal Computing                                                                             Revenue     $  54,649        $  50,838        $  44,820     Cost of revenue        25,238           24,892           24,552     Operating expenses        15,245           13,987           10,230\n\n[4] ticker=MSFT  chunk_idx=1605\n    Form 10-K of Microsoft Corporation for the year ended June 30, 2025.\n\n[5] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia",
+        "[1] ticker=MSFT  chunk_idx=993\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[2] ticker=MSFT  chunk_idx=1851\n    We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financial statements\"). In our opinion, the financial statements present fairly, in all material respects, the financial posi\n\n[3] ticker=MSFT  chunk_idx=32879\n    style=\"color:#000000;white-space:pre-wrap;font-size:10pt;font-family:Arial;font-kerning:none;min-width:fit-content;\">We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2025 and 2024, the related consolidated statements of income, comprehensive income, cash flows, and stockholders' equity, for each of the three years in the period ended June 30, 2025, and the related notes (collectively referred to as the \"financia\n\n[4] ticker=AAPL  chunk_idx=1958\n    Consolidated Financial Statement Details The following tables show the Company’s consolidated financial statement details as of September 27, 2025 and September 28, 2024 (in millions): Other Non-Current Assets 2025 2024 Deferred tax assets $ 20,777  $ 19,499  Other non-current assets 62,950  55,335  Total other non-current assets $ 83,727  $ 74,834  Other Current Liabilities 2025 2024 Income taxes payable $ 13,016  $ 26,601  Accrued distribution and marketing 8,919  7,679  Other current liabilit\n\n[5] ticker=META  chunk_idx=888\n    The following table sets forth our consolidated statements of income data (in millions): Year Ended December 31, 2025 2024 2023 Revenue $ 200,966  $ 164,501  $ 134,902  Costs and expenses:   Cost of revenue 36,175  30,161  25,959  Research and development 57,372  43,873  38,483  Marketing and sales 11,991  11,347  12,301  General and administrative 12,152  9,740  11,408  Total costs and expenses 117,690  95,121  88,151  Income from operations 83,276  69,380  46,751  Interest and other income, ne"
+      ],
+      "n_contexts": 9,
+      "n_agent_messages": 20,
+      "recursion_limit_hit": true,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:12:21+00:00",
+      "error": null,
+      "finish_reason": null,
+      "final_content_type": "str",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_recall": 0.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0023",
+      "question_type": "list",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Name two of the three reportable operating segments Amazon uses to report financial performance.",
+      "ground_truth": "North America and International (the third is AWS).",
+      "answer": "Amazon organizes its operations into three segments: North America, International, and Amazon Web Services (AWS).",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=31\n    in the Company’s other reportable segments. Although the reportable segments provide similar hardware and software products and similar services, each one is managed separately to better align with the location of the Company’s customers and distribution partners and the unique market dynamics of each geographic region.\n\n[2] ticker=AMZN  chunk_idx=19\n    We have organized our operations into three segments: North America, International, and Amazon Web Services (“AWS”). These segments reflect the way the Company evaluates its business performance and manages its operations. Information on our net sales is contained in Item 8 of Part II, “Financial Statements and Supplementary Data — Note 10 — Segment Information.” Consumers\n\n[3] ticker=AMZN  chunk_idx=5643\n    \"http://www.amazon.com/role/SegmentInformationReportableSegmentsandReconciliationtoConsolidatedNetIncomeDetails\" ], \"lang\": { \"en-us\": { \"role\": { \"terseLabel\": \"Schedule of Segment Reporting Information, by Segment [Table]\", \"label\": \"Schedule of Segment Reporting Information, by Segment [Table]\", \"documentation\": \"Disclosure of information about profit (loss) and total assets by reportable segment.\" } } }, \"auth_ref\": [ \"r32\", \"r33\", \"r34\" ] },\n\n[4] ticker=MSFT  chunk_idx=533\n    Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing. The segment amounts included in MD&A are presented on a basis consistent with our internal management reporting.\n\n[5] ticker=AMZN  chunk_idx=3966\n    Operating Segments | International           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  81,984  69,487  69,718  Operating Segments | AWS           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  252,588  155,953  108,533  Corporate           Segment Reporting, Asset Reconciling Item [Line Items]           Total assets  $ 247,818  $ 189,334  $ 153,574  X  - Definition Amount of asset recognized for present right to economic benefi"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:31:53+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.7023296064980248,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0035",
+      "question_type": "list",
+      "ticker": "GOOGL",
+      "section": "business",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "Name two Other Bets portfolio companies specifically discussed in Alphabet's 10-K.",
+      "ground_truth": "Waymo (autonomous driving) and Isomorphic Labs (drug discovery).",
+      "answer": "Two Other Bets portfolio companies specifically discussed in Alphabet's 10-K are Waymo and X.",
+      "contexts": [
+        "[1] ticker=GOOGL  chunk_idx=868\n    86.   Table of Contents Alphabet Inc. • Other Bets is a combination of multiple operating segments that are not individually material. Revenues from Other Bets are generated primarily from the sale of autonomous transportation services and internet services.\n\n[2] ticker=GOOGL  chunk_idx=393\n    30.   Table of Contents Alphabet Inc. Other Bets Revenues from Other Bets are generated primarily from the sale of autonomous transportation services and internet services. Costs and Expenses\n\n[3] ticker=GOOGL  chunk_idx=70\n    Across Alphabet, we are also using technology to try to solve big problems that affect a wide variety of industries, including transportation and health technology. Alphabet’s investment in the portfolio of Other Bets includes businesses that are at various stages of development, ranging from those in the research and development phase, such as X, our moonshot factory focused on developing breakthrough technologies, to those that are scaling commercialization, such as Waymo, which is expanding t\n\n[4] ticker=GOOGL  chunk_idx=72\n    Other Bets operate as independent companies and some of them have their own boards with independent members and outside investors. While these early-stage businesses naturally come with considerable uncertainty, some of them are already generating revenue and making important strides in their industries. Revenues from Other Bets are generated primarily from the sale of autonomous transportation and internet services. Competition\n\n[5] ticker=GOOGL  chunk_idx=2983\n    • Other Bets is a combination of multiple operating segments that are not individually material. Revenues from Other Bets are generated primarily from the sale of autonomous transportation services and internet services."
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:11:44+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9708489444749779,
+        "context_recall": 0.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0051",
+      "question_type": "list",
+      "ticker": "MSFT",
+      "section": "business",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "What are Microsoft's three reportable operating segments?",
+      "ground_truth": "Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.",
+      "answer": "Microsoft's three reportable operating segments are Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=31\n    in the Company’s other reportable segments. Although the reportable segments provide similar hardware and software products and similar services, each one is managed separately to better align with the location of the Company’s customers and distribution partners and the unique market dynamics of each geographic region.\n\n[2] ticker=MSFT  chunk_idx=533\n    Reportable Segments We report our financial performance based on the following segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing. The segment amounts included in MD&A are presented on a basis consistent with our internal management reporting.\n\n[3] ticker=AMZN  chunk_idx=5339\n    \"documentation\": \"Number of operating segments. An operating segment is a component of an enterprise: (a) that engages in business activities from which it may earn revenues and incur expenses (including revenues and expenses relating to transactions with other components of the same enterprise), (b) whose operating results are regularly reviewed by the enterprise's chief operating decision maker to make decisions about resources to be allocated to the segment and assess its performance, and (c)\n\n[4] ticker=META  chunk_idx=6799\n    Number of reporting segments (in segments)  2  X  - Definition Number of segments reported by the entity. A reportable segment is a component of an entity for which there is an accounting requirement to report separate financial information on that component in the entity's financial statements.\n\n[5] ticker=AMZN  chunk_idx=2505\n    Number of operating segments. An operating segment is a component of an enterprise: (a) that engages in business activities from which it may earn revenues and incur expenses (including revenues and expenses relating to transactions with other components of the same enterprise), (b) whose operating results are regularly reviewed by the enterprise's chief operating decision maker to make decisions about resources to be allocated to the segment and assess its performance, and (c) for which discret"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:34:39+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9999999999997681,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0047",
+      "question_type": "multi_hop",
+      "ticker": "META",
+      "section": "risk_factors",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "According to Meta's risk factors, what key personnel do Meta's operations depend on, and what risks to that person are highlighted?",
+      "ground_truth": "Meta depends on Mark Zuckerberg; risks highlighted include his participation in high-risk activities such as combat sports, extreme sports, and recreational aviation, which carry the risk of serious injury and death.",
+      "answer": "Meta's operations depend on the continued services and performance of its key personnel, specifically identifying Mark Zuckerberg.\n\nThe company highlights that Mr. Zuckerberg participates in various high-risk activities, including combat sports, extreme sports, and recreational aviation. These activities carry the risk of serious injury and death. Meta notes that if Mr. Zuckerberg were to become unavailable for any reason, there could be a material adverse impact on the company's operations.",
+      "contexts": [
+        "[1] ticker=AMZN  chunk_idx=149\n    and other technical staff (including for artificial intelligence and machine learning technologies). In addition, changes we make to our current and future work environments may not meet the needs or expectations of our employees or may be perceived as less favorable compared to other companies’ policies, which could negatively impact our ability to hire and retain qualified personnel. The loss of any of our executive officers or other key employees, the failure to successfully transition key ro\n\n[2] ticker=AMZN  chunk_idx=150\n    to successfully transition key roles, or the inability to hire, train, retain, and manage qualified personnel, could harm our business.\n\n[3] ticker=AMZN  chunk_idx=147\n    The Loss of Key Senior Management Personnel or the Failure to Hire and Retain Highly Skilled and Other Personnel Could Negatively Affect Our Business\n\n[4] ticker=META  chunk_idx=430\n    The loss of one or more of our key personnel, or our failure to attract and retain other highly qualified personnel in the future, could harm our business.\n\n[5] ticker=AMZN  chunk_idx=151\n    We also rely on a significant number of personnel to operate our stores, fulfillment network, and data centers and carry out our other operations. Failure to successfully hire, train, manage, and retain sufficient personnel to meet our needs can strain our operations, increase payroll and other costs, and harm our business and reputation. In addition, changes in laws and regulations applicable to employees, independent contractors, and temporary personnel could increase our payroll costs, decrea",
+        "[1] ticker=META  chunk_idx=431\n    We currently depend on the continued services and performance of our key personnel, including Mark Zuckerberg. Mr. Zuckerberg and certain other members of management participate in various high-risk activities, such as combat sports, extreme sports, and recreational aviation, which carry the risk of serious injury and death. If Mr. Zuckerberg were to become unavailable for any reason, there could be a material adverse impact on our operations. The loss of other key personnel, including members o\n\n[2] ticker=META  chunk_idx=440\n    officer, Mr. Zuckerberg owes a fiduciary duty to our stockholders and must act in good faith in a manner he reasonably believes to be in the best interests of our stockholders. As a stockholder, even a controlling stockholder, Mr. Zuckerberg is entitled to vote his shares in his own interests, which may not always be in the interests of our stockholders generally.\n\n[3] ticker=META  chunk_idx=1429\n    X 32.1# Certification of Mark Zuckerberg, Chief Executive Officer, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002. X 32.2# Certification of Susan Li, Chief Financial Officer, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002. X 97.1 Compensation Recoupment Policy. 10-K 001-35551 97.1 February 2, 2024 101.INS\n\n[4] ticker=META  chunk_idx=1428\n    X 31.1 Certification of Mark Zuckerberg, Chief Executive Officer, pursuant to Rule 13a-14(a)/15d-14(a), as adopted pursuant to Section 302 of the Sarbanes-Oxley Act of 2002. X 31.2 Certification of Susan Li, Chief Financial Officer, pursuant to Rule 13a-14(a)/15d-14(a), as adopted pursuant to Section 302 of the Sarbanes-Oxley Act of 2002. X 32.1#\n\n[5] ticker=META  chunk_idx=1496\n    /s/ MARK ZUCKERBERG Mark Zuckerberg Chairman and Chief Executive Officer (Principal Executive Officer)"
+      ],
+      "n_contexts": 2,
+      "n_agent_messages": 6,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:12:07+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.4149293158557957,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0060",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Which company among Apple, Amazon, Alphabet, Meta, and Microsoft reported the highest net income in its most recent fiscal year according to these 10-K filings?",
+      "ground_truth": "Alphabet, with net income of $132,170 million for the year ended December 31, 2025.",
+      "answer": "Based on the most recent fiscal year data available in the provided 10-K filings, Alphabet reported the highest net income.\n\nThe net income figures for the most recent fiscal year for each company are as follows:\n\n*   **Alphabet:** $132,170 million (fiscal year 2025)\n*   **Microsoft:** $88,308 million (fiscal year 2024)\n*   **Amazon:** $77,670 million (fiscal year 2025)\n*   **Meta:** $60,458 million (fiscal year 2025)\n*   **Apple:** The provided filings do not explicitly state a single \"net income\" figure for the most recent fiscal year (2025) in the retrieved excerpts.",
+      "contexts": [
+        "=== AAPL ===\n  [1] chunk_idx=1904\n      Total net sales $ 416,161  $ 391,035  $ 383,285  Portion of total net sales that was included in deferred revenue as of the beginning of the period $ 8,229  $ 7,728  $ 8,169  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.\n\n  [2] chunk_idx=2258\n      Total net sales $ 416,161  $ 391,035  $ 383,285  Portion of total net sales that was included in deferred revenue as of the beginning of the period $ 8,229  $ 7,728  $ 8,169  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.\n\n  [3] chunk_idx=2353\n      The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790  $ 142,196  $ 138,573  China (1) 64,377  66,952  72,559  Other countries 199,994  181,887  172,153  Total net sales $ 416,161  $ 391,035  $ 383,285  2025 2024 Long-lived ass\n\n  [4] chunk_idx=317\n      29,915  Percentage of total net sales 8 % 8 % 8 % Selling, general and administrative $ 27,601  6  % $ 26,097  5  % $ 24,932  Percentage of total net sales 7 % 7 % 7 % Total operating expenses $ 62,151  8  % $ 57,467  5  % $ 54,847  Percentage of total net sales 15 % 15 % 14 % Research and Development The growth in R&D expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and infrastructure-related costs. Selling, General and Administrative\n\n  [5] chunk_idx=2257\n      The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586  $ 201,183  $ 200,583  Mac 33,708  29,984  29,357  iPad 28,023  26,694  28,300  Wearables, Home and Accessories 35,686  37,005  39,845  Services  (1) 109,158  96,169  85,200  Total net sales $ 416,161  $ 391,035  $ 383,285\n\n=== AMZN ===\n  [1] chunk_idx=3865\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Segment Reporting Information [Line Items]           Net sales  $ 716,924  $ 637,959  $ 574,785  Operating expenses  636,949  569,366  537,933  Operating Income (Loss)  79,975  68,593  36,852  Total non-operating income  17,336  21  705  Provision for income taxes  (19,087)  (9,265)  (7,120)  Equity-method investment activity, net of tax  (554)  (101)  (12)  Net income  77,670  59,248  30,425  North America\n\n  [2] chunk_idx=2481\n      Net Sales Attributed to Countries that Represent a Significant Portion of Consolidated Net Sales  Net sales attributed to countries that represent a significant portion of consolidated net sales are as follows (in millions):   Year Ended December 31,   2023 2024 2025 United States $ 395,637  $ 438,015  $ 489,657  Germany 37,588  40,856  45,900  United Kingdom 33,591  37,855  43,212  Japan 26,002  27,401  30,688  Rest of world 81,967  93,832  107,467  Consolidated $ 574,785  $ 637,959  $ 716,924\n\n  [3] chunk_idx=714\n      Operating income 36,852   68,593   79,975   Total non-operating income 705   21   17,336   Provision for income taxes ( 7,120 ) ( 9,265 ) ( 19,087 ) Equity-method investment activity, net of tax ( 12 ) ( 101 ) ( 554 ) Net income $ 30,425   $ 59,248   $ 77,670   68 Table of Contents Net sales by groups of similar products and services, which also have similar economic characteristics, is as follows (in millions):     Year Ended December 31,   2023 2024 2025 Net Sales: Online stores (1) $ 231,872\n\n  [4] chunk_idx=678\n      2 ) and $ 1,327 5   ( 4,273 ) End of year balance, net of tax of $( 2,054 ) and $( 9,481 ) 6,139   30,170 Other: Beginning of year balance, net of tax of $( 1 ) and $ 0 6 1 Other, net of tax of $ 1 and $( 1 ) ( 5 ) 7 End of year balance, net of tax of $ 0 and $( 1 ) 1   8 Total ending accumulated other comprehensive income (loss), net of tax of $( 1,762 ) and $( 9,384 ) $ ( 34 ) $ 28,230   Note 9 —  INCOME TAXES In 2023, 2024, and 2025, we recorded a net tax provision of $ 7.1 billion, $ 9.3 bil\n\n  [5] chunk_idx=1976\n      Total non-operating income 705  21  17,336  Provision for income taxes (7,120) (9,265) (19,087) Equity-method investment activity, net of tax (12) (101) (554) Net income $ 30,425  $ 59,248  $ 77,670  Net sales by groups of similar products and services, which also have similar economic characteristics, is as follows (in millions):     Year Ended December 31,   2023 2024 2025 Net Sales: Online stores (1) $ 231,872  $ 247,029  $ 269,287  Physical stores (2) 20,030  21,215  22,561\n\n=== GOOGL ===\n  [1] chunk_idx=1957\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Income Statement [Abstract]           Revenues  $ 402,836  $ 350,018  $ 307,394  Costs and expenses:           Cost of revenues  162,535  146,306  133,332  Research and development  61,087  49,326  45,427  Sales and marketing  28,693  27,808  27,917  General and administrative  21,482  14,188  16,425  Total costs and expenses  273,797  237,628  223,101  Income from operations  129,039  112,390  84,293  Other income (expense), net  29,\n\n  [2] chunk_idx=553\n      Research and development 45,427   49,326   61,087   Sales and marketing 27,917   27,808   28,693   General and administrative 16,425   14,188   21,482   Total costs and expenses 223,101   237,628   273,797   Income from operations 84,293   112,390   129,039   Other income (expense), net 1,424   7,425   29,787   Income before income taxes 85,717   119,815   158,826   Provision for income taxes 11,922   19,697   26,656   Net income $ 73,795   $ 100,118   $ 132,170   Basic net income per share (Not\n\n  [3] chunk_idx=3215\n      Other income (expense), net $ 1,424  $ 7,425  $ 29,787  (1)     Interest expense is net of interest capitalized of $181 million, $194 million, and $447 million for the years ended December 31, 2023, 2024, and 2025, respectively.\n\n  [4] chunk_idx=445\n      Year Ended December 31,   2024 2025 Net cash provided by operating activities $ 125,299  $ 164,713  Net cash used in investing activities $ (45,536) $ (120,291) Net cash used in financing activities $ (79,733) $ (37,388) Cash Provided by Operating Activities\n\n  [5] chunk_idx=2567\n      2023 2024 2025 Interest income $ 3,865  $ 4,482  $ 4,337  Interest expense (1) (308) (268) (736) Foreign currency exchange gain (loss), net (1,238) (409) (382) Gain (loss) on debt securities, net (1,215) (1,043) 540  Gain (loss) on equity securities, net 392  3,714  24,080  Income (loss) and impairment from equity method investments, net (628) (188) 281  Other 556  1,137  1,667  Other income (expense), net $ 1,424  $ 7,425  $ 29,787  (1)\n\n=== META ===\n  [1] chunk_idx=1349\n      Interest and Other Income, Net The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123   $ 2,517   $ 1,639   Interest expense ( 1,165 ) ( 715 ) ( 446 ) Foreign currency exchange gains (losses), net 352   ( 690 ) ( 366 ) Other income (expense), net 1,346   171   ( 150 ) Total interest and other income, net $ 2,656   $ 1,283   $ 677   Note 14.\n\n  [2] chunk_idx=889\n      46,751  Interest and other income, net 2,656  1,283  677  Income before provision for income taxes 85,932  70,663  47,428  Provision for income taxes 25,474  8,303  8,330  Net income $ 60,458  $ 62,360  $ 39,098  The following table sets forth our consolidated statements of income data (as a percentage of revenue) (1) : Year Ended December 31, 2025 2024 2023 Revenue 100  % 100  % 100  % Costs and expenses: Cost of revenue 18  18  19  Research and development 29  27  29  Marketing and sales 6  7\n\n  [3] chunk_idx=5572\n      Schedule of Interest and Other Income, Net  The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123  $ 2,517  $ 1,639  Interest expense (1,165) (715) (446) Foreign currency exchange gains (losses), net 352  (690) (366) Other income (expense), net 1,346  171  (150) Total interest and other income, net $ 2,656  $ 1,283  $ 677   X  - References No definition available.  + Details  Name:\n\n  [4] chunk_idx=888\n      The following table sets forth our consolidated statements of income data (in millions): Year Ended December 31, 2025 2024 2023 Revenue $ 200,966  $ 164,501  $ 134,902  Costs and expenses:   Cost of revenue 36,175  30,161  25,959  Research and development 57,372  43,873  38,483  Marketing and sales 11,991  11,347  12,301  General and administrative 12,152  9,740  11,408  Total costs and expenses 117,690  95,121  88,151  Income from operations 83,276  69,380  46,751  Interest and other income, ne\n\n  [5] chunk_idx=5103\n      Interest and Other Income, Net  Interest and Other Income, Net The following table presents the detail of interest and other income, net (in millions):  Year Ended December 31, 2025 2024 2023 Interest income $ 2,123  $ 2,517  $ 1,639  Interest expense (1,165) (715) (446) Foreign currency exchange gains (losses), net 352  (690) (366) Other income (expense), net 1,346  171  (150) Total interest and other income, net $ 2,656  $ 1,283  $ 677   X  - References No definition available.  + Details  Nam\n\n=== MSFT ===\n  [1] chunk_idx=561\n      $  128,528        $  109,433           17%                                              Reportable Segments Fiscal Year 2025 Compared with Fiscal Year 2024  Productivity and Business Processes\n\n  [2] chunk_idx=863\n      2024  2023  Revenue  $  247,442  $  219,790  Net income  88,308  71,383  Diluted earnings per share  11.82  9.55\n\n  [3] chunk_idx=2656\n      2024  2023  Revenue  $  247,442  $  219,790  Net income  88,308  71,383  Diluted earnings per share  11.82  9.55\n\n  [4] chunk_idx=2644\n      Total, net  $  204,966  $  135,591          During fiscal years 2025, 2024, and 2023, depreciation expense was $ 22.0 billion, $ 15.2 billion, and $ 11.0 billion,  respectively.\n\n  [5] chunk_idx=984\n      88,523                                              No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:    (In millions)                 Year Ended June 30,  2025  2024  2023           United States  (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:35:34+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.7142857142857143,
+        "answer_relevancy": 0.8750029836040542,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0061",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "human_capital",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Which of the five companies employed the most people as of its most recent fiscal year-end in these 10-Ks?",
+      "ground_truth": "Amazon, with approximately 1,576,000 full-time and part-time employees as of December 31, 2025.",
+      "answer": "Based on the most recent fiscal year-end data provided in the 10-K filings, Amazon employed the most people among the five companies.\n\nThe employee counts as of the most recent fiscal year-end for each company are as follows:\n\n*   **Amazon:** Approximately 1,576,000 full-time and part-time employees (as of December 31, 2025).\n*   **Microsoft:** Approximately 228,000 full-time employees (as of June 30, 2025).\n*   **Alphabet (Google):** 190,820 employees (as of December 31, 2025).\n*   **Apple:** Approximately 166,000 full-time equivalent employees (as of September 27, 2025).\n*   **Meta:** 78,865 employees (as of December 31, 2025).",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== AAPL ===\n  [1] chunk_idx=67\n      As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n  [2] chunk_idx=357\n      Years ended September 27, 2025 September 28, 2024 September 30, 2023 Net sales:    Products $ 307,003   $ 294,866   $ 298,085      Services 109,158   96,169   85,200   Total net sales 416,161   391,035   383,285   Cost of sales:    Products 194,116   185,233   189,282      Services 26,844   25,119   24,855   Total cost of sales 220,960   210,352   214,137   Gross margin 195,201   180,683   169,148   Operating expenses: Research and development 34,550   31,370   29,915   Selling, general and admi\n\n  [3] chunk_idx=317\n      29,915  Percentage of total net sales 8 % 8 % 8 % Selling, general and administrative $ 27,601  6  % $ 26,097  5  % $ 24,932  Percentage of total net sales 7 % 7 % 7 % Total operating expenses $ 62,151  8  % $ 57,467  5  % $ 54,847  Percentage of total net sales 15 % 15 % 14 % Research and Development The growth in R&D expense during 2025 compared to 2024 was primarily driven by increases in headcount-related expenses and infrastructure-related costs. Selling, General and Administrative\n\n  [4] chunk_idx=3093\n      Net sales  28,703  25,052  24,257  Cost of sales  (13,779)  (11,744)  (11,542)  Selling and marketing  (969)  (854)  (827)  Operating income  13,955  12,454  11,888  Rest of Asia Pacific | Operating segments           Segment Reporting Information [Line Items]           Net sales  33,696  30,658  29,615  Cost of sales  (17,724)  (16,305)  (16,313)  Selling and marketing  (1,386)  (1,291)  (1,236)  Operating income  $ 14,586  $ 13,062  $ 12,066  X\n\n  [5] chunk_idx=2353\n      The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790  $ 142,196  $ 138,573  China (1) 64,377  66,952  72,559  Other countries 199,994  181,887  172,153  Total net sales $ 416,161  $ 391,035  $ 383,285  2025 2024 Long-lived ass\n\n=== MSFT ===\n  [1] chunk_idx=984\n      88,523                                              No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:    (In millions)                 Year Ended June 30,  2025  2024  2023           United States  (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171\n\n  [2] chunk_idx=185\n      As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.\n\n  [3] chunk_idx=2844\n      (In millions)                                            Year Ended June 30,        2025           2024           2023                                         Productivity and Business Processes                                                                          Revenue     $  120,810        $  106,820        $  94,151     Cost of revenue        22,422           19,611           17,202     Operating expenses        28,615           27,548           26,875\n\n  [4] chunk_idx=3240\n      (In millions)                                            Year Ended June 30,        2025           2024           2023                                         Productivity and Business Processes                                                                          Revenue     $  120,810        $  106,820        $  94,151     Cost of revenue        22,422           19,611           17,202     Operating expenses        28,615           27,548           26,875\n\n  [5] chunk_idx=561\n      $  128,528        $  109,433           17%                                              Reportable Segments Fiscal Year 2025 Compared with Fiscal Year 2024  Productivity and Business Processes\n\n=== GOOGL ===\n  [1] chunk_idx=1957\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Income Statement [Abstract]           Revenues  $ 402,836  $ 350,018  $ 307,394  Costs and expenses:           Cost of revenues  162,535  146,306  133,332  Research and development  61,087  49,326  45,427  Sales and marketing  28,693  27,808  27,917  General and administrative  21,482  14,188  16,425  Total costs and expenses  273,797  237,628  223,101  Income from operations  129,039  112,390  84,293  Other income (expense), net  29,\n\n  [2] chunk_idx=414\n      • Operating cash flow was $164.7 billion for the year ended December 31, 2025. • Capital expenditures, which primarily reflected investments in technical infrastructure, were $91.4 billion for the year ended December 31, 2025. • As of  December 31, 2025, we had 190,820 employees.\n\n  [3] chunk_idx=3389\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction [Line Items]        Transaction price allocated to remaining performance obligations  $ 242.8     Deferred revenue  8.6  $ 6.0  Revenues recognized  $ 4.6     Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction, Start Date [Axis]: 2026-01-01        Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction [Line Items]\n\n  [4] chunk_idx=445\n      Year Ended December 31,   2024 2025 Net cash provided by operating activities $ 125,299  $ 164,713  Net cash used in investing activities $ (45,536) $ (120,291) Net cash used in financing activities $ (79,733) $ (37,388) Cash Provided by Operating Activities\n\n  [5] chunk_idx=904\n      Schedule II: Valuation and Qualifying Accounts The table below details the activity of the allowance for credit losses and sales credits for the years ended December 31, 2023, 2024, and 2025 (in millions): Balance at Beginning of Year Additions Usage Balance at End of Year Year ended December 31, 2023 $ 1,213   $ 3,115   $ ( 2,737 ) $ 1,591   Year ended December 31, 2024 $ 1,591   $ 2,895   $ ( 2,850 ) $ 1,636   Year ended December 31, 2025 $ 1,636   $ 4,128   $ ( 3,408 ) $ 2,356   Note:\n\n=== AMZN ===\n  [1] chunk_idx=2481\n      Net Sales Attributed to Countries that Represent a Significant Portion of Consolidated Net Sales  Net sales attributed to countries that represent a significant portion of consolidated net sales are as follows (in millions):   Year Ended December 31,   2023 2024 2025 United States $ 395,637  $ 438,015  $ 489,657  Germany 37,588  40,856  45,900  United Kingdom 33,591  37,855  43,212  Japan 26,002  27,401  30,688  Rest of world 81,967  93,832  107,467  Consolidated $ 574,785  $ 637,959  $ 716,924\n\n  [2] chunk_idx=671\n      Year Ended December 31, 2023 2024 2025 Cost of sales $ 836   $ 838   $ 777   Fulfillment 3,090   2,973   2,703   Technology and infrastructure 13,434   12,150   10,871   Sales and marketing 4,623   4,084   3,445   General and administrative 2,040   1,966   1,671   Total stock-based compensation expense (1) $ 24,023   $ 22,011   $ 19,467   ___________________ (1) The related tax benefits were $ 5.4 billion, $ 5.0 billion, and $ 4.4 billion for 2023, 2024, and 2025.\n\n  [3] chunk_idx=3865\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Segment Reporting Information [Line Items]           Net sales  $ 716,924  $ 637,959  $ 574,785  Operating expenses  636,949  569,366  537,933  Operating Income (Loss)  79,975  68,593  36,852  Total non-operating income  17,336  21  705  Provision for income taxes  (19,087)  (9,265)  (7,120)  Equity-method investment activity, net of tax  (554)  (101)  (12)  Net income  77,670  59,248  30,425  North America\n\n  [4] chunk_idx=322\n      108,521  Sales and marketing 43,907  47,129  General and administrative 11,359  11,172  Other operating expense (income), net 763  4,639  Total operating expenses $ 569,366  $ 636,949  Year-over-year Percentage Growth (Decline): Cost of sales 7  % 9  % Fulfillment 9  11  Technology and infrastructure 3  23  Sales and marketing (1) 7  General and administrative (4) (2) Other operating expense (income), net (1) 508  Percent of Net Sales: Cost of sales 51.1  % 49.7  % Fulfillment 15.4  15.2\n\n  [5] chunk_idx=1981\n      Net sales are attributed to countries primarily based on country-focused online and physical stores or, for AWS purposes, the selling entity.  Net sales attributed to countries that represent a significant portion of consolidated net sales are as follows (in millions):   Year Ended December 31,   2023 2024 2025 United States $ 395,637  $ 438,015  $ 489,657  Germany 37,588  40,856  45,900  United Kingdom 33,591  37,855  43,212  Japan 26,002  27,401  30,688  Rest of world 81,967  93,832  107,467\n\n=== META ===\n  [1] chunk_idx=906\n      The higher employee compensation was primarily from an 8% growth in employee headcount from 2024 to 2025 in engineering and other technical functions and an increase in share-based compensation expense. Marketing and sales Year Ended December 31, 2025 2024 2023 2025 vs 2024 % change 2024 vs 2023 % change (in millions, except percentages) Marketing and sales $ 11,991  $ 11,347  $ 12,301  6  % (8) % Percentage of revenue 6  % 7  % 9  %\n\n  [2] chunk_idx=907\n      6  % (8) % Percentage of revenue 6  % 7  % 9  % Marketing and sales expenses in 2025 increased $644 million, or 6%, compared to 2024. The increase was mainly due to higher professional services related to our ongoing platform integrity efforts. 74 Table of Contents General and administrative Year Ended December 31, 2025 2024 2023 2025 vs 2024 % change 2024 vs 2023 % change (in millions, except percentages) General and administrative $ 12,152  $ 9,740  $ 11,408  25  % (15) % Percentage of revenue\n\n  [3] chunk_idx=1035\n      Year Ended December 31,   2025 2024 2023 Cash flows from operating activities Net income $ 60,458   $ 62,360   $ 39,098   Adjustments to reconcile net income to net cash provided by operating activities: Depreciation and amortization 18,616   15,498   11,178   Share-based compensation 20,427   16,690   14,027   Deferred income taxes 18,738   ( 4,738 ) 131   Unrealized (gain) loss on equity investments ( 1,138 ) ( 53 ) 102   Impairment charges for facilities consolidation —   383   2,432   Other\n\n  [4] chunk_idx=5367\n      No customer represented 10% or more of total revenue or accounts receivable for the years ended December 31, 2025, 2024, and 2023.\n\n  [5] chunk_idx=5605\n      The following table sets forth our segment information of revenue, expenses, and income (loss) from operations (in millions):   Year Ended December 31,    2025 2024 2023 Family of Apps: Revenue $ 198,759  $ 162,355  $ 133,006  Employee compensation  (1) (39,943) (31,116) (28,878) Other costs and expenses  (2) (56,347) (44,130) (41,257) Income from operations $ 102,469  $ 87,109  $ 62,871  Reality Labs: Revenue $ 2,207  $ 2,146  $ 1,896  Employee compensation  (1) (10,759) (10,211) (8,942)",
+        "[1] ticker=AAPL  chunk_idx=67\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=MSFT  chunk_idx=185\n    As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.\n\n[3] ticker=META  chunk_idx=99\n    We had a global workforce of 78,865 employees as of December 31, 2025, and we have offices in more than 90 cities around the world. We are committed to fostering an enriching environment for our workforce and we are focused on supporting our people in doing the best work of their careers. We offer competitive compensation and a wide range of benefits, including many learning and development resources.\n\n[4] ticker=META  chunk_idx=887\n    71 Table of Contents Results of Operations In this section, we discuss the results of our operations for the year ended December 31, 2025 compared to the year ended December 31, 2024. For a discussion of the year ended December 31, 2024 compared to the year ended December 31, 2023, please refer to Part II, Item 7, \"Management's Discussion and Analysis of Financial Condition and Results of Operations\" in our Annual Report on Form 10-K for the year ended December 31, 2024.\n\n[5] ticker=META  chunk_idx=1405\n    Item 9B. Other Information Rule 10b5-1 Trading Plans During the quarter ended December 31, 2025, the officers and directors listed below  adopted , modified, or  terminated",
+        "[1] ticker=AAPL  chunk_idx=67\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=META  chunk_idx=887\n    71 Table of Contents Results of Operations In this section, we discuss the results of our operations for the year ended December 31, 2025 compared to the year ended December 31, 2024. For a discussion of the year ended December 31, 2024 compared to the year ended December 31, 2023, please refer to Part II, Item 7, \"Management's Discussion and Analysis of Financial Condition and Results of Operations\" in our Annual Report on Form 10-K for the year ended December 31, 2024.\n\n[3] ticker=META  chunk_idx=99\n    We had a global workforce of 78,865 employees as of December 31, 2025, and we have offices in more than 90 cities around the world. We are committed to fostering an enriching environment for our workforce and we are focused on supporting our people in doing the best work of their careers. We offer competitive compensation and a wide range of benefits, including many learning and development resources.\n\n[4] ticker=MSFT  chunk_idx=514\n    the results of our operations for the year ended June 30, 2025 compared to the year ended June 30, 2024. For a discussion of the year ended June 30, 2024 compared to the year ended June 30, 2023, please refer to Part II, Item 7, “Management’s Discussion and Analysis of Financial Condition and Results of Operations” in our Annual Report on Form 10-K for the year ended June 30, 2024 and our Form 8-K filed on December 3, 2024.\n\n[5] ticker=GOOGL  chunk_idx=415\n    December 31, 2025, we had 190,820 employees. We are monitoring ongoing developments surrounding international trade and the macroeconomic environment. As a result of volatility in international trade and financial markets, we may experience direct and indirect effects on our business, operations, and financial results. Our past results may not be indicative of our future performance, and our financial results may differ materially from historical trends. Financial Results Revenues",
+        "[1] ticker=AAPL  chunk_idx=67\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=MSFT  chunk_idx=185\n    As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.\n\n[3] ticker=META  chunk_idx=887\n    71 Table of Contents Results of Operations In this section, we discuss the results of our operations for the year ended December 31, 2025 compared to the year ended December 31, 2024. For a discussion of the year ended December 31, 2024 compared to the year ended December 31, 2023, please refer to Part II, Item 7, \"Management's Discussion and Analysis of Financial Condition and Results of Operations\" in our Annual Report on Form 10-K for the year ended December 31, 2024.\n\n[4] ticker=META  chunk_idx=99\n    We had a global workforce of 78,865 employees as of December 31, 2025, and we have offices in more than 90 cities around the world. We are committed to fostering an enriching environment for our workforce and we are focused on supporting our people in doing the best work of their careers. We offer competitive compensation and a wide range of benefits, including many learning and development resources.\n\n[5] ticker=META  chunk_idx=1405\n    Item 9B. Other Information Rule 10b5-1 Trading Plans During the quarter ended December 31, 2025, the officers and directors listed below  adopted , modified, or  terminated",
+        "[1] ticker=AAPL  chunk_idx=67\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=AMZN  chunk_idx=37\n    Our employees are critical to our mission of being Earth’s most customer-centric company. As of December 31, 2025, we employed approximately 1,576,000 full-time and part-time employees. Additionally, we use independent contractors and temporary personnel to supplement our workforce. Competition for qualified personnel is intense, particularly for software engineers, computer scientists, and other technical staff (including for artificial intelligence and machine learning technologies), and const\n\n[3] ticker=MSFT  chunk_idx=185\n    As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.\n\n[4] ticker=META  chunk_idx=1448\n    3. Eligibility. Participation in the Plan is limited to Full-Time regular and Part-Time regular non-sales employees of Meta or its subsidiaries 1\n\n[5] ticker=META  chunk_idx=1426\n    10-Q 001-35551 10.3 July 25, 2019 10.11+ Director Compensation Policy, as amended. 10-Q 001-35551 10.3 July 31, 2025 10.12+ Amended and Restated  Deferred Compensation Plan for Non-Employee Directors . 10-Q 001-35551 10.4 July 31, 2025 10.13+ Indemnification Agreement Relating to Subsidiary Operations, dated March 14, 2021, between Registrant and Mark Zuckerberg. 10-Q 001-35551 10.2 April 29, 2021 10.14+* Aircraft Time Sharing Agreement, dated March 27, 2024, between Registrant and Mark Zuckerbe"
+      ],
+      "n_contexts": 6,
+      "n_agent_messages": 14,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:35:46+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "answer_relevancy": 0.7220863240934525,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0063",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Comparing the most recent fiscal years in these 10-Ks, which company had higher total revenue: Alphabet or Microsoft?",
+      "ground_truth": "Alphabet, with total revenues of $402,836 million for the year ended December 31, 2025, versus Microsoft's $281,724 million for the fiscal year ended June 30, 2025.",
+      "answer": "Based on the most recent fiscal year data available in their respective 10-K filings, Alphabet had higher total revenue than Microsoft.\n\nAlphabet reported total revenues of $402,836 million for the fiscal year ended December 31, 2025.\n\nMicrosoft reported total revenue of $371,902 million for the fiscal year ended June 30, 2025.",
+      "contexts": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== GOOGL ===\n  [1] chunk_idx=1957\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Dec. 31, 2023  Income Statement [Abstract]           Revenues  $ 402,836  $ 350,018  $ 307,394  Costs and expenses:           Cost of revenues  162,535  146,306  133,332  Research and development  61,087  49,326  45,427  Sales and marketing  28,693  27,808  27,917  General and administrative  21,482  14,188  16,425  Total costs and expenses  273,797  237,628  223,101  Income from operations  129,039  112,390  84,293  Other income (expense), net  29,\n\n  [2] chunk_idx=425\n      Year Ended December 31,   2024 2025 TAC $ 54,900  $ 59,926  Other cost of revenues 91,406  102,609  Total cost of revenues $ 146,306  $ 162,535  Total cost of revenues as a percentage of revenues 42  % 40  % Cost of revenues increased $16.2 billion from 2024 to 2025 due to an increase in other cost of revenues and TAC of $11.2 billion and $5.0 billion, respectively.\n\n  [3] chunk_idx=2421\n      v3.25.4  Revenues  12 Months Ended  Dec. 31, 2025  Revenue from Contract with Customer [Abstract]     Revenues\n\n  [4] chunk_idx=445\n      Year Ended December 31,   2024 2025 Net cash provided by operating activities $ 125,299  $ 164,713  Net cash used in investing activities $ (45,536) $ (120,291) Net cash used in financing activities $ (79,733) $ (37,388) Cash Provided by Operating Activities\n\n  [5] chunk_idx=3389\n      12 Months Ended  Dec. 31, 2025  Dec. 31, 2024  Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction [Line Items]        Transaction price allocated to remaining performance obligations  $ 242.8     Deferred revenue  8.6  $ 6.0  Revenues recognized  $ 4.6     Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction, Start Date [Axis]: 2026-01-01        Revenue, Remaining Performance Obligation, Expected Timing of Satisfaction [Line Items]\n\n=== MSFT ===\n  [1] chunk_idx=984\n      88,523                                              No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:    (In millions)                 Year Ended June 30,  2025  2024  2023           United States  (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171\n\n  [2] chunk_idx=561\n      $  128,528        $  109,433           17%                                              Reportable Segments Fiscal Year 2025 Compared with Fiscal Year 2024  Productivity and Business Processes\n\n  [3] chunk_idx=2844\n      (In millions)                                            Year Ended June 30,        2025           2024           2023                                         Productivity and Business Processes                                                                          Revenue     $  120,810        $  106,820        $  94,151     Cost of revenue        22,422           19,611           17,202     Operating expenses        28,615           27,548           26,875\n\n  [4] chunk_idx=3240\n      (In millions)                                            Year Ended June 30,        2025           2024           2023                                         Productivity and Business Processes                                                                          Revenue     $  120,810        $  106,820        $  94,151     Cost of revenue        22,422           19,611           17,202     Operating expenses        28,615           27,548           26,875\n\n  [5] chunk_idx=863\n      2024  2023  Revenue  $  247,442  $  219,790  Net income  88,308  71,383  Diluted earnings per share  11.82  9.55",
+        "[1] ticker=MSFT  chunk_idx=518\n    Highlights from fiscal year 2025 compared with fiscal year 2024 included: • Microsoft Cloud revenue increased 23% to $168.9 billion. • Microsoft 365 Commercial products and cloud services revenue increased 14% driven by Microsoft 365 Commercial cloud revenue growth of 15%. • Microsoft 365 Consumer products and cloud services revenue increased 11% driven by Microsoft 365 Consumer cloud revenue growth of 11%. • LinkedIn revenue increased 9%. •\n\n[2] ticker=MSFT  chunk_idx=1605\n    Form 10-K of Microsoft Corporation for the year ended June 30, 2025.\n\n[3] ticker=MSFT  chunk_idx=991\n    (In millions)                 June 30,  2025  2024  2023           United States  $  230,069  $  186,106  $  114,380  Other countries  141,833  115,263  72,859                                               Total  $  371,902  $  301,369  $  187,239              85  PART II Item 8    REPORT OF INDEPENDENT REGIST ERED PUBLIC ACCOUNTING FIRM To the Stockholders and the Board of Directors of Microsoft Corporation\n\n[4] ticker=MSFT  chunk_idx=2850\n    Revenue, classified by significant product and service offerings, was as follows:     (In millions)                 Year Ended June 30,  2025  2024  2023           Server products and cloud services     $  98,435  $  79,828  $  65,007  Microsoft 365 Commercial products and cloud services  87,767     76,969  66,949  Gaming  23,455  21,503  15,466  LinkedIn  17,812     16,372     14,989  Windows and Devices     17,314        17,026     17,147  Search and news advertising  13,878     12,306     12,\n\n[5] ticker=MSFT  chunk_idx=3246\n    Revenue, classified by significant product and service offerings, was as follows:     (In millions)                 Year Ended June 30,  2025  2024  2023           Server products and cloud services     $  98,435  $  79,828  $  65,007  Microsoft 365 Commercial products and cloud services  87,767     76,969  66,949  Gaming  23,455  21,503  15,466  LinkedIn  17,812     16,372     14,989  Windows and Devices     17,314        17,026     17,147  Search and news advertising  13,878     12,306     12,"
+      ],
+      "n_contexts": 3,
+      "n_agent_messages": 8,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:12:37+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "answer_relevancy": 0.8946373670324363,
+        "context_recall": 1.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0064",
+      "question_type": "negative",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "What was Apple's revenue from the Vision Pro product line in fiscal 2025, as reported in its 10-K?",
+      "ground_truth": "The 10-K does not disclose a separate revenue figure for the Vision Pro product line; Apple reports Wearables, Home and Accessories as a combined category.",
+      "answer": "Apple's 10-K filing for fiscal year 2025 does not provide a separate revenue figure for the Vision Pro product line. The company reports net sales by the following categories: iPhone, Mac, iPad, Wearables, Home and Accessories, and Services.",
+      "contexts": [
+        "[1] ticker=AAPL  chunk_idx=395\n    Apple Inc. | 2025 Form 10-K | 35 The following table shows disaggregated net sales, as well as the portion of total net sales that was previously deferred, for 2025, 2024 and 2023 (in millions): 2025 2024 2023 iPhone $ 209,586   $ 201,183   $ 200,583   Mac 33,708   29,984   29,357   iPad 28,023   26,694   28,300   Wearables, Home and Accessories 35,686   37,005   39,845   Services  (1) 109,158   96,169   85,200   Total net sales $ 416,161   $ 391,035   $ 383,285\n\n[2] ticker=AAPL  chunk_idx=299\n    Product, Service and Software Announcements The Company announces new product, service and software offerings at various times during the year. Significant announcements during fiscal year 2025 included the following: First Quarter 2025: • MacBook Pro • Mac mini • iMac • iPad mini Second Quarter 2025: • iPhone 16e • iPad Air • iPad • MacBook Air • Mac Studio Third Quarter 2025: • iOS 26, macOS Tahoe 26, iPadOS 26, watchOS 26, visionOS 26 and tvOS 26 Fourth Quarter 2025: •\n\n[3] ticker=AAPL  chunk_idx=311\n    $ 416,161  6  % $ 391,035  2  % $ 383,285  (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. iPhone iPhone net sales increased during 2025 compared to 2024 due to higher net sales of Pro models. Mac Mac net sales increased during 2025 compared to 2024 primarily due to higher net sales of laptops and desktops. iPad\n\n[4] ticker=AAPL  chunk_idx=397\n    The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, “Segment Information and Geographic Data” for 2025, 2024 and 2023, except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales. As of September 27, 2025 and September 28, 2024, the Company had total deferred revenue of $ 13.7 billion and $ 12.8  billion, respectively. As of September 27, 2025, the Company expects  66\n\n[5] ticker=AAPL  chunk_idx=310\n    Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586  4  % $ 201,183  —  % $ 200,583  Mac 33,708  12  % 29,984  2  % 29,357  iPad 28,023  5  % 26,694  (6) % 28,300  Wearables, Home and Accessories 35,686  (4) % 37,005  (7) % 39,845  Services  (1) 109,158  14  % 96,169  13  % 85,200  Total net sales $ 416,161  6  % $ 391,035  2  % $ 383,285  (1)"
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:36:00+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.5714285714285714,
+        "answer_relevancy": 0.8995753542369141,
+        "context_recall": 0.5
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    },
+    {
+      "id": "qa_0065",
+      "question_type": "negative",
+      "ticker": "GOOGL",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "What was Waymo's standalone revenue in 2025, as disclosed in Alphabet's 10-K?",
+      "ground_truth": "Alphabet's 10-K does not disclose Waymo's standalone revenue; Waymo is part of the Other Bets segment and the filing states Other Bets revenues come primarily from the sale of autonomous transportation services and internet services but are not broken out at the company level.",
+      "answer": "Alphabet's 10-K for the fiscal year ended December 31, 2025, does not disclose a standalone revenue figure for Waymo. The filing notes that Waymo is included within \"Other Bets,\" which reported an operating loss of $7.5 billion for the year ended December 31, 2025.",
+      "contexts": [
+        "[1] ticker=GOOGL  chunk_idx=2518\n    In February 2026, Waymo, a consolidated VIE, announced an investment round of $16.0 billion, the significant majority of which was funded by Alphabet. Investments from external parties will be accounted for as equity transactions and will result in recognition of noncontrolling interests.\n\n[2] ticker=GOOGL  chunk_idx=412\n    • Other Bets operating loss of $7.5 billion for the year ended December 31, 2025 included a $2.1 billion employee compensation charge recognized in the fourth quarter for Waymo, primarily reflected in research and development expenses, based on estimated stock valuation. In February 2026, Waymo announced an investment round of $16.0 billion, the significant majority of which was funded by Alphabet.  •\n\n[3] ticker=GOOGL  chunk_idx=732\n    2.3 billion and $ 2.0 billion, respectively. We may continue to fund ongoing operations, including the potential funding of employee compensation programs, of certain VIEs that are included within Other Bets. In February 2026, Waymo, a consolidated VIE, announced an investment round of $ 16.0  billion, the significant majority of which was funded by Alphabet. Investments from external parties will be accounted for as equity transactions and will result in recognition of noncontrolling interests.\n\n[4] ticker=GOOGL  chunk_idx=972\n    I, Anat Ashkenazi, certify pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report on Form 10-K of Alphabet Inc. for the fiscal year ended December 31, 2025, fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Annual Report on Form 10-K fairly presents, in all material respects, the financial condition and results of operations of Alpha\n\n[5] ticker=AAPL  chunk_idx=298\n    Operations” in Part II, Item 7 of the Company’s Annual Report on Form 10-K for the fiscal year ended September 28, 2024."
+      ],
+      "n_contexts": 1,
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:d1bedac20eb2",
+      "generated_at": "2026-09-10T17:36:07+00:00",
+      "error": null,
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "answer_relevancy": 0.8571311589752502,
+        "context_recall": 0.0
+      },
+      "judge_model": "openai/gpt-oss-120b",
+      "judge_provider": "groq",
+      "scored_at": "2026-09-10T20:04:08+00:00"
+    }
+  ]
+}
