@@ -83,7 +83,8 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Frontend tests | Vitest + React Testing Library |
+| Backend tests | pytest — 67 tests, no network / API key / index required |
+| Frontend tests | Vitest + React Testing Library — 2 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) — see [eval/EVALUATION.md](eval/EVALUATION.md) |
 | Hosting | Vercel (frontend) + Hugging Face Spaces (backend), both free tier |
@@ -287,12 +288,12 @@ parallel jobs:
 1. Install `requirements.txt` (CPU PyTorch extra index)
 2. `flake8 .` with `--max-line-length 120 --ignore E501,W503`
 3. `python -m eval.run_eval --dry-run`
-4. `pytest` (exit code 5 = no tests collected is treated as pass)
+4. `pytest` (67 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
 2. `npm run lint`
-3. `npm test` (Vitest streaming smoke test)
+3. `npm test` (2 Vitest tests on the SSE streaming client)
 4. `npm run build`
 
 No secrets are required — the backend dry-run path makes no LLM calls.
@@ -312,7 +313,7 @@ The whole stack runs on free tiers:
 
 ```
 financial-research-agent/
-├── .github/workflows/ci.yml        # GitHub Actions: lint + dry-run
+├── .github/workflows/ci.yml        # GitHub Actions: lint, eval dry-run, pytest, frontend
 ├── agent/
 │   ├── financial_agent.py          # Direct in-process ReAct agent
 │   └── mcp_agent.py                # Same ReAct loop, tools sourced from MCP
@@ -337,6 +338,12 @@ financial-research-agent/
 │   └── server.py                   # FastMCP server, streamable-HTTP transport
 ├── retrieval/
 │   └── query_engine.py             # Single-shot RAG (no agent loop)
+├── tests/                          # 67 tests; no network, key or index needed
+│   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
+│   ├── test_retrieval.py           # query_engine retrieval + prompt path (16)
+│   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (17)
+│   └── test_query_stream.py        # SSE streaming contract (2)
+├── ROADMAP.md                      # Three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
 ├── requirements.txt
@@ -354,5 +361,5 @@ financial-research-agent/
 - **`context_recall` is measured over context blobs, not chunks.** The eval harness captures each tool observation as one context string, and an observation already concatenates all k = 5 passages. That makes `context_recall` coarser than a per-chunk measurement would be — a blob containing one relevant passage among five scores as recalled.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Open dependency advisories are tracked and triaged rather than auto-patched.** The remaining npm advisories are test-runner devDependencies (the `vitest` 2.x chain) that never reach the production bundle; the only fix is a breaking major upgrade. The four open ChromaDB advisories have **no patched release available upstream**, so no version bump clears them — they are noted rather than fixed. The `mcp` and `lxml` advisories do have patched versions and are outstanding: this project pins every dependency for reproducible evaluation (see [eval/EVALUATION.md](eval/EVALUATION.md)), which makes taking a security bump an explicit, re-baselined change rather than an automatic one.
-- **Thin test coverage.** Two backend tests, both on the `/query/stream` SSE contract, plus two frontend Vitest tests. The chunker, cleaner, embedder, retrieval query path, MCP tool contract and the `/query` and `/health` routes have no unit tests. The CI `pytest` step still tolerates zero collected tests, which is now obsolete and should be tightened.
+- **Test coverage is real but not complete.** 67 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, and both terminal-failure states. Still untested: `mcp_server/server.py` and `agent/mcp_agent.py` (the MCP tool contract), `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).
