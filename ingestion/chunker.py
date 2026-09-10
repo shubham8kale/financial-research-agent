@@ -7,8 +7,9 @@
 #
 # WHY CHUNK AT ALL?
 # -----------------
-# Large Language Models have a fixed context window (e.g. GPT-4o supports
-# ~128 k tokens, but a single 10-K filing can easily exceed 100 k tokens).
+# Large Language Models have a fixed context window (current Gemini flash models
+# accept ~1 M tokens, but a single 10-K filing here cleans to ~3.6 M characters,
+# and retrieval still has to select what is actually relevant).
 # Even when a model *could* fit the whole document, passing the entire filing
 # to the LLM on every query is:
 #   1. Expensive  – you pay per token, and most of the document is irrelevant
@@ -49,8 +50,10 @@ logger = logging.getLogger(__name__)
 # CHUNK_SIZE: maximum number of *characters* per chunk.
 #
 # Why 512?
-#   - The embedding model (text-embedding-3-small) accepts up to 8 191 tokens,
-#     but embedding quality peaks at shorter, focused passages.  Academic work
+#   - The embedding model (all-MiniLM-L6-v2) truncates at 256 word-piece tokens,
+#     roughly 1 000 characters, so a 512-character chunk always fits whole —
+#     anything materially larger would be silently cut off mid-passage.
+#     Embedding quality also peaks at shorter, focused passages: academic work
 #     (e.g. Shi et al. 2023 "REPLUG") shows that ~200–600 token chunks yield
 #     the best retrieval precision for long-document Q&A.
 #   - 512 characters ≈ 100–150 tokens for English prose, well within the

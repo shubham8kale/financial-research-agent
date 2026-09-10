@@ -107,7 +107,7 @@ logger = logging.getLogger(__name__)
 
 # ── Model configuration ───────────────────────────────────────────────────────
 
-GEMINI_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash-lite")
+GEMINI_MODEL = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
 
 # How many chunks to retrieve per query.
 # 5 provides enough context to synthesise a complete answer for typical
