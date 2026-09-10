@@ -4,7 +4,7 @@
 # langchain         : the main orchestration framework; provides chains,
 #                     retrievers, and memory abstractions that wire everything
 #                     together without boilerplate.
-langchain==1.2.15
+langchain==1.3.9
 
 # langchain-huggingface: official LangChain integration for Hugging Face
 #                     models.  Provides HuggingFaceEmbeddings, which wraps
@@ -32,14 +32,14 @@ langchain-community==0.4.1
 #                     here rather than in `langchain.text_splitter`.  Kept as a
 #                     separate package so splitter improvements can be shipped
 #                     independently of the core orchestration framework.
-langchain-text-splitters==1.1.1
+langchain-text-splitters==1.1.2
 
 # ── Vector store ───────────────────────────────────────────────────────────────
 # chromadb          : an open-source, embedded vector database that runs
 #                     locally with no external service. Ideal for prototyping
 #                     because there is nothing to deploy; swap for Pinecone /
 #                     Weaviate when you need cloud scale.
-chromadb==1.5.7
+chromadb==1.5.9
 
 # ── Tokenisation ───────────────────────────────────────────────────────────────
 # tiktoken          : OpenAI's fast BPE tokeniser. We use it in the chunker to
@@ -75,7 +75,7 @@ beautifulsoup4==4.14.3
 #                     backend.  Chosen over the built-in html.parser for its
 #                     speed (~5-10× faster) on the large (500 K+ token) filings
 #                     we ingest, and for its tolerance of malformed markup.
-lxml==6.0.3
+lxml==6.1.0
 
 # ── LLM provider — Google Gemini ──────────────────────────────────────────────
 # langchain-google-genai: LangChain's official integration for Google's
@@ -101,7 +101,7 @@ google-generativeai==0.8.6
 #                     fit Gemini's 20-requests-per-day free tier.  Preferred
 #                     over langchain-groq so the same wrapper also serves any
 #                     other OpenAI-compatible provider.
-langchain-openai==1.1.12
+langchain-openai==1.1.14
 
 # ── API layer ──────────────────────────────────────────────────────────────────
 # fastapi           : async web framework for exposing the agent as a REST API.
@@ -122,7 +122,7 @@ uvicorn==0.44.0
 #                     provides FastMCP (high-level server API), the Context type
 #                     for lifespan-state injection, and transport implementations
 #                     (stdio, SSE, streamable-http).
-mcp[cli]==1.27.0
+mcp[cli]==1.28.1
 
 # ── MCP client adapter for LangGraph ──────────────────────────────────────────
 # langchain-mcp-adapters: bridges MCP servers and LangChain/LangGraph. Provides
