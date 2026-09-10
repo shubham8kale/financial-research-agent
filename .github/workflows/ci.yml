@@ -49,19 +49,13 @@ jobs:
         run: python -m eval.run_eval --dry-run
 
       - name: Run pytest
-        # Pytest exits 5 when it collects zero tests; treat that as success so
-        # the pipeline stays green until real tests are added. Any other exit
-        # code (including real test failures) still fails the job.
-        shell: bash
-        run: |
-          set +e
-          python -m pytest --tb=short
-          status=$?
-          if [ "$status" -eq 5 ]; then
-            echo "::notice::pytest found no tests to collect — skipping."
-            exit 0
-          fi
-          exit "$status"
+        # No zero-test escape hatch. This step used to treat pytest's exit code
+        # 5 ("collected no tests") as success, from when the suite was empty.
+        # Left in place it would let the entire suite disappear — a deleted
+        # conftest, a renamed directory, a bad import in every test module —
+        # while CI stayed green. --strict-markers and -p no:cacheprovider keep
+        # the run reproducible on a clean runner.
+        run: python -m pytest --tb=short --strict-markers -p no:cacheprovider
 
   frontend:
     runs-on: ubuntu-latest
