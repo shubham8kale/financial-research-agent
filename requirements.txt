@@ -92,6 +92,17 @@ langchain-google-genai==4.2.1
 #                     of LangChain's minimum requirement.
 google-generativeai==0.8.6
 
+# ── Cross-family eval judge ────────────────────────────────────────────────────
+# langchain-openai  : provides ChatOpenAI, which eval/run_eval.py points at
+#                     Groq's OpenAI-compatible endpoint (base_url override) for
+#                     `--judge-provider groq`.  Required for the reported
+#                     evaluation run: the judge is deliberately a different
+#                     model family from the agent, and 396 judge calls will not
+#                     fit Gemini's 20-requests-per-day free tier.  Preferred
+#                     over langchain-groq so the same wrapper also serves any
+#                     other OpenAI-compatible provider.
+langchain-openai==1.1.12
+
 # ── API layer ──────────────────────────────────────────────────────────────────
 # fastapi           : async web framework for exposing the agent as a REST API.
 #                     Chosen for its automatic OpenAPI docs (great for demos)

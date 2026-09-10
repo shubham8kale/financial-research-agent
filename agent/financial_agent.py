@@ -387,9 +387,9 @@ if __name__ == "__main__":
     test_question = "Compare Apple and Microsoft revenue for their most recent fiscal year"
 
     print(f"\nQuestion: {test_question}")
-    print("─" * 70)
+    print("-" * 70)
 
     answer = run_agent(test_question)
 
-    print("\n" + "─" * 70)
+    print("\n" + "-" * 70)
     print(f"Final Answer:\n{answer}")

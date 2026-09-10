@@ -371,11 +371,11 @@ if __name__ == "__main__":
         else "What was Apple's total revenue in the most recent fiscal year?"
     )
 
-    print(f"\nQuestion: {question}\n{'─' * 60}")
+    print(f"\nQuestion: {question}\n{'-' * 60}")
     result = ask(question)
 
     print(f"\nAnswer:\n{result.answer}")
-    print(f"\n{'─' * 60}\nSources ({len(result.sources)} chunks retrieved):\n")
+    print(f"\n{'-' * 60}\nSources ({len(result.sources)} chunks retrieved):\n")
     for i, doc in enumerate(result.sources, start=1):
         ticker = doc.metadata.get("ticker", "?")
         chunk_idx = doc.metadata.get("chunk_idx", "?")

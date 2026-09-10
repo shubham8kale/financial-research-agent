@@ -423,7 +423,7 @@ def save_results(payload: dict, path: Path) -> None:
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False, default=str)
     os.replace(tmp, path)
-    logger.info("Saved results → %s", path)
+    logger.info("Saved results -> %s", path)
 
 
 # ── Aggregation ──────────────────────────────────────────────────────────────
@@ -754,8 +754,24 @@ def resolve_judge(args) -> tuple[str, str, str]:
     misreports which family judged it, which is precisely the provenance error
     this harness exists to make impossible.  Selecting a cross-family judge is
     therefore always an explicit --judge-provider.
+
+    RAGAS_JUDGE_PROVIDER still has a job: it declares which provider the
+    RAGAS_JUDGE_MODEL / RAGAS_JUDGE_API_KEY pair belongs to, and a mismatch
+    against --judge-provider is a hard error.  Without that check, pointing
+    --judge-provider at one vendor while .env holds another vendor's key fails
+    deep inside the HTTP client with an opaque auth error.
     """
     provider = (args.judge_provider or "google").strip().lower()
+
+    declared = (os.getenv("RAGAS_JUDGE_PROVIDER") or "").strip().lower()
+    if provider != "google" and declared and declared != provider:
+        raise EnvironmentError(
+            f"--judge-provider {provider!r} does not match RAGAS_JUDGE_PROVIDER="
+            f"{declared!r} in .env. The RAGAS_JUDGE_MODEL / RAGAS_JUDGE_API_KEY "
+            f"pair belongs to {declared!r}; using them against {provider!r} would "
+            f"fail as an authentication error. Either pass --judge-provider "
+            f"{declared} or update .env."
+        )
 
     if provider == "google":
         model = args.judge_model or os.getenv("RAGAS_LLM_MODEL") or "gemini-2.5-flash-lite"
@@ -1042,7 +1058,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, default=None,
                    help="Only process the first N benchmark items.")
     p.add_argument("--judge-provider", default=None, choices=["google", "groq"],
-                   help="Judge provider. Default: RAGAS_JUDGE_PROVIDER, else google.")
+                   help="Judge provider. Default: google. A non-google value must "
+                        "match RAGAS_JUDGE_PROVIDER in .env.")
     p.add_argument("--judge-model", default=None,
                    help="Judge model id. Default: RAGAS_LLM_MODEL (google) or "
                         "RAGAS_JUDGE_MODEL (other providers).")
