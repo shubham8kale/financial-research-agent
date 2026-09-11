@@ -85,7 +85,7 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 67 tests, no network / API key / index required |
+| Backend tests | pytest — 85 tests, no network / API key / index required |
 | Frontend tests | Vitest + React Testing Library — 2 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) — see [eval/EVALUATION.md](eval/EVALUATION.md) |
@@ -246,7 +246,7 @@ RAGAS scored those `NaN` and then dropped them from the mean, reporting
 faithfulness as 0.8411 instead of 0.7136. The system's worst items were improving
 its score. The API served them as HTTP 200 and the streaming endpoint rendered
 them as blank messages with source citations attached. That is now a named
-terminal-failure state guarded at every layer, with 17 tests.
+terminal-failure state guarded at every layer, with 33 tests.
 
 Four of six question-type strata are n ≤ 8 and `multi_hop` is a single item, so
 the per-type breakdown in EVALUATION.md is anecdote, not measurement. n = 66
@@ -305,7 +305,7 @@ parallel jobs:
 1. Install `requirements.txt` (CPU PyTorch extra index)
 2. `flake8 .` with `--max-line-length 120 --ignore E501,W503`
 3. `python -m eval.run_eval --dry-run`
-4. `pytest` (67 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (85 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
@@ -370,7 +370,7 @@ financial-research-agent/
 │   └── server.py                   # FastMCP server, streamable-HTTP transport
 ├── retrieval/
 │   └── query_engine.py             # Single-shot RAG (no agent loop)
-├── tests/                          # 67 tests; no network, key or index needed
+├── tests/                          # 85 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (16)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (17)
@@ -393,5 +393,5 @@ financial-research-agent/
 - **`context_recall` is measured over context blobs, not chunks.** The eval harness captures each tool observation as one context string, and an observation already concatenates all k = 5 passages. That makes `context_recall` coarser than a per-chunk measurement would be — a blob containing one relevant passage among five scores as recalled.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 67 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, and both terminal-failure states. Still untested: `mcp_server/server.py` and `agent/mcp_agent.py` (the MCP tool contract), `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 85 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, both terminal-failure states, and list-shaped message content through every entry point that flattens it. Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).

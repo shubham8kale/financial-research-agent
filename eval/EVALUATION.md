@@ -188,7 +188,7 @@ as a distinct outcome.
 `/query` returns **502** with a generic message. `/query/stream` emits an `error`
 event and no `token` or `done`. The eval harness records `terminal_failure` by
 name, splits NaN into *terminal-failure* vs *unexplained*, and reports
-`mean_failures_as_zero` alongside RAGAS's default. 17 tests in
+`mean_failures_as_zero` alongside RAGAS's default. 33 tests in
 [`tests/test_terminal_failures.py`](../tests/test_terminal_failures.py) cover both
 directions.
 
