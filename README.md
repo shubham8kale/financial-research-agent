@@ -150,7 +150,8 @@ docker exec financial-research-agent-mcp-server-1 python -m ingestion.pipeline
 
 ### `GET /health`
 
-Returns service status and whether the MCP backend is reachable.
+Returns service status and whether the MCP backend is reachable. `mcp_server` is
+a boolean, not a status string — it is a 2-second TCP connect to `MCP_SERVER_URL`.
 
 ```bash
 curl http://localhost:8080/health
@@ -158,11 +159,14 @@ curl http://localhost:8080/health
 
 ```json
 {
-  "status": "ok",
-  "mcp_server": "reachable",
-  "direct_agent": "ready"
+  "status": "healthy",
+  "mcp_server": false
 }
 ```
+
+`false` is what the deployed Space returns: it runs a single container with no
+MCP server, so every request uses the in-process agent. Running the full
+`docker-compose` stack locally returns `true`.
 
 ### `POST /query`
 
@@ -176,13 +180,23 @@ curl -X POST http://localhost:8080/query \
 
 ```json
 {
-  "answer": "Apple's total net sales for fiscal 2025 were $416,161 million ...",
+  "answer": "Apple's total net sales for the 2025 fiscal year were $416,161 million.",
   "sources": [
-    {"ticker": "AAPL", "chunk_idx": 142, "snippet": "Total net sales $ 416,161 ..."}
+    {
+      "text": "Apple Inc. | 2025 Form 10-K | 35 The following table shows d ...",
+      "ticker": "AAPL",
+      "source_file": "AAPL_10K_chunk_395"
+    }
   ],
-  "backend": "mcp"
+  "tokens_used": null
 }
 ```
+
+Each source is `{text, ticker, source_file}` — the chunk index is encoded in
+`source_file` as `TICKER_10K_chunk_N`, and the SSE endpoint splits it out into a
+separate `chunk_idx` field. There is no `backend` field: which agent served the
+request is logged server-side, not returned. `tokens_used` is currently always
+`null`.
 
 Optional `ticker` field narrows retrieval to a single company.
 
@@ -363,6 +377,6 @@ financial-research-agent/
 - **`answer_relevancy` is not reproducible to the third decimal.** RAGAS overrides the judge's temperature to 0.3 for any metric requesting n > 1 generations, which `answer_relevancy` always does. `faithfulness` and `context_recall` are stable run-to-run; small `answer_relevancy` differences are noise.
 - **`context_recall` is measured over context blobs, not chunks.** The eval harness captures each tool observation as one context string, and an observation already concatenates all k = 5 passages. That makes `context_recall` coarser than a per-chunk measurement would be — a blob containing one relevant passage among five scores as recalled.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
-- **Open dependency advisories are tracked and triaged rather than auto-patched.** The remaining npm advisories are test-runner devDependencies (the `vitest` 2.x chain) that never reach the production bundle; the only fix is a breaking major upgrade. The four open ChromaDB advisories have **no patched release available upstream**, so no version bump clears them — they are noted rather than fixed. The `mcp` and `lxml` advisories do have patched versions and are outstanding: this project pins every dependency for reproducible evaluation (see [eval/EVALUATION.md](eval/EVALUATION.md)), which makes taking a security bump an explicit, re-baselined change rather than an automatic one.
+- **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
 - **Test coverage is real but not complete.** 67 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, and both terminal-failure states. Still untested: `mcp_server/server.py` and `agent/mcp_agent.py` (the MCP tool contract), `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).

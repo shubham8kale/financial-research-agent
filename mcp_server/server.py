@@ -310,8 +310,6 @@ async def compare_companies(
 
     await ctx.info(f"Comparing companies: {ticker_list} on topic: {question!r}")
 
-    # Prepend "total net sales" to the query to anchor retrieval toward revenue
-    # tables — the same augmentation used in agent/financial_agent.py.
     # The question is passed to the retriever unmodified. It used to be
     # prefixed with "total net sales", which injected revenue vocabulary into
     # every comparison - so "compare Meta and Alphabet headcount" was embedded

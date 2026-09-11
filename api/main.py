@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8000")
 # Max seconds for an agent run before we give up. Configurable via env because the
-# right value depends on the host: a fast local box handles 30s, but a free-tier
+# right value depends on the host: a fast local box would manage in 30s, but a free-tier
 # CPU deployment (HF Spaces) needs more headroom for multi-step reasoning +
 # per-call query embedding + Gemini latency. Default 120s for deployed use.
 AGENT_TIMEOUT_SECONDS = float(os.getenv("AGENT_TIMEOUT_SECONDS", "120"))
@@ -293,7 +293,7 @@ def _final_answer(result: dict) -> str:
 #
 # STREAMING METHOD (shipped): chunked final answer.
 # We run the agent to completion with ainvoke() — reusing the exact MCP→direct
-# fallback and 30s timeout as /query — then stream the FINAL answer to the client
+# fallback and AGENT_TIMEOUT_SECONDS timeout as /query — then stream the FINAL answer
 # word-by-word as SSE "token" events, followed by one "sources" event and a "done"
 # event. We deliberately did NOT use LangGraph astream_events for per-token LLM
 # streaming: create_react_agent emits model-stream events for *every* LLM turn
@@ -318,7 +318,8 @@ def _chunk_idx_of(source_file: str) -> str:
 async def _run_with_fallback(request: Request, question: str):
     """Run the agent (MCP first, then direct) and return (answer, sources).
 
-    Mirrors /query's fallback order and 30s timeout so the streaming endpoint has
+    Mirrors /query's fallback order and AGENT_TIMEOUT_SECONDS timeout (120 s by
+    default) so the streaming endpoint has
     identical semantics; only the response transport differs. Propagates
     asyncio.TimeoutError if the direct agent also times out, or the underlying
     exception if it fails, so the caller can emit an SSE error event.
