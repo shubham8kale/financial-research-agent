@@ -22,10 +22,11 @@
 #   2. Self-correction — if an observation is unhelpful, the Thought step can
 #      recognise that and try a different query or tool before answering.
 #
-# HOW LangChain 1.2 create_agent WORKS
+# HOW langgraph.prebuilt.create_react_agent WORKS
 # --------------------------------------
 # LangChain 1.2 replaced the old text-based ReAct loop (create_react_agent +
-# AgentExecutor) with a LangGraph-backed tool-calling loop (create_agent).
+# AgentExecutor) with a LangGraph-backed tool-calling loop. This file uses
+# langgraph.prebuilt.create_react_agent, which compiles that loop directly.
 # The mechanics differ in implementation but the reasoning pattern is the same:
 #
 #   model call  → generates a tool-call request (structured JSON, not text)
@@ -41,7 +42,7 @@
 # ARCHITECTURE
 # ------------
 #   ┌──────────────────────────────────────────────────────┐
-#   │  create_agent (compiled LangGraph StateGraph)        │
+#   │  create_react_agent (compiled LangGraph StateGraph) │
 #   │   recursion_limit=20 (≈10 tool-call round trips)    │
 #   │  ┌──────────────────────────────────────────────┐    │
 #   │  │   LLM: ChatGoogleGenerativeAI (Gemini)       │    │
@@ -225,7 +226,7 @@ def search_filings(query: str) -> str:
     -------
     A formatted string listing up to 5 chunks.  Each entry contains:
       - Rank, ticker symbol, and chunk index (for citation)
-      - A 300-character snippet of the passage text
+      - A 500-character snippet of the passage text
     Returns "No results found." if the vector store is empty or the query
     matches nothing above the similarity threshold.
     """
@@ -320,7 +321,7 @@ def compare_companies(question: str, tickers: str) -> str:
 
 # ── System prompt ─────────────────────────────────────────────────────────────
 #
-# create_agent() in LangChain 1.2 takes a plain system_prompt string rather
+# create_react_agent() takes a plain `prompt` string rather
 # than a PromptTemplate.  The tool list and tool schemas are bound to the LLM
 # automatically via tool-calling (structured JSON), so there is no need for
 # {tools} / {tool_names} / {agent_scratchpad} placeholders.
@@ -365,7 +366,8 @@ _SYSTEM_PROMPT = (
 def build_agent_executor():
     """Construct and return a ready-to-use LangGraph agent (LangChain 1.2 API).
 
-    LangChain 1.2 replaced create_react_agent + AgentExecutor with create_agent,
+    LangChain 1.2 replaced the old text-parsing ReAct loop + AgentExecutor with
+    a LangGraph-backed one. This uses langgraph.prebuilt.create_react_agent,
     which compiles a LangGraph StateGraph.  The reasoning loop is equivalent —
     the model iterates tool calls until it produces a final answer — but tool
     invocations are structured JSON rather than parsed text, eliminating the
@@ -375,7 +377,7 @@ def build_agent_executor():
     --------------
     1. Build the Gemini LLM (temperature=0 for deterministic financial answers).
     2. Collect the three domain tools into a list.
-    3. Call create_agent() with the LLM, tools, and system prompt.  Internally
+    3. Call create_react_agent() with the LLM, tools, and prompt.  Internally
        this builds a two-node LangGraph (model node ↔ tool node) that loops
        until the model emits an AIMessage with no tool calls.
     4. The recursion_limit passed at invoke time caps iterations.  Each full

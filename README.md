@@ -61,6 +61,8 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 
 Requests to `POST /query` try the MCP-backed agent first. If MCP is unreachable or times out, the request falls through to the in-process direct agent so the API stays available during transport outages.
 
+**In production that fallback fires on every request.** The deployed Space runs a single container with no MCP server alongside it — `GET /health` there reports `"mcp_server": false` — so the live demo always answers via the in-process agent. That is a deliberate deployment choice: running a second container purely to prove the protocol works is not something a single-user demo warrants. The MCP server exists to show the tools being *served over* MCP and consumed through `langchain-mcp-adapters`, and it is exercised locally via `docker-compose`, not in the hosted demo. It has no tests and no evaluation behind it either — see [ROADMAP.md](ROADMAP.md) item 3.
+
 **Frontend (`web/`).** A Next.js + TypeScript chat UI streams answers over Server-Sent Events:
 
 ```

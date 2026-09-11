@@ -9,7 +9,12 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8000 || exit 1"]
+      # Uses Python, not `nc`: the base image is python:3.11-slim, which ships
+      # no netcat, so the previous `nc -z` check could only ever fail and the
+      # container never reported healthy. Python is guaranteed present.
+      test:
+        - CMD-SHELL
+        - python -c "import socket,sys; s=socket.socket(); s.settimeout(3); sys.exit(s.connect_ex(('127.0.0.1',8000)))"
       interval: 30s
       timeout: 5s
       retries: 3
