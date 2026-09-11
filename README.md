@@ -234,7 +234,7 @@ failures (empty answer or recursion limit) are counted as 0 in both, not exclude
 |---|---|---|---|
 | faithfulness | 0.7136 | **0.8813** | +0.1677 |
 | answer relevancy | 0.5547 | **0.7625** | +0.2078 |
-| context recall | 0.6364 | **0.6970** | +0.0606 |
+| context recall | 0.5152 | **0.6970** | +0.1818 |
 | terminal failures | **12 / 66** (10 empty, 2 recursion) | **6 / 66** (0 empty, 6 recursion) | |
 
 Judge `gemini-3.6-flash`, k=5, prompt `sha256:d1bedac20eb2`, RAGAS 0.4.3, 100%

@@ -57,13 +57,22 @@ Terminal failures: **12 / 66** — 10 empty answers, 2 recursion limit.
 
 | question type | n | faithfulness | answer relevancy | context recall |
 |---|---|---|---|---|
-| **all** | **66** | **0.7136** | **0.5547** | **0.6364** |
-| single_hop | 17 | 0.7647 | 0.7053 | 0.8824 |
-| numerical | 33 | 0.7677 | 0.5572 | 0.6364 |
-| multi_hop | 1 | 0.0000 | 0.0000 | 1.0000 |
+| **all** | **66** | **0.7136** | **0.5547** | **0.5152** |
+| single_hop | 17 | 0.7647 | 0.7053 | 0.7059 |
+| numerical | 33 | 0.7677 | 0.5572 | 0.5152 |
+| multi_hop | 1 | 0.0000 | 0.0000 | 0.0000 |
 | comparative | 4 | 0.4167 | 0.1938 | 0.2500 |
 | negative | 3 | 0.8889 | 0.3181 | 0.3333 |
 | list | 8 | 0.5542 | 0.5631 | 0.3750 |
+
+`context_recall` is scored from the retrieved passages alone, so RAGAS returns a
+number for it even on items whose answer was blank. Eight of the twelve terminal
+failures had retrieved the right passages and scored 1.0 on recall while
+answering nothing. Zeroing them, as the rule above requires, moves overall recall
+from the as-scored 0.6364 to **0.5152** — an earlier revision of this table
+published the un-zeroed figure, which credited the run for evidence it never
+used. The `multi_hop` row is the starkest case: n = 1, and that one item was an
+empty answer on perfectly retrieved context.
 
 ### After — agent `gemini-3.1-flash-lite`
 
@@ -83,10 +92,10 @@ Terminal failures: **6 / 66** — 0 empty answers, 6 recursion limit.
 
 | question type | faithfulness | answer relevancy | context recall |
 |---|---|---|---|
-| **all** | **+0.1677** | **+0.2078** | **+0.0606** |
-| single_hop | +0.1176 | +0.1266 | **−0.0588** |
-| numerical | +0.0808 | +0.1740 | +0.0606 |
-| multi_hop | +1.0000 | +0.6640 | 0.0000 |
+| **all** | **+0.1677** | **+0.2078** | **+0.1818** |
+| single_hop | +0.1176 | +0.1266 | +0.1176 |
+| numerical | +0.0808 | +0.1740 | +0.1818 |
+| multi_hop | +1.0000 | +0.6640 | +1.0000 |
 | comparative | +0.5833 | +0.4142 | +0.5000 |
 | negative | 0.0000 | +0.6229 | 0.0000 |
 | list | +0.3833 | +0.2034 | +0.1250 |
@@ -116,9 +125,13 @@ Unlike an empty answer, the recursion placeholder is *non-empty*, so RAGAS score
 it rather than dropping it — it entered the mean as a visible 0. That asymmetry is
 the whole argument for the guard.
 
-`context_recall` barely moved (+0.06) and `single_hop` recall actually fell
-(−0.059), which is expected: retrieval, embeddings, index and k never changed. The
-only reason it moves at all is finding 3.
+`context_recall` moves +0.18, and essentially all of that is the terminal-failure
+rule rather than better retrieval: eight of the baseline's twelve zeroed items had
+scored 1.0 on recall before the rule was applied. Compare like with like and
+retrieval barely changed — on the 54 baseline items that were *not* terminal
+failures, recall is 0.6296 against 0.6970 after. That is expected, because
+retrieval, embeddings, index and k never changed; the only reason it moves at all
+is finding 3.
 
 ---
 
@@ -634,7 +647,9 @@ Including the ones that weaken the numbers above.
     ships a prebuilt Chroma index via Git LFS). Because the sync is manual it can
     drift again, so the revision serving any given demo session is not guaranteed
     to be the revision measured here. See the README.
-13. **Open dependency advisories are tracked rather than auto-patched.** The
-    remaining npm advisories are test-runner devDependencies that never reach the
-    production bundle; the four open ChromaDB advisories have no patched release
-    upstream, so no version bump clears them.
+13. **Open dependency advisories are tracked rather than auto-patched.** `npm
+    audit` now reports 0 vulnerabilities — the test-runner devDependency chain
+    was cleared by moving to Node 22 and vitest 4. What remains is Python-side:
+    four ChromaDB advisories and one `ragas` advisory, none of which has a
+    patched release upstream, so no version bump clears them. See the README's
+    limitations for the ChromaDB index-compatibility constraint.
