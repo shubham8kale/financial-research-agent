@@ -432,6 +432,58 @@ model the reported run does not use.
 This constraint was later removed by billing activation, which is why this document
 reports 66 items rather than 8. The earlier run is preserved below.
 
+### 11. A defensible code fix that the metrics scored as a regression
+
+`compare_companies` prefixed every retrieval query with the literal string
+`"total net sales"`, so *"which two are incorporated outside Delaware"* was
+embedded as *"total net sales which two are incorporated outside Delaware"*.
+The prefix assumed all comparisons are about revenue. Removing it is not a
+judgement call — it is deleting an injected term that corrupts the query the
+agent composed.
+
+Measured on the 10 items that route through that tool (comparative, temporal,
+multi_hop), run **twice** to separate the effect from the run-to-run variance in
+finding 3:
+
+| | before | after (run 1) | after (run 2) |
+|---|---|---|---|
+| faithfulness | 0.900 | 0.650 | 0.633 |
+| answer_relevancy | 0.733 | 0.738 | 0.724 |
+| context_recall | 0.800 | **0.900** | **0.900** |
+
+The two after-runs agree closely, so the drop is reproducible, not noise.
+Retrieval — the thing the change actually touches — improved and stayed
+improved. Faithfulness fell by a quarter.
+
+Decomposing the fall, per item:
+
+- **`qa_0062` improved and was scored down.** Before, the agent returned a false
+  refusal: *"the filings do not contain information regarding the state of
+  incorporation"* — faithfulness **1.00**, because a refusal makes no claims to
+  verify. After, it answered *"Apple and Microsoft… Apple is incorporated in
+  California"*, which **is the ground truth** — faithfulness **0.33**. The fix
+  turned a wrong answer into a right one and the metric marked it down. This is
+  finding 2's blind spot from the other direction: faithfulness rewards
+  declining to answer.
+- **`qa_0063` genuinely regressed.** It now reports Microsoft's total revenue as
+  $371,902M; the correct figure is $281,724M. A real wrong number.
+- **`qa_0060` now exhausts the recursion limit** in both after-runs, where before
+  it answered in 4 messages. Different retrieval, more exploration, over budget.
+- **`qa_0067` retrieval improved outright** (context_recall 0.00 → 1.00) and the
+  figure it quotes is now correct, though it still mislabels the fiscal year —
+  finding 2 again, untouched by this change.
+
+**The change was kept.** The prefix is indefensible on inspection and demonstrably
+caused at least one false refusal; reverting a correct fix because a coarse
+metric dislikes it would be letting the instrument drive the engineering. But
+this is explicitly **not** reported as an improvement: the headline metric went
+down, one item produces a wrong figure that did not before, and `comparative` is
+n = 4. Nothing here is conclusive in either direction.
+
+This is the strongest argument so far for the roadmap's thin-strata item. A
+four-item stratum cannot adjudicate a retrieval change, and two of the four
+movements above are metric artefacts rather than quality changes.
+
 ---
 
 ## Prior result: the n = 8 run

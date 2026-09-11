@@ -295,7 +295,15 @@ def compare_companies(question: str, tickers: str) -> str:
     if not ticker_list:
         return "No tickers provided. Please supply a comma-separated list such as 'AAPL, MSFT'."
 
-    search_query = f"total net sales {question}"
+    # The question is passed to the retriever unmodified. It used to be
+    # prefixed with "total net sales", which injected revenue vocabulary into
+    # every comparison - so "compare Meta and Alphabet headcount" was embedded
+    # as "total net sales compare Meta and Alphabet headcount" and retrieved
+    # against the wrong passages. The prefix assumed all comparisons are about
+    # revenue. Query composition is already the largest uncontrolled variable
+    # in the evaluation (eval/EVALUATION.md finding 3); deliberately corrupting
+    # the query the agent composed made it worse.
+    search_query = question
     sections = []
     for ticker in ticker_list:
         docs = vs.similarity_search(
