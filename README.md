@@ -322,7 +322,22 @@ No secrets are required — the backend dry-run path makes no LLM calls.
 The whole stack runs on free tiers:
 
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
-- **Backend → Hugging Face Spaces (Docker SDK).** The [Dockerfile](Dockerfile) rebuilds the Chroma index at build time from the committed filings under `data/sec_filings/` (using local MiniLM embeddings), so the ~360-370 MB index never needs to live in git. Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
+- **Backend → Hugging Face Spaces (Docker SDK).** Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets.
+
+  Note that this repo's [Dockerfile](Dockerfile) and the one in the deployed Space differ deliberately. Here, the image **rebuilds** the Chroma index at build time from the committed filings under `data/sec_filings/` using local MiniLM embeddings, so the ~360–370 MB index never has to live in git. Re-embedding 67,521 chunks exceeds Hugging Face's build timeout on the free CPU builder, so the Space instead **ships a prebuilt index via Git LFS** and skips the rebuild. Copying this Dockerfile into the Space would produce a build that times out.
+
+**If the Space build fails with `exit code 128`.** The build job dies at the git/LFS stage before any Docker step runs — the build log shows `Build Queued` and nothing after — and the Space serves HTTP 503 until it is fixed. Observed three times during development.
+
+Pushing an empty commit to retry sometimes clears it and sometimes does not. What reliably works is a **factory rebuild**, which discards the build cache:
+
+- In the Space UI: **Settings → Factory rebuild**
+- Or via the API with a write token:
+
+```bash
+curl -X POST -H "Authorization: Bearer $HF_TOKEN" "https://huggingface.co/api/spaces/<user>/<space>/restart?factory=true"
+```
+
+This is worth knowing before sending anyone the demo link: a plain retry can leave it down, and the fix is not obvious from the error. `git lfs fsck` locally and Space storage were both clean each time, so it appears to be build-cache flakiness rather than repository corruption.
 
 ---
 
