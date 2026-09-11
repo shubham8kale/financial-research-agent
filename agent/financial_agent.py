@@ -162,15 +162,52 @@ class RecursionLimitError(AgentTerminalFailure):
     outcome = OUTCOME_RECURSION_LIMIT
 
 
-def classify_terminal_state(answer: str | None) -> str | None:
+def content_text(content) -> str:
+    """Flatten an AIMessage/BaseMessage content payload to plain text.
+
+    Message content is not reliably a string.  Older Gemini models return it as
+    one, but newer ones return a LIST of content blocks:
+
+        [{"type": "text", "text": "...", "extras": {...}}]
+
+    On the shipped agent model this is the common case, not the edge case — the
+    66-item rerun recorded list content on 60 of 66 items
+    (``eval/results/rerun66-af83fa6.json``, ``final_content_type``).  Anything
+    that calls ``.strip()`` on the raw payload therefore raises AttributeError
+    on most questions, and anything that ``str()``s it leaks a Python repr into
+    the answer.
+
+    This lives here, beside the terminal-state vocabulary, because the flattened
+    string is what every layer must agree on: the two CLI entry points, both API
+    routes, the MCP agent and the eval harness all classify and display the same
+    text.  The API and the eval harness had each grown their own copy of this;
+    the two CLI entry points and the MCP agent had none, and broke on list
+    content.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+        return "".join(parts)
+    if content is None:
+        return ""
+    return str(content)
+
+
+def classify_terminal_state(answer) -> str | None:
     """Return a named terminal-failure outcome for *answer*, or None if usable.
 
-    Deliberately operates on the flattened answer text rather than on the
-    message list, so that every caller — the agent entry point, both API
-    routes, and the eval harness — classifies the identical string the user
+    Accepts either a plain string or a raw message content payload, flattening
+    it first, so that every caller — both CLI entry points, both API routes, the
+    MCP agent and the eval harness — classifies the identical string the user
     would otherwise have been shown.
     """
-    text = (answer or "").strip()
+    text = content_text(answer).strip()
     if not text:
         return OUTCOME_EMPTY_ANSWER
     if RECURSION_LIMIT_MARKER in text.lower():
@@ -178,8 +215,12 @@ def classify_terminal_state(answer: str | None) -> str | None:
     return None
 
 
-def raise_for_terminal_state(answer: str | None) -> str:
-    """Return *answer* unchanged, or raise the matching AgentTerminalFailure."""
+def raise_for_terminal_state(answer) -> str:
+    """Return *answer* as flattened text, or raise the matching AgentTerminalFailure.
+
+    Returns the flattened string rather than the input, so callers that pass raw
+    message content get back something they can print, slice and ``.strip()``.
+    """
     outcome = classify_terminal_state(answer)
     if outcome == OUTCOME_EMPTY_ANSWER:
         raise EmptyAnswerError(
@@ -190,7 +231,7 @@ def raise_for_terminal_state(answer: str | None) -> str:
         raise RecursionLimitError(
             "The agent exhausted its step budget before producing an answer."
         )
-    return answer
+    return content_text(answer)
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────

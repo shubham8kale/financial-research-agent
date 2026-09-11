@@ -213,3 +213,22 @@ def test_ask_strips_surrounding_whitespace_from_the_answer(api_key, monkeypatch)
     monkeypatch.setattr(qe, "_build_llm", lambda _key: llm)
     result = ask("q", vectorstore=_FakeVectorstore([_doc()]))
     assert result.answer == "Total net sales were $416,161 million."
+
+
+def test_ask_flattens_list_shaped_content(api_key, monkeypatch):
+    # The shipped model returns .content as a list of blocks on most calls, so
+    # the old `response.content.strip()` raised AttributeError here — breaking
+    # `python -m retrieval.query_engine`, the second command in README step 5.
+    llm = _FakeLLM(reply=[
+        {"type": "text", "text": "  Total net sales were $416,161 million.  "},
+    ])
+    monkeypatch.setattr(qe, "_build_llm", lambda _key: llm)
+    result = ask("q", vectorstore=_FakeVectorstore([_doc()]))
+    assert result.answer == "Total net sales were $416,161 million."
+
+
+def test_ask_does_not_leak_a_repr_for_list_content(api_key, monkeypatch):
+    llm = _FakeLLM(reply=[{"type": "text", "text": "Apple: $416,161M."}])
+    monkeypatch.setattr(qe, "_build_llm", lambda _key: llm)
+    result = ask("q", vectorstore=_FakeVectorstore([_doc()]))
+    assert "{" not in result.answer and "type" not in result.answer

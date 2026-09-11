@@ -359,7 +359,7 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
     higher-level ``run_agent`` helper) because we need access to the full
     message history — ``run_agent`` returns only the last message's content.
     """
-    from agent.financial_agent import build_agent_executor
+    from agent.financial_agent import build_agent_executor, content_text
 
     agent = build_agent_executor()
     result = agent.invoke(
@@ -367,19 +367,12 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
         config={"recursion_limit": 20},
     )
     messages = result["messages"]
-    final_answer = messages[-1].content or ""
-    if not isinstance(final_answer, str):
-        # Some LangChain versions return a list of content parts for the
-        # AIMessage; flatten the text parts rather than str()-ing the list,
-        # which would leak a Python repr into the scored answer.
-        if isinstance(final_answer, list):
-            parts = [
-                p.get("text", "") if isinstance(p, dict) else str(p)
-                for p in final_answer
-            ]
-            final_answer = "".join(parts)
-        else:
-            final_answer = str(final_answer)
+    # .content is a list of content blocks on most items with the shipped model
+    # (60 of 66 in rerun66); content_text flattens the text parts rather than
+    # str()-ing the list, which would leak a Python repr into the scored answer.
+    # Shared with the API and both CLI entry points so all four score and
+    # display the identical string.
+    final_answer = content_text(messages[-1].content)
     contexts = _extract_contexts(messages)
 
     # Provenance for the empty-answer case.  An empty final answer is

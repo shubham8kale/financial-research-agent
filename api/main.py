@@ -32,6 +32,7 @@ from agent.financial_agent import (
     OUTCOME_EMPTY_ANSWER,
     OUTCOME_RECURSION_LIMIT,
     classify_terminal_state,
+    content_text,
 )
 
 load_dotenv()
@@ -261,32 +262,17 @@ def _build_question(req: QueryRequest) -> str:
     return req.question
 
 
-def _content_text(content) -> str:
-    """Flatten an AIMessage content payload to plain text.
-
-    Older Gemini models return message content as a plain string, but newer ones
-    (e.g. gemini-2.5-flash) return a LIST of content blocks such as
-    [{"type": "text", "text": "...", "extras": {...}}]. Without this, the API
-    would leak the raw repr of that list into answers.
-    """
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts = []
-        for block in content:
-            if isinstance(block, str):
-                parts.append(block)
-            elif isinstance(block, dict) and block.get("type") == "text":
-                parts.append(block.get("text", ""))
-        return "".join(parts)
-    return str(content)
-
-
 def _final_answer(result: dict) -> str:
+    """Return the last message's content as plain text.
+
+    Flattening lives in agent.financial_agent so that this route, the two CLI
+    entry points, the MCP agent and the eval harness all render the identical
+    string; it used to be reimplemented here.
+    """
     messages = result.get("messages") or []
     if not messages:
         return ""
-    return _content_text(messages[-1].content)
+    return content_text(messages[-1].content)
 
 
 # ── Streaming (SSE) helpers ─────────────────────────────────────────────────────

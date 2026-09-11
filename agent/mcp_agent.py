@@ -70,6 +70,8 @@ from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from agent.financial_agent import raise_for_terminal_state
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -258,7 +260,10 @@ async def arun_agent(question: str) -> str:
         # Each tool-call round trip costs 2 graph steps; limit=20 ≈ 10 calls.
         config={"recursion_limit": 20},
     )
-    return result["messages"][-1].content
+    # Same contract as financial_agent.run_agent: flatten the content payload
+    # (it is a list of blocks on the shipped model) and raise a named failure
+    # rather than returning a non-answer that reads like a result.
+    return raise_for_terminal_state(result["messages"][-1].content)
 
 
 def run_agent(question: str) -> str:
@@ -282,6 +287,9 @@ def run_agent(question: str) -> str:
         If the MCP server is unreachable at startup.
     EnvironmentError
         If GEMINI_API_KEY is not set.
+    AgentTerminalFailure
+        If the agent stopped without producing a usable answer (empty final
+        message, or the LangGraph recursion-limit placeholder).
     """
     return asyncio.run(arun_agent(question))
 

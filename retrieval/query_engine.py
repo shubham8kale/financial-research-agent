@@ -4,9 +4,9 @@
 # -------
 # Accept a natural-language question, retrieve the most relevant passages from
 # the ChromaDB vector store, and generate a grounded answer using Google Gemini
-# 2.5 Flash-Lite — returning both the answer text and the source chunks for
+# 3.1 Flash-Lite — returning both the answer text and the source chunks for
 # citation.  The exact model is controlled by the LLM_MODEL env var and
-# defaults to gemini-2.5-flash-lite (see GEMINI_MODEL below).
+# defaults to gemini-3.1-flash-lite (see GEMINI_MODEL below).
 #
 # PIPELINE
 # --------
@@ -19,12 +19,12 @@
 #   _build_context_block()     ← formats chunks as numbered, labelled passages
 #       │
 #       ▼
-#   ChatGoogleGenerativeAI     ← Gemini 2.5 Flash-Lite, temperature=0
+#   ChatGoogleGenerativeAI     ← Gemini 3.1 Flash-Lite, temperature=0
 #       │
 #       ▼
 #   QueryResult(answer, sources)
 #
-# WHY GEMINI 2.5 FLASH-LITE?
+# WHY GEMINI FLASH-LITE?
 # --------------------------
 # For a RAG system the LLM's job is synthesis and faithfulness, not recall —
 # retrieval already surfaces the relevant facts.  Flash-Lite is well suited:
@@ -99,6 +99,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from agent.financial_agent import content_text
 from ingestion.embedder import build_embeddings, build_vectorstore
 
 load_dotenv()
@@ -240,7 +241,7 @@ def _build_context_block(docs: list[Document]) -> str:
 
 
 def _build_llm(api_key: str) -> ChatGoogleGenerativeAI:
-    """Construct and return the Gemini 2.5 Flash-Lite chat model.
+    """Construct and return the Gemini Flash-Lite chat model.
 
     Centralised in a factory so the model configuration (name, temperature,
     safety settings) lives in one place and every call site gets the same
@@ -341,12 +342,15 @@ def ask(
         HumanMessage(content=human_content),
     ]
 
-    # ── 6. Call Gemini 2.5 Flash-Lite ─────────────────────────────────────────
+    # ── 6. Call the LLM ───────────────────────────────────────────────────────
     llm = _build_llm(api_key)
     logger.info("Sending prompt to %s (context: %d docs).", GEMINI_MODEL, len(docs))
     response = llm.invoke(messages)
 
-    answer = response.content.strip()
+    # .content is not reliably a string — the shipped model returns a list of
+    # content blocks on most calls — so flatten before stripping.  See
+    # agent.financial_agent.content_text.
+    answer = content_text(response.content).strip()
     logger.info("Received answer (%d chars).", len(answer))
 
     return QueryResult(answer=answer, sources=docs)
