@@ -52,8 +52,14 @@ much does retrieval quality move with it.
 **Now.** The eval harness deliberately runs the in-process agent, to measure
 answer quality without a network hop confounding it. That was the right call
 for the eval, and it leaves the MCP server with **no test and no score against
-it** — despite being a headline feature of the architecture, and the path the
-deployed API tries first.
+it** — despite being a headline feature of the architecture.
+
+The deployed Space does not exercise it either: `/health` there reports
+`mcp_server: false`, so production always runs the in-process fallback. Running
+an MCP server as a second container is not something a single-container demo
+deployment warrants, so this is a deliberate deployment choice rather than a
+defect — but it does mean the MCP path has neither tests nor production traffic
+behind it.
 
 **Why it matters.** The two paths can diverge silently. `langchain-mcp-adapters`
 returns tool results in a different shape from the in-process tools (a list of
@@ -73,10 +79,14 @@ and no new infrastructure.
 
 ## Not on this list, and why
 
-**A larger benchmark.** The full 66-item set is already written and committed;
-running it is a quota problem (20 Gemini requests/day/model), not an engineering
-one. More items would sharpen the existing numbers without teaching anything new
-about the system.
+**A larger benchmark.** All 71 items have been run — items 1–66 in the two full
+before/after runs, and the five `temporal` items separately — so size is no
+longer the constraint it was when free-tier quota capped a run at 20 requests
+per day per model. More items of the existing kinds would tighten the numbers
+without teaching anything new. What would teach something is more items in the
+*thin* strata — `multi_hop` is a single item in the whole benchmark, and
+`negative` and `comparative` are 3 and 4 — since those are exactly the rows the
+results tables cannot currently support.
 
 **Tuning retrieval — k, chunk size, a table-aware splitter.** All plausible
 improvements, all currently unmeasurable for the reason in item 1. Tuning

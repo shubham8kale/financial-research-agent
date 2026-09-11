@@ -322,7 +322,7 @@ that already worked — consistent with the per-stratum deltas above.
 
 Caveat: these 8 were the original smoke set, not a random draw.
 
-### 6. A repo verified reproducible on Monday was unreproducible on Tuesday
+### 6. A repo verified reproducible one day was unreproducible the next
 
 **9 September 2026.** Cold-clone check passed: fresh `git clone`, README followed
 verbatim, ingestion built the index in 1,531 s producing **exactly 67,521 chunks**,

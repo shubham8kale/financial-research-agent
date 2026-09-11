@@ -332,7 +332,7 @@ financial-research-agent/
 ├── ingestion/
 │   ├── downloader.py               # SEC EDGAR fetcher
 │   ├── cleaner.py                  # HTML/iXBRL stripping
-│   ├── chunker.py                  # Token-aware recursive splitter
+│   ├── chunker.py                  # Recursive splitter, 512 chars / 50 overlap
 │   ├── embedder.py                 # MiniLM → ChromaDB upsert
 │   └── pipeline.py                 # download → clean → chunk → embed
 ├── mcp_server/
@@ -356,8 +356,8 @@ financial-research-agent/
 ## Known limitations
 
 - **Table chunking.** The recursive character splitter breaks 10-K tables across chunk boundaries, so numeric questions that depend on multi-row context (e.g. segment breakdowns) can retrieve partial rows. A dedicated table-aware splitter (or a layout-preserving parser like Unstructured) would close this gap.
-- **n = 66 for the reported runs establishes no statistical significance**, and five of seven question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 5 and 9.
-- **Judge bias is mitigated but not measured.** The reported run uses a Groq `gpt-oss-120b` judge against a Gemini agent, so it is already cross-family — the same-model bias this section previously flagged does not apply to it. What is still missing is a *quantified* comparison: re-judging the same cached answers with a Gemini judge to measure how much the two disagree. That was scoped and not run (it needs a full day's Gemini bucket). Every number is currently one judge's opinion, with no inter-judge agreement measured.
+- **n = 66 for the reported runs establishes no statistical significance**, and five of seven question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 6 and 10.
+- **The reported runs are same-family judged, and the cross-family check is thin.** Both 66-item runs used a `gemini-3.6-flash` judge against a Gemini agent, so same-model-family bias applies to the headline numbers. A cross-family check was run — 20 of those items re-scored by Groq `openai/gpt-oss-120b` — and the two judges broadly agree (mean absolute divergence 0.025–0.061; agreement within 0.1 on 80–95% of items). The disagreement concentrates on the three `comparative` items, where the Gemini judge gave a flat 1.00 and the Groq judge 0.71–0.75. That is a signal worth acting on, not proof of bias: n = 3. See [eval/EVALUATION.md](eval/EVALUATION.md) finding 4.
 - **`answer_relevancy` is not reproducible to the third decimal.** RAGAS overrides the judge's temperature to 0.3 for any metric requesting n > 1 generations, which `answer_relevancy` always does. `faithfulness` and `context_recall` are stable run-to-run; small `answer_relevancy` differences are noise.
 - **`context_recall` is measured over context blobs, not chunks.** The eval harness captures each tool observation as one context string, and an observation already concatenates all k = 5 passages. That makes `context_recall` coarser than a per-chunk measurement would be — a blob containing one relevant passage among five scores as recalled.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
