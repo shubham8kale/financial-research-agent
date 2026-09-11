@@ -7,24 +7,31 @@ import MessageList from "@/components/MessageList";
 import type { ChatMessage } from "@/components/Message";
 import { streamQuery, type Citation } from "@/lib/api";
 
-// Each suggestion is verified against the live backend before shipping: a
-// prompt the UI offers should not be one the corpus answers badly.
+// Each suggestion is verified against the live backend before shipping, twice,
+// because retrieval varies run to run (eval/EVALUATION.md finding 3). A prompt
+// the UI offers should not be one the corpus answers badly.
 //
-// "What are the main risk factors Meta discloses?" was removed. It is a fair
-// question and the system handles it honestly - it retrieves 12 passages,
-// finds none containing the Item 1A text, and declines rather than
-// confabulating - but a suggestion that reliably produces a refusal is a poor
-// first impression. The cause is retrieval: a broad "main risk factors" query
-// does not surface the risk-factor sections.
+// The cloud-revenue comparison was removed. It worked until compare_companies
+// stopped prefixing every retrieval query with "total net sales" - a prefix
+// that was wrong in general (it injected revenue vocabulary into non-revenue
+// comparisons) but was incidentally steering revenue questions to the right
+// tables. Without it, this prompt returns Microsoft's FY2024 figure and fails
+// to find Google Cloud revenue at all, reproducibly. See EVALUATION.md
+// finding 11 for the trade-off and why the prefix removal was kept anyway.
 //
-// Both financial prompts say "most recent fiscal year" deliberately. The
-// filings present three years side by side, and without that phrase the agent
-// answers with the PRIOR year - measured at 4 of 5 on the benchmark's temporal
-// stratum (see eval/EVALUATION.md finding 2). The wording steers the demo
-// around a real, documented defect; it does not fix it.
+// Replaced with the Delaware incorporation question, which still exercises
+// compare_companies across all five filings and is exactly the kind of
+// non-revenue comparison the prefix used to break: it previously produced a
+// false refusal and now answers correctly and identically across runs.
+//
+// The Apple prompt says "most recent fiscal year" deliberately. The filings
+// present three years side by side, and without that phrase the agent answers
+// with the PRIOR year - 4 of 5 on the benchmark's temporal stratum
+// (EVALUATION.md finding 2). The wording steers the demo around a real,
+// documented defect; it does not fix it.
 const EXAMPLE_QUESTIONS = [
   "What were Apple's total net sales in the most recent fiscal year?",
-  "Compare Microsoft and Alphabet cloud revenue in their most recent fiscal years.",
+  "Among Apple, Amazon, Alphabet, Meta, and Microsoft, which two are incorporated outside Delaware?",
   "How many employees did Meta have at the end of 2025?",
 ];
 

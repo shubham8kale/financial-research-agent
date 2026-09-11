@@ -473,6 +473,32 @@ Decomposing the fall, per item:
   figure it quotes is now correct, though it still mislabels the fiscal year —
   finding 2 again, untouched by this change.
 
+**What the prefix was actually doing, found by testing the live demo.** The
+removal was verified end to end after deployment, and the picture sharpened:
+
+- The target case now works. *"Among Apple, Amazon, Alphabet, Meta, and
+  Microsoft, which two are incorporated outside Delaware?"* returns *"Apple and
+  Microsoft… Apple is incorporated in California, and Microsoft is incorporated
+  in Washington. Alphabet, Amazon, and Meta are all incorporated in Delaware"* —
+  the exact ground truth, identical across two runs. Before removal this same
+  question produced a false refusal.
+- A revenue comparison that previously worked now does not. *"Compare Microsoft
+  and Alphabet cloud revenue in their most recent fiscal years"* returned
+  Microsoft $106,265M (FY2025) and Alphabet $58,705M (2025) before; it now
+  returns Microsoft's FY2024 figure and fails to locate Google Cloud revenue at
+  all. Reproduced twice.
+
+So the prefix was **wrong in general and helpful by accident**: injecting
+"total net sales" corrupted every non-revenue comparison, while steering revenue
+comparisons toward the right tables. Removing it trades one failure mode for
+another rather than eliminating one.
+
+That is a real finding about the retrieval design, not a reason to reinstate a
+hardcoded assumption. What it argues for is the roadmap's item 1 — a retriever
+whose query is not silently rewritten, measured by an instrument that can tell
+two retrieval strategies apart — rather than choosing which set of questions to
+break.
+
 **The change was kept.** The prefix is indefensible on inspection and demonstrably
 caused at least one false refusal; reverting a correct fix because a coarse
 metric dislikes it would be letting the instrument drive the engineering. But
