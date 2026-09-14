@@ -373,7 +373,7 @@ financial-research-agent/
 ├── tests/                          # 85 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (16)
-│   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (17)
+│   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   └── test_query_stream.py        # SSE streaming contract (2)
 ├── ROADMAP.md                      # Three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
