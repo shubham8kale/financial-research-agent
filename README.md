@@ -2,6 +2,13 @@
 
 An agentic RAG system that answers natural-language questions about SEC 10-K filings with source-grounded citations, exposed through both a FastAPI REST interface and a Model Context Protocol (MCP) server — with a streamed, full-stack Next.js chat UI on top.
 
+## In one minute
+
+- **What it is.** Five FY2025 10-K filings, cleaned to their 10-K documents (4,783 chunks) and their tagged XBRL facts (6,089), behind a LangGraph ReAct agent with five tools, a FastAPI streaming API, an MCP server and a Next.js chat UI. Free tiers throughout.
+- **What is measured, and where.** A 71-item labelled benchmark ([eval/EVALUATION.md](eval/EVALUATION.md), every number traceable to a file under [eval/results/](eval/results/)). Retrieval, scored without a model: the shipped configuration puts a relevant chunk in the top 5 on **66.2%** of questions (dense alone 50.7%). Answers: the figure the question asked for is in the answer on **100%** of the items that have one (judged runs, first index), faithfulness 0.957. Every answer is verified against what was retrieved before it is served (70 of 70 verified on the latest run), at about $0.002 and 4 s per query on a laptop.
+- **What it is not.** Not a production service (no auth, no rate limit, one small corpus), not statistically powered (n = 71, five strata under 9 items), and its answer-quality judge has not yet been re-bought on the rebuilt index (limitation 19).
+- **What changed after review.** Three-quarters of the first index was XBRL markup, identifiers and metadata rather than 10-K text; finding 22 records the audit, the fix and every number that moved. [docs/DECISIONS.md](docs/DECISIONS.md) lists the design decisions with their evidence. MIT licensed.
+
 ---
 
 ## Live demo
@@ -16,7 +23,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
   retrieval switches, meter and answer verification. A later commit on `main` reaches the
   Space only at the next sync (see Deploy). What deliberately differs is the
   deployment machinery: the Space ships a **prebuilt Chroma index via Git LFS**, because
-  re-embedding 67K chunks at image-build time exceeds Hugging Face's build timeout on the
+  re-embedding the old 67K-chunk index at image-build time exceeded Hugging Face's build timeout on the
   free CPU builder, whereas this repo's Dockerfile rebuilds the index and gitignores it.
   Because sync is manual, treat the live demo's revision as unverified unless you check it
   — numbers in [eval/EVALUATION.md](eval/EVALUATION.md) always name the exact agent model
@@ -36,7 +43,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
    └────────┬─────────┘
             ▼
    ┌──────────────────┐
-   │    ChromaDB      │   persistent vector store, 67,521 chunks
+   │    ChromaDB      │   persistent vector store, 4,783 chunks
    │ (data/chroma_db) │   metadata: ticker, chunk_idx, source path
    │  + facts.sqlite  │   6,089 tagged XBRL facts: concept, period, unit, segment
    └────────┬─────────┘
@@ -92,13 +99,13 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 201 tests, no network / API key / index required |
+| Backend tests | pytest — 222 tests, no network / API key / index required |
 | Frontend tests | Vitest + React Testing Library — 3 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
 | Verification | Output contract: every answer becomes claims with cited observation ids and is checked against what was retrieved this turn, with no model in the check; fail-closed (`agent/contract.py`) |
 | Hosting | Vercel (frontend) + Hugging Face Spaces (backend), both free tier |
-| CI | GitHub Actions: lint, tests, build, and a retrieval quality gate on every PR (thresholds in `eval/ci_gate.json`, scored on a committed index slice); the judged run is a manual, paid workflow |
+| CI | GitHub Actions: lint, tests, build, and a retrieval quality gate on every PR (thresholds in `eval/ci_gate.json`, scored on the index rebuilt from the committed filings); the judged run is a manual, paid workflow |
 
 ---
 
@@ -118,9 +125,9 @@ cp .env.example .env
 
 # 4. Build the vector index (first run only)
 #    Reads the 10-K filings already committed under data/sec_filings/ — no SEC
-#    download needed. Embeds 67,521 chunks locally on CPU. Measured on a cold
-#    clone: about 26 minutes on a 12-core laptop, ~370 MB on disk. Only re-run
-#    this if data/chroma_db/ is missing.
+#    download needed. Cleans each submission to its 10-K document and embeds the
+#    4,783 chunks locally on CPU: 72 s on a 12-core laptop, 29 MB on disk. Only
+#    re-run this if data/chroma_db/ is missing.
 python -m ingestion.pipeline
 
 # 5. Run the agent on its built-in smoke question (no arguments; edit
@@ -193,7 +200,7 @@ This starts two services sharing the `./data` volume:
 - `api-server` on port **8080** (FastAPI)
 
 The first build is slow: CPU PyTorch and the transformer models download, and the image
-re-embeds all 67,521 chunks (about 26 minutes on a laptop CPU). Subsequent builds are
+re-embeds the 4,783 chunks (about a minute on a laptop CPU). Subsequent builds are
 cached. Compose bind-mounts `./data` over `/app/data`, so the index the container serves
 is the one on the host, not the one baked into the image.
 
@@ -422,13 +429,16 @@ configuration, no API call. Nineteen configurations were measured this way
 
 | | hit@5 | recall@5 | MRR | nDCG@5 | recall@25 | p50 latency |
 |---|---|---|---|---|---|---|
-| dense top-5, as originally shipped | 0.507 | 0.489 | 0.357 | 0.373 | 0.680 | 17.5 ms |
-| **dense + cross-encoder rerank over 50 + inferred ticker filter** (the measured configuration; on with the `RETRIEVAL_*` variables) | **0.634** | **0.606** | **0.496** | **0.507** | **0.750** | 893 ms |
-| the same, table items only (n = 26) | 0.500 | | | | | |
-| the same, non-table items (n = 45) | 0.711 | | | | | |
+| dense top-5, as originally shipped | 0.507 | 0.489 | 0.358 | 0.369 | 0.725 | 13.6 ms |
+| **dense + cross-encoder rerank over 50 + inferred ticker filter** (the measured configuration; on with the `RETRIEVAL_*` variables) | **0.662** | **0.630** | **0.541** | **0.546** | **0.771** | 751 ms |
+| the same, table items only (n = 27) | 0.481 | | | | | |
+| the same, non-table items (n = 44) | 0.773 | | | | | |
 
-Hybrid BM25 + dense fusion scored below plain dense (0.479) and is kept in
-the code, off by default, as a measured negative result. Labels mark the
+Numbers are on the index rebuilt after review (finding 22: three-quarters
+of the first index was XBRL markup, identifiers and metadata). Hybrid BM25 + dense fusion is the best
+unreranked retriever on the clean index (0.592) and loses to reranked
+dense candidates (0.634 against 0.662), so it is kept in the code, off by
+default. Labels mark the
 cited reference passage, not every chunk stating the fact, so these are lower
 bounds (EVALUATION.md finding 13). Before the reranker, the agent's own query
 wording found a labelled chunk on 43.7% of items (`agent_hit_rate`), below
@@ -440,9 +450,9 @@ Two views of whether the answer got the number right, both with years
 matched exactly and a candidate accepted when it rounds to the ground truth
 at the precision the ground truth was written in. `figure_primary`: the
 answer contains the figure the question asked for. `figure_exact`: it
-contains every figure in the ground truth, context included. On the 50 items
-whose ground truth carries a figure, the dense baseline scores **76.0%** and
-**64.0%**. This is the check that scores a right-figure-wrong-year answer as
+contains every figure in the ground truth, context included. On the 45 items
+whose ground truth carries a figure other than a year, the dense baseline scores **73.3%** and
+**60.0%**. This is the check that scores a right-figure-wrong-year answer as
 a failure where faithfulness scored it 1.00 (findings 14 and 18).
 
 ### Answer quality, schema 3 (contexts scored per chunk, with provenance)
@@ -455,7 +465,7 @@ text they returned, never excluded. Evidence and per-stratum rows:
 
 | n | faithfulness | answer relevancy | context recall | figure_exact | agent_hit |
 |---|---|---|---|---|---|
-| 71 | **0.826** | 0.764 | 0.718 | 0.640 (n = 50) | 0.437 |
+| 71 | **0.826** | 0.764 | 0.718 | 0.600 (n = 45) | 0.437 |
 
 On the 61 answers byte-identical with the schema-2 run below, the new instrument
 returned the same `context_recall` on every item and faithfulness within two
@@ -474,8 +484,8 @@ judge:
 
 | | dense top-5 (baseline) | dense + rerank 50 + inferred ticker | change |
 |---|---|---|---|
-| `figure_primary` (n = 50) | 0.760 | **0.920** | +0.16 |
-| `figure_exact` (n = 50) | 0.640 | **0.860** | +0.22 |
+| `figure_primary` (n = 45) | 0.733 | **0.911** | +0.18 |
+| `figure_exact` (n = 45) | 0.600 | **0.844** | +0.24 |
 | `agent_hit` (n = 71) | 0.437 | **0.662** | +0.23 |
 | terminal failures (recursion limit) | 7 | **1** | −6 |
 
@@ -494,8 +504,8 @@ available on top of the reranked retrieval, judged the same way:
 
 | | + reranker | + reranker + fact tools |
 |---|---|---|
-| `figure_primary` — the figure the question asked for (n = 50) | 0.920 | **1.000** |
-| `figure_exact` — every ground-truth figure (n = 50) | 0.860 | **0.900** |
+| `figure_primary` — the figure the question asked for (n = 45) | 0.911 | **1.000** |
+| `figure_exact` — every ground-truth figure (n = 45) | 0.844 | **0.889** |
 | faithfulness | 0.931 | **0.957** |
 | answer relevancy | 0.869 | **0.894** |
 | context recall | 0.887 | 0.852 |
@@ -585,12 +595,11 @@ VERIFY_MODE=off LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-
 # Regenerate the leaderboard from every results file.
 python -m eval.leaderboard
 
-# The CI quality gate, locally: cut the index slice (30 s), embed it apart from
-# the shipped index (~2.5 min), score the gated configurations against it.
-python -m eval.ci_corpus build
-CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_corpus index
-CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_gate retrieval
-python -m eval.ci_gate calibrate        # the judged smoke thresholds next to their calibration values
+# What the index holds, class by class (finding 22), and the CI quality gate
+# against the live index; then the judged smoke thresholds next to their calibration values.
+python -m ingestion.audit
+python -m eval.ci_gate retrieval
+python -m eval.ci_gate calibrate
 ```
 
 Every run records a hash of its resolved configuration. A configuration that
@@ -633,20 +642,19 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
    and `python -m eval.ci_gate retrieval --dry-run` — the last one checks that
    every threshold in `eval/ci_gate.json` sits at or below the committed value
    it was set from, so the gate cannot be edited past what was measured
-4. `pytest` (201 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (222 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Retrieval quality gate (`retrieval-gate`)**
-1. Embed the committed index slice ([`eval/ci_corpus.jsonl.gz`](eval/ci_corpus.jsonl.gz),
-   3,991 chunks) into Chroma — a few minutes once, then restored from the
-   Actions cache on the slice's hash
+1. `python -m ingestion.pipeline`: rebuild the index and the fact table from
+   the committed filings — about a minute of embedding, cached on the
+   filings' and the ingestion code's hash
 2. `python -m eval.ci_gate retrieval`: the dense baseline and the shipped
    configuration scored against the 71 labelled items with the retriever-only
    runner (no LLM call). Seven thresholds: each hit rate at or below two
    items under the committed value, MRR and nDCG 0.03 under it, so a one- or
-   two-item loss passes and a three-item loss fails; the PASS/FAIL table lands on the run's summary page and
-   the per-item results are uploaded as a build artefact. The slice reproduces
-   the full-index numbers for both configurations (EVALUATION.md, "CI quality
-   gate")
+   two-item loss passes and a three-item loss fails; the PASS/FAIL table lands
+   on the run's summary page and the per-item results are uploaded as a build
+   artefact (EVALUATION.md, "CI quality gate")
 
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
@@ -656,7 +664,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
 
 `.github/workflows/eval-judged.yml` is the paid half, run by hand from the
 Actions tab and never on a push or a schedule: the agent and the judge over
-ten fixed benchmark items on the same slice, thresholds calibrated from the
+ten fixed benchmark items on the same rebuilt index, thresholds calibrated from the
 committed judged run over those items, about 60 judge calls and $0.20 per
 run. It reads `GEMINI_API_KEY` (and `RAGAS_JUDGE_API_KEY` for the free Groq
 cross-family judge option) from repository secrets; an incomplete run, or one
@@ -672,7 +680,7 @@ The whole stack runs on free tiers:
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
 - **Backend → Hugging Face Spaces (Docker SDK).** Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets. The Space's own Dockerfile sets the measured retrieval configuration (`RETRIEVAL_RERANK=true`, `RETRIEVAL_FETCH_K=50`, `RETRIEVAL_TICKER_FILTER=inferred`) as image environment, pre-downloads the cross-encoder (~90 MB) at build time, and runs `python -m ingestion.xbrl` at build time (about three seconds) to create `data/facts.sqlite` from the LFS-shipped filings; Space variables of the same names override the image defaults. Reranking adds roughly a second of CPU per retrieval call on the free tier's two cores, and verification adds a second model call per answer.
 
-  Note that this repo's [Dockerfile](Dockerfile) and the one in the deployed Space differ deliberately. Here, the image **rebuilds** the Chroma index at build time from the committed filings under `data/sec_filings/` using local MiniLM embeddings, so the ~360–370 MB index never has to live in git. Re-embedding 67,521 chunks exceeds Hugging Face's build timeout on the free CPU builder, so the Space instead **ships a prebuilt index via Git LFS** and skips the rebuild. Copying this Dockerfile into the Space would produce a build that times out.
+  Note that this repo's [Dockerfile](Dockerfile) and the one in the deployed Space differ deliberately. Here, the image **rebuilds** the Chroma index at build time from the committed filings under `data/sec_filings/` using local MiniLM embeddings, so the index never has to live in git. Re-embedding the old 67,521-chunk index exceeded Hugging Face's build timeout on the free CPU builder, so the Space **ships a prebuilt index via Git LFS** and skips the rebuild; the rebuilt index (29 MB, about a minute to embed) would fit a build step, and moving the Space to that is a separate change.
 
 **If the Space build fails with `exit code 128`.** The build job dies at the git/LFS stage before any Docker step runs — the build log shows `Build Queued` and nothing after — and the Space serves HTTP 503 until it is fixed. Observed three times during development.
 
@@ -715,7 +723,7 @@ financial-research-agent/
 │   ├── benchmark_smoke.csv         # 5 of those rows, for --dry-run and CI
 │   ├── benchmark_chunks.json       # Which index chunks hold each item's reference passage
 │   ├── chunk_labels.py             # Builds benchmark_chunks.json from the index (+ overrides)
-│   ├── chunk_labels_overrides.json # The 2 hand-resolved labels, with reasons
+│   ├── chunk_labels_overrides.json # The 3 hand-resolved labels, with reasons
 │   ├── run_eval.py                 # RAGAS harness (resumable, checkpointed, schema 3)
 │   ├── run_retrieval_eval.py       # Retriever-only metrics, no LLM calls
 │   ├── retrieval_metrics.py        # hit/recall@k, MRR, nDCG over relevance groups
@@ -724,8 +732,6 @@ financial-research-agent/
 │   ├── leaderboard.py              # Regenerates results/LEADERBOARD.md
 │   ├── ci_gate.py                  # The quality gate: thresholds vs measured, PASS/FAIL, step summary
 │   ├── ci_gate.json                # Thresholds, each naming the committed file it was set from
-│   ├── ci_corpus.py                # Cuts / embeds the CI index slice
-│   ├── ci_corpus.jsonl.gz          # The slice: 3,991 chunks that reproduce the full-index numbers
 │   ├── ablation.py                 # Renders the retrieval ablation matrix from results files
 │   ├── recompute_deterministic.py  # Re-derives the judge-free metrics on any results file
 │   ├── EVALUATION.md               # Method, findings, limitations
@@ -733,7 +739,9 @@ financial-research-agent/
 │   └── cache/                      # Agent-output cache (gitignored)
 ├── ingestion/
 │   ├── downloader.py               # SEC EDGAR fetcher
-│   ├── cleaner.py                  # HTML/iXBRL stripping
+│   ├── submission.py               # The EDGAR envelope: which <DOCUMENT> is the 10-K
+│   ├── cleaner.py                  # 10-K document only → plain text (finding 22)
+│   ├── audit.py                    # What the index holds, class by class
 │   ├── chunker.py                  # Recursive splitter, 512 chars / 50 overlap
 │   ├── embedder.py                 # MiniLM → ChromaDB upsert
 │   ├── xbrl.py                     # Inline XBRL → data/facts.sqlite (6,089 tagged facts)
@@ -747,27 +755,33 @@ financial-research-agent/
 │   ├── rerank.py                   # Cross-encoder reranker
 │   ├── tickers.py                  # Which company a question names (the inferred filter)
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 201 tests; no network, key or index needed
+├── tests/                          # 222 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
+│   ├── test_submission_audit.py    # the EDGAR envelope, 10-K isolation, the audit classifier (6)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   ├── test_query_stream.py        # SSE streaming contract (2)
 │   ├── test_query_meta.py          # the meter on /query and the meta stream event (2)
 │   ├── test_meter.py               # latency, tokens, cost, tool timings, trace id (6)
 │   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (27)
-│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, deterministic aggregation (8)
+│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, the generate / cache / stop loop (12)
 │   ├── test_retriever.py           # fusion, BM25, ticker inference, retrieval switches (13)
 │   ├── test_tool_wiring.py         # tool observations round-trip through the parser (4)
 │   ├── test_ablation.py            # ablation matrix rendering (2)
-│   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator (10)
+│   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator, segment filter (13)
 │   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
-│   ├── test_ci_gate.py             # gate thresholds, judged checks, the index slice (17)
-│   └── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (19)
+│   ├── test_ci_gate.py             # gate thresholds and judged checks (14)
+│   ├── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (22)
+│   ├── test_api_edges.py           # question bound, one deadline, stream cancellation (4)
+│   └── test_mcp_contract.py        # the MCP server in-process: discovery, schemas, observation format (4)
 ├── web/                            # Next.js chat client (see web/README.md)
-├── docs/adr/                       # Architecture decision records
+├── docs/
+│   ├── DECISIONS.md                # Every design decision with its evidence
+│   └── adr/                        # Architecture decision records
+├── LICENSE                         # MIT
 ├── conftest.py                     # Test setup: tracing and verification forced off
 ├── SECURITY.md
-├── ROADMAP.md                      # Six upgrades done, three next steps, each from a finding
+├── ROADMAP.md                      # Seven upgrades done, three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
 ├── requirements.txt
@@ -786,5 +800,11 @@ financial-research-agent/
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 201 backend tests plus 3 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 222 backend tests plus 3 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

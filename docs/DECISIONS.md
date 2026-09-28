@@ -1,0 +1,135 @@
+# Decisions
+
+One entry per design decision that a reader might ask about, with the
+evidence it rests on. Numbers live in [eval/EVALUATION.md](../eval/EVALUATION.md)
+and the results files under [eval/results/](../eval/results/); each entry
+points at the section or finding that measured it. Where a decision was
+reversed, the entry says so and why.
+
+## Corpus and ingestion
+
+**Five FY2025 10-K filings, committed to the repository.** The SEC EDGAR
+full-submission files are public, 84 MB together and under GitHub's per-file
+limit, and committing them makes every index reproducible from a clean clone
+with no network step. Five large-cap technology filers is a demo-sized corpus
+by design (limitation 4).
+
+**Clean only the 10-K document of a submission.** The original cleaner read
+the whole EDGAR envelope, and 74% of the index it built was escaped markup,
+XBRL identifiers and MetaLinks JSON from the exhibits, the taxonomy files
+and the XBRL instance; 23% was prose (finding 22; `python -m ingestion.audit` shows the composition). Keeping the
+10-K document alone cut the index from 67,521 chunks to 4,783, all prose and
+tables, and cut a rebuild from 26 minutes to about one.
+
+**512-character chunks with 50 characters of overlap, recursive splitting.**
+The size every number in the evaluation was measured with. A 10-K table cut
+mid-row is the known cost — table questions are the weakest stratum at every
+retrieval configuration — and table-aware chunking is ROADMAP item 1, to be
+measured with the retriever-only runner before any judged run.
+
+**all-MiniLM-L6-v2 embeddings, run locally.** Pinned, free, CPU-fast and
+reproducible; a general-web model whose weakness on financial terminology
+was answered by reranking its candidates rather than by a larger encoder
+(the ablation). The one constant to change if that is revisited is
+`EMBEDDING_MODEL`, followed by a re-index and a relabel.
+
+**SQLite for the tagged XBRL facts.** 6,089 facts is a small relational
+table queried by (ticker, concept, fiscal year, segment); a vector store's
+metadata filter is neither indexed for that nor able to express it.
+[docs/adr/0001](adr/0001-sqlite-for-xbrl-facts.md).
+
+## Retrieval
+
+**Reciprocal Rank Fusion with k = 60 for hybrid search.** RRF needs no score
+calibration between a cosine similarity and a BM25 score, and 60 is the
+constant from the original RRF paper (Cormack, Clarke and Buettcher, 2009);
+the sweep to 20 and the sparse-weight sweep are in the ablation matrix.
+
+**Dense candidates into a cross-encoder, not hybrid ones.** Nineteen
+configurations were scored on the current index ("Retrieval ablation" in
+eval/EVALUATION.md). The shipped pipeline — dense search over 50 candidates,
+reranked, under the inferred ticker filter — has hit@5 0.662 against 0.507 for
+dense alone. Hybrid BM25 fusion is the best *unreranked* option (0.592) but
+feeding its candidates to the reranker scores lower (0.634 against 0.662).
+The first ablation, on the uncleaned index, had hybrid losing to dense
+outright; that reversed on the clean index (finding 22), which is why this
+is recorded as a measurement to re-run after any ingestion change rather
+than a preference.
+
+**A cross-encoder over 50 dense candidates.** Reranking is the single largest
+gain in the matrix at every index; 100 candidates gained nothing over 50
+(finding 16) and costs twice the latency.
+
+**An inferred ticker filter, not an oracle one.** Restricting search to the
+one company a question names costs nothing at query time and matched the
+oracle filter that the agent could never have (finding 17).
+
+**The code default stays dense top-5; the measured configuration is switched
+on by environment variables.** Flipping the default would have orphaned every
+cached agent output keyed on the untagged configuration; the deployment sets
+the variables instead (README, "Retrieval switches").
+
+## Answering
+
+**Facts first, search second.** The prompt sends any exact-figure question
+to `lookup_financial_fact` and any arithmetic to `compute_metric`. The
+temporal stratum, where the agent quoted the prior year on four of five
+items under two retrievers, closed only when the fiscal year became a query
+argument (finding 18), and in-head arithmetic vanished once the calculator's
+result was an observation (finding 20).
+
+**`gemini-3.1-flash-lite` at temperature 0.** The model the benchmark was
+measured on; its predecessor returned an empty answer on 10 of 66 items
+(finding 1). Temperature 0 for a tool-calling loop that must decide reliably
+when to stop.
+
+**Terminal failures are named states, not answers.** An empty answer or a
+recursion-limit placeholder is refused at every layer and counted as a
+failure in every mean, never excluded (finding 1).
+
+## Verification
+
+**Every answer becomes cited claims and is checked before it is served.** A
+faithfulness judge cannot see a correct-looking derivation from grounded
+numbers (finding 20) or a right figure under the wrong year (finding 2); the
+contract's checks are deterministic, run on every answer, and refuse rather
+than serve what they cannot attribute. What happens when verification fails:
+one repair attempt with the failures shown to the structuring model, then
+in strict mode a refusal that names what could not be verified; `VERIFY_MODE`
+selects strict, warn or off. The price is a second model call: about +22% in
+dollars and a doubled median latency (finding 21).
+
+## Evaluation
+
+**Judge-free metrics first, a judge only on winners.** The retriever-only
+runner and the figure check cost nothing and run in seconds; a judge pass
+over 71 items costs about $1.10 (cost and latency section). Every retrieval
+change is measured for free before anything is spent on it.
+
+**Why faithfulness alone is not enough.** It scored the wrong-year answers
+1.0 and the in-head arithmetic 1.0 (findings 2 and 20); the figure check
+and the grounding check exist because of that, and the primary-figure rate
+is reported only over items whose ground truth holds a figure other than a
+year (figure check version 4).
+
+**Contexts are scored per chunk with a provenance prefix.** Stripping the
+`[META 10-K, chunk 412]` header cost 0.12 faithfulness on identical answers
+(finding 15); the prefix is part of the hashed configuration.
+
+**Thresholds sit two items under the committed value.** A CI gate is a
+regression detector: one or two items of movement is within the measured
+run-to-run noise, three is not (CI quality gate section).
+
+**CI rebuilds the real index.** With the clean corpus embedding in about a
+minute, CI builds the same index the docs measure from the committed filings
+and caches it on their hash; an earlier committed slice was retired when the
+rebuild became cheap.
+
+## Deployment
+
+**The Space ships a prebuilt index and is synced by hand.** Hugging Face's
+free CPU builder timed out re-embedding the old 67,521-chunk index at image
+build, so the index went in through Git LFS. The rebuild is now cheap
+enough to do at build time; that change is deliberate and separate.
+
+**MIT license.** So the code can be reused and deployed without asking.

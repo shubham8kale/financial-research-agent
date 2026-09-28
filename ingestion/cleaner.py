@@ -10,8 +10,8 @@
 # A full-submission.txt is an SGML envelope of every document in the filing.
 # Only the 10-K document is kept (ingestion/submission.py): the exhibits, the
 # XBRL taxonomy files and the XBRL instance — whose text blocks are
-# HTML-escaped copies of the notes — made up 82% of the index before this
-# step (eval/EVALUATION.md, finding 22).  From that document: the SEC-HEADER
+# HTML-escaped copies of the notes — made up three-quarters of the index
+# before this step (eval/EVALUATION.md, finding 22).  From that document: the SEC-HEADER
 # block (filer metadata, identical in every filing); the inline XBRL header
 # (<ix:header>: hidden facts, contexts, units — a list of CIKs, dates, member
 # names and namespace URLs, not prose); <style> and <script> bodies; and
@@ -154,9 +154,9 @@ def clean_filing(file_path: str | Path) -> str:
     # the exhibits, the XBRL taxonomy files, the XBRL instance (whose text
     # blocks are HTML-escaped copies of the notes — after entity decoding they
     # read as literal "<td style=...>" prose) and images.  Before this step the
-    # cleaner read all of them, and 82% of the index was not 10-K text: 39%
-    # escaped markup, 31% identifiers, 9% MetaLinks JSON (eval/EVALUATION.md,
-    # finding 22).  A file without an envelope (a saved .htm, the tests) is
+    # cleaner read all of them, and 74% of the index was not text at all: 39%
+    # escaped markup, 26% XBRL identifiers, 9% MetaLinks JSON; 23% was prose
+    # (eval/EVALUATION.md, finding 22).  A file without an envelope (a saved .htm, the tests) is
     # cleaned whole.
     cleaned, n_dropped = primary_document_or_all(cleaned)
     if n_dropped:

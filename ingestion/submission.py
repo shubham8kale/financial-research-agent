@@ -8,8 +8,9 @@
 # documents; the rest are exhibits, the XBRL taxonomy files, the XBRL
 # instance (whose text blocks are HTML-escaped copies of the notes) and
 # images.  Both the text cleaner and the XBRL parser need only the 10-K, and
-# before this module the cleaner read the whole envelope: 82% of the index it
-# built was not 10-K prose (eval/EVALUATION.md, finding 22).
+# before this module the cleaner read the whole envelope: three-quarters of
+# the index it built was markup, identifiers and metadata, 23% prose
+# (eval/EVALUATION.md, finding 22).
 
 import re
 

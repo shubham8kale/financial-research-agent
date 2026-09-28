@@ -15,8 +15,8 @@ worth building because the instrument could not have told two apart.
 
 **Now (results schema 3).** Contexts are split per chunk. Every benchmark item
 is labelled with the chunk(s) that hold its reference passage
-([`eval/benchmark_chunks.json`](eval/benchmark_chunks.json): 66 located
-verbatim, 3 by prefix, 2 by hand). A retriever-only runner scores the
+([`eval/benchmark_chunks.json`](eval/benchmark_chunks.json): on the current
+index 65 located verbatim, 3 by prefix, 3 by hand). A retriever-only runner scores the
 retriever against those labels with no LLM call at all, in under 30 seconds,
 and a ground-truth figure check scores whether the answer quoted the right
 number. Every run carries a config hash and lands on
@@ -24,8 +24,8 @@ number. Every run carries a config hash and lands on
 
 **What it measured on the shipped dense retriever**, question sent verbatim,
 k = 25, 71 items: a relevant chunk in the top 5 on **50.7%** of items, in the
-top 25 on 70.4%, MRR 0.357, nDCG@5 0.373, 17.5 ms per query
-([`retrieval-dense-1e17cf5b5eab.json`](eval/results/retrieval-dense-1e17cf5b5eab.json)).
+top 25 on 74.7%, MRR 0.358, nDCG@5 0.369, 13.6 ms per query
+([`retrieval-dense-eb4d1b4fefba.json`](eval/results/retrieval-dense-eb4d1b4fefba.json); the same 50.7% on the first index).
 Half the time the dense retriever does not put the right page in front of the
 model. That is the number the next item exists to move.
 
@@ -44,9 +44,11 @@ depth sweeps, a cross-encoder reranker at three fetch depths, ticker filters
 inferred from the question and the oracle upper bound — for no LLM calls
 ([eval/EVALUATION.md](eval/EVALUATION.md), "Retrieval ablation", findings
 16–17). The winner, dense + reranker over 50 + inferred ticker filter, takes
-hit@5 to **0.634** and MRR from 0.357 to 0.496 at 0.9 s per query. Hybrid
-BM25 fusion lost to plain dense (0.479) and is kept in the code, off, as the
-measured negative result.
+hit@5 to **0.662** and MRR from 0.358 to 0.541 at 0.75 s per query on
+the rebuilt index. Hybrid BM25 fusion is the best unreranked retriever there
+(0.592) and loses under the reranker (0.634 against 0.662); on the
+first index it had lost to dense outright, an artefact of the exhibits
+(finding 22). It stays in the code, off.
 
 ---
 
@@ -62,10 +64,11 @@ figure_exact was 0.40 before and after the reranker.
 ingestion pipeline; [docs/adr/0001](docs/adr/0001-sqlite-for-xbrl-facts.md))
 and the agent has `lookup_financial_fact` and `compute_metric`
 ([eval/EVALUATION.md](eval/EVALUATION.md), "Structured facts"). The fiscal
-year is a filter, the calculator does the arithmetic. On the 50 benchmark
-items with a figure, the answer contains the figure the question asked for
-on **100%** (`figure_primary`), against 92% with the reranker alone and 76%
-for the dense baseline; every temporal item now names the year asked. The
+year is a filter, the calculator does the arithmetic. On the 45 benchmark
+items whose ground truth carries a figure other than a year, the answer
+contains the figure the question asked for on **100%** (`figure_primary`), against
+91% with the reranker alone and 73% for the dense baseline; every temporal
+item now names the year asked. The
 fact tool was used on 34 of 71 items and the calculator on 8.
 
 **Left open.** `agent_hit_rate` counts index chunks only, so it falls when
@@ -116,24 +119,46 @@ will be larger than here.
 **Was.** CI linted, ran a dry-run that made no retrieval call, and ran the
 unit tests. A change that halved hit@5 would have passed.
 
-**Now.** Every pull request scores the dense baseline and the shipped
+**Now.** Every pull request rebuilds the index from the committed filings
+(about a minute, cached), scores the dense baseline and the shipped
 configuration against the 71 labelled items and fails below thresholds set
 two items under the committed values ([eval/ci_gate.py](eval/ci_gate.py),
 [eval/ci_gate.json](eval/ci_gate.json); a threshold above its own source
-value fails the dry-run). It runs on a committed 3,991-chunk slice of the
-index ([eval/ci_corpus.py](eval/ci_corpus.py)) that reproduces the
-full-index numbers for both gated configurations — a full rebuild embeds
-67,521 chunks in about 26 minutes on a 12-core laptop; the slice embeds in
-2.5 and is cached. The judged run is a manual workflow over ten fixed items
-with thresholds calibrated from the committed judged run, about $0.20 a
-click ([eval/EVALUATION.md](eval/EVALUATION.md), "CI quality gate").
+value fails the dry-run). The judged run is a manual workflow over ten fixed
+items with thresholds calibrated from the committed judged run, about $0.20
+a click ([eval/EVALUATION.md](eval/EVALUATION.md), "CI quality gate").
 
 **Left open.** The gate is a regression detector, not a quality measure:
-two items of slack means a one-item loss passes. BM25 cannot be scored on a
-slice (its IDF is corpus-wide) and is not gated. The judged smoke meets a
-smaller haystack than production, so its scores bound the full-corpus ones
-from above. A chunking change (item 1 below) invalidates the labels and the
-slice together; both are regenerated with two commands.
+two items of slack means a one- or two-item loss passes. A chunking change
+(item 1 below) invalidates the labels; they are regenerated with one command
+and the gate refuses to score an index they do not match.
+
+---
+
+## Done: the index is the 10-K, and the review's other findings
+
+**Was.** A second review found that the index was mostly not the 10-K, that
+the primary-figure headline counted years, that the MCP server was untested
+and drifting, that the API had no question bound and kept spending after a
+client left, that the fact store's segment filter matched axis names and its
+CAGR could return a complex number, that the harness's core loop was
+untested, and that the repository had no license.
+
+**Now.** The cleaner keeps only the 10-K document and the index is 4,783
+chunks of prose and tables instead of 67,521 chunks, three-quarters of them
+XBRL markup, identifiers and metadata; every retrieval number was re-measured and finding 22 records what
+moved (the winner stayed, hybrid fusion flipped from loser to best unreranked
+option, the rebuild fell from 26 minutes to 72 seconds). The figure check is
+at version 4; the MCP server honours the retriever's configuration, runs off
+the event loop, has DNS-rebinding protection on and a contract test; the API
+bounds the question, shares one deadline across both agents and cancels the
+agent when the stream's client leaves; the two fact-store bugs are fixed with
+tests; the generate / cache / stop loop is tested; and
+[docs/DECISIONS.md](docs/DECISIONS.md) and a license exist.
+
+**Left open.** Answer quality has not been judged on the rebuilt index
+(limitation 19; about $1.10). The Space still ships its index through LFS
+although a build-time rebuild would now fit.
 
 ---
 
@@ -179,13 +204,11 @@ changes every chunk id, so
 overrides are re-resolved. Measure on the `requires_table` and `temporal`
 strata first, with the retriever-only runner, before any judge call.
 
-**Two ingestion facts to fold into the same pass.** The MSFT filing
-contributes 32,886 of 67,521 chunks (49% of the index) because its full
-submission carries exhibits and XBRL context blocks the cleaner leaves in;
-the first prose of its cover page is chunk 72. And the splitter produced a
-two-word chunk (`MSFT_10K_chunk_296`, "Activision Blizzard") in the middle of
-a sentence. Both inflate the haystack for every query, and the exhibit bloat
-is part of why exact-token matching underperformed here.
+**One ingestion fact to fold into the same pass.** The exhibit and XBRL
+bloat that once made Microsoft half the index is gone (finding 22), but the
+splitter still emits heading-only chunks: 12% of the rebuilt index is under
+120 characters. Folding those into their neighbour belongs to the same
+structure-preserving pass.
 
 ---
 

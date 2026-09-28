@@ -53,10 +53,10 @@ items, and the agent's own query wording does worse, 43.7%.**
 **Upgrades 2–6, built on that instrument.** Nineteen retrieval configurations
 were scored for free and one was bought with the judge: dense search over 50
 candidates, reranked by a cross-encoder under an inferred ticker filter, takes
-hit@5 from 0.507 to **0.634** ([Retrieval ablation](#retrieval-ablation)).
+hit@5 from 0.507 to **0.662** on the current index ([Retrieval ablation](#retrieval-ablation)).
 The tagged XBRL facts became a lookup tool and a calculator, and the answer
 contains the figure the question asked for on **100%** of items with one, up
-from 76% on the dense baseline, with faithfulness 0.826 → **0.957**
+from 73% on the dense baseline, with faithfulness 0.826 → **0.957**
 ([Structured facts](#structured-facts-exact-figures-and-a-calculator)). A
 meter on every run prices the result: p50 1.9 s and **$0.0017 per query**
 ([Cost and latency](#cost-and-latency)). Every answer is then turned into
@@ -65,6 +65,15 @@ cited claims and verified against what was retrieved before it is served —
 ([Output contract](#output-contract-and-fail-closed-verification)) — and the
 retrieval numbers are a gate on every pull request
 ([CI quality gate](#ci-quality-gate)). Findings 16–21 are what those showed.
+
+**The index was rebuilt after a review (finding 22).** The cleaner had read
+every document in each EDGAR submission — exhibits, XBRL taxonomy files and
+the HTML-escaped XBRL instance — and 74% of the 67,521-chunk index was
+escaped markup, XBRL identifiers or MetaLinks JSON; 23% was prose. It now reads the 10-K document alone: 4,783 chunks, 86% prose,
+built in 72 seconds instead of 26 minutes. **Every retrieval number in this
+document is on the rebuilt index**; the judged answer-quality runs predate
+it and are marked as such, and the judge-free run on the new index is under
+finding 22.
 
 ---
 
@@ -181,16 +190,18 @@ instrument, so the two can be compared item for item; nothing was regenerated.
 | Where runs land | `results/` | `results/` plus [`LEADERBOARD.md`](results/LEADERBOARD.md), regenerated on every run |
 
 **Chunk labels.** [`chunk_labels.py`](chunk_labels.py) finds each item's
-reference passage in the index by whitespace-normalised substring search. 66 of
-71 locate verbatim, 3 by their first 60 characters, and 2 were resolved by hand
-in [`chunk_labels_overrides.json`](chunk_labels_overrides.json) with the reason
-recorded: `qa_0057`'s sentence straddles MSFT chunks 295–297 (the splitter
-produced a two-word chunk, "Activision Blizzard", in the middle of it), and
-`qa_0062`'s Microsoft cover-page reference straddles chunks 72–73, because
-chunks 0–71 of that filing are XBRL context blocks the cleaner left in. A
-reference that sits in several chunks — the 50-character overlap copies text
-into a neighbour; a table row like "AWS 90,757 107,556 128,725" appears in
-several tables — becomes one *any-of* group; 20 items have such a group.
+reference passage in the index by whitespace-normalised substring search. On
+the current index 65 of 71 locate verbatim, 3 by their first 60 characters,
+and 3 were resolved by hand in
+[`chunk_labels_overrides.json`](chunk_labels_overrides.json) with the reason
+recorded: `qa_0022` and `qa_0023` cite Amazon's segment table, whose column
+header sits in the chunk before its rows; `qa_0057`'s sentence has a space
+before its comma in the cleaned text. A reference that sits in several
+chunks — the 50-character overlap copies text into a neighbour; a table row
+like "AWS 90,757 107,556 128,725" appears in several tables — becomes one
+*any-of* group; 12 items have such a group. (On the first index, 66 located
+verbatim, 3 by prefix and 2 by hand, one of them because Microsoft's cover
+page began at chunk 72 behind XBRL context blocks — finding 22.)
 Recall is measured over groups, so retrieving one of two overlap neighbours is
 not a miss. The benchmark CSV was not edited.
 
@@ -200,39 +211,46 @@ not every chunk that states the same fact. Finding 13 quantifies the gap.
 ### Retrieval alone, question sent verbatim
 
 [`run_retrieval_eval.py`](run_retrieval_eval.py) sends each benchmark question
-unchanged to the shipped dense retriever (all-MiniLM-L6-v2, ChromaDB, no
-filter), asks for 25 chunks, and scores the ranked ids against the labels. 71
-items, no LLM call, 27 s wall clock, 17.5 ms p50 per query. Evidence:
-[`retrieval-dense-1e17cf5b5eab.json`](results/retrieval-dense-1e17cf5b5eab.json).
+unchanged to the dense retriever (all-MiniLM-L6-v2, ChromaDB, no filter),
+asks for 25 chunks, and scores the ranked ids against the labels. 71 items,
+no LLM call, 13.6 ms p50 per query on the current 4,783-chunk index.
+Evidence: [`retrieval-dense-eb4d1b4fefba.json`](results/retrieval-dense-eb4d1b4fefba.json).
 
 | stratum | n | hit@5 | recall@5 | MRR | nDCG@5 | recall@10 | recall@25 |
 |---|---|---|---|---|---|---|---|
-| **all** | **71** | **0.5070** | **0.4894** | **0.3569** | **0.3729** | **0.5880** | **0.6796** |
-| single_hop | 17 | 0.5882 | 0.5882 | 0.5215 | 0.5187 | 0.7059 | 0.8824 |
-| numerical | 33 | 0.5758 | 0.5758 | 0.4028 | 0.4368 | 0.6364 | 0.6970 |
-| multi_hop | 1 | 1.0000 | 1.0000 | 0.2000 | 0.3869 | 1.0000 | 1.0000 |
-| comparative | 4 | 0.5000 | 0.1875 | 0.1750 | 0.1345 | 0.1875 | 0.1875 |
-| negative | 3 | 0.0000 | 0.0000 | 0.0417 | 0.0000 | 0.3333 | 0.3333 |
-| list | 8 | 0.2500 | 0.2500 | 0.1845 | 0.1875 | 0.3750 | 0.3750 |
-| temporal | 5 | 0.4000 | 0.4000 | 0.1364 | 0.1635 | 0.6000 | 0.9000 |
-| requires_table = True | 26 | 0.4615 | 0.4615 | 0.2798 | 0.3059 | 0.5769 | 0.7115 |
-| requires_table = False | 45 | 0.5333 | 0.5056 | 0.4015 | 0.4116 | 0.5944 | 0.6611 |
+| **all** | **71** | **0.5070** | **0.4894** | **0.3582** | **0.3695** | **0.5951** | **0.7254** |
+| single_hop | 17 | 0.6471 | 0.6471 | 0.5510 | 0.5558 | 0.8235 | 0.9412 |
+| numerical | 34 | 0.5000 | 0.5000 | 0.3377 | 0.3646 | 0.5588 | 0.7059 |
+| multi_hop | 1 | 1.0000 | 1.0000 | 0.5000 | 0.6309 | 1.0000 | 1.0000 |
+| comparative | 4 | 0.5000 | 0.1875 | 0.3465 | 0.2021 | 0.3125 | 0.3750 |
+| negative | 2 | 0.5000 | 0.5000 | 0.1000 | 0.1935 | 0.5000 | 0.5000 |
+| list | 8 | 0.3750 | 0.3750 | 0.2375 | 0.2664 | 0.3750 | 0.5000 |
+| temporal | 5 | 0.2000 | 0.2000 | 0.1201 | 0.0861 | 0.6000 | 0.8000 |
+| requires_table = True | 27 | 0.3704 | 0.3704 | 0.2030 | 0.2247 | 0.4815 | 0.6296 |
+| requires_table = False | 44 | 0.5909 | 0.5625 | 0.4535 | 0.4583 | 0.6648 | 0.7841 |
 
-Half the time the retriever does not put a labelled chunk in the top 5, and on
-a third of items it is not in the top 25 either. `comparative` items need
-several passages and get 19% of them; `list` items fare little better. Items
-that depend on a table trail the rest at every depth up to 10 and lead only
-at 25 (recall@25 0.712 against 0.661). The `negative` row
-scores retrieval of the passage that shows a fact is *absent*, which is a
-weaker notion of relevance — read it as context for the refusal behaviour, not
-as a retrieval failure in the usual sense. Thin strata are thin here as
-everywhere: `multi_hop` is one item.
+Half the time the retriever does not put a labelled chunk in the top 5, and
+on a quarter of items it is not in the top 25 either. `comparative` items
+need several passages and get 19% of them at k = 5; `list` items
+38%. Items that depend on a table trail the rest (hit@5 0.370
+against 0.591). The `negative` row scores retrieval of the passage that
+shows a fact is *absent*, which is a weaker notion of relevance — read it as
+context for the refusal behaviour, not as a retrieval failure in the usual
+sense. Thin strata are thin here as everywhere: `multi_hop` is one item.
+
+The same measurement on the first index gave hit@5 0.507 as well
+([`retrieval-dense-1e17cf5b5eab.json`](results/retrieval-dense-1e17cf5b5eab.json)): the junk that made up
+three-quarters of that index was not competing for the top 5 of a dense search, it was
+competing with exact-token search and with the reranker (finding 22).
 
 This table was the starting line for the retrieval ablation in the next
 section: a variant is measured here first, for free, and only a winner is
 spent on with the judge.
 
 ### The same 71 answers, re-scored per chunk
+
+*Measured on the first index (67,521 chunks); the figure columns are at
+figure-check version 4. See finding 22 for the rebuilt index.*
 
 The 71 `gemini-3.1-flash-lite` answers in the cache (prompt
 `sha256:d1bedac20eb2`), re-judged by `gemini-3.6-flash` with contexts split
@@ -243,12 +261,12 @@ scored on the placeholder text they returned, never excluded. Evidence:
 
 | stratum | n | faithfulness | answer relevancy | context recall | figure_exact (n) | agent_hit |
 |---|---|---|---|---|---|---|
-| **all** | **71** | **0.8263** | **0.7639** | **0.7183** | **0.6400** (50) | **0.4366** |
-| single_hop | 17 | 0.8824 | 0.8317 | 0.8235 | 1.0000 (8) | 0.6471 |
+| **all** | **71** | **0.8263** | **0.7639** | **0.7183** | **0.6000** (45) | **0.4366** |
+| single_hop | 17 | 0.8824 | 0.8317 | 0.8235 | 1.0000 (4) | 0.6471 |
 | numerical | 33 | 0.8232 | 0.7278 | 0.6970 | 0.6061 (33) | 0.4242 |
 | multi_hop | 1 | 1.0000 | 0.6225 | 1.0000 | n/a | 1.0000 |
 | comparative | 4 | 0.4583 | 0.5611 | 0.7500 | 0.3333 (3) | 0.2500 |
-| negative | 3 | 0.8889 | 0.9517 | 0.3333 | 1.0000 (1) | 0.3333 |
+| negative | 3 | 0.8889 | 0.9517 | 0.3333 | n/a | 0.3333 |
 | list | 8 | 0.9375 | 0.7614 | 0.5000 | n/a | 0.1250 |
 | temporal | 5 | 0.7000 | 0.8528 | 1.0000 | 0.4000 (5) | 0.4000 |
 
@@ -283,8 +301,9 @@ Computed by `attach_deterministic_metrics()` on the same 71 answers:
 
 | | value | n |
 |---|---|---|
-| `figure_exact_rate` — every ground-truth figure present in the answer | **0.6400** | 50 items whose ground truth contains a figure |
-| `figure_recall` — share of ground-truth figures present | 0.7320 | 50 |
+| `figure_primary_rate` — the figure the question asked for is in the answer | **0.7333** | 45 items whose ground truth holds a figure other than a year |
+| `figure_exact_rate` — every ground-truth figure present in the answer | **0.6000** | 45 |
+| `figure_recall` — share of ground-truth figures present | 0.7022 | 45 |
 | `agent_hit_rate` — a labelled chunk seen anywhere in the agent's tool observations | **0.4366** | 71 |
 | `agent_recall` — share of reference groups the agent saw | 0.4296 | 71 |
 | `agent_mrr` — by the agent's own first-seen order | 0.2942 | 71 |
@@ -292,10 +311,13 @@ Computed by `attach_deterministic_metrics()` on the same 71 answers:
 Per-stratum values are in the schema-3 baseline results file and on the
 leaderboard. Items whose ground truth has no figure (`list`, most `negative`)
 are *not applicable* to the figure check and are reported as such, never as a
-pass. These are figure-check **version 3** numbers: version 1 read the "10" in
+pass. These are figure-check **version 4** numbers: version 1 read the "10" in
 "10-K" as a figure and demanded it of the answer on three `negative` items,
-and version 3 added the primary-figure rate and precision-aware rounding
-(finding 18); every schema-3 results file was brought to version 3 by
+version 3 added the primary-figure rate and precision-aware rounding
+(finding 19), and version 4 made a ground truth whose only figure is a year
+*not applicable* — five items, one of them a "not disclosed" answer that had
+counted as a pass on the strength of the year; every schema-3 results file
+was brought to version 4 by
 [`recompute_deterministic.py`](recompute_deterministic.py), which records the
 recomputation inside the file, and no judge score was touched.
 
@@ -308,8 +330,10 @@ is a field on `RetrievalConfig`, defaulting to dense top-5 — the code default,
 what the system shipped with before the ablation — and each
 configuration below was scored with `run_retrieval_eval.py` — the benchmark
 question sent verbatim, 25 chunk ids returned, compared against the chunk
-labels. No LLM call was made for any row; the whole matrix took under fifteen
-minutes of CPU. Latency is the median wall-clock per query on the development
+labels. No LLM call was made for any row; the whole matrix took about twenty
+minutes of CPU on the current index (the first matrix, on the 67,521-chunk
+index, is in git history and summarised configuration by configuration in
+finding 22). Latency is the median wall-clock per query on the development
 machine (a laptop CPU), after a warm-up query; the free-tier Space has fewer
 cores and should be assumed slower.
 
@@ -318,25 +342,25 @@ The matrix is regenerated from the results files by `python -m eval.ablation
 
 | configuration | hit@5 | recall@5 | MRR | nDCG@5 | recall@10 | recall@25 | table hit@5 | p50 ms | file |
 |---|---|---|---|---|---|---|---|---|---|
-| dense, rerank fetch=50, ticker=inferred | 0.634 | 0.606 | 0.496 | 0.507 | 0.672 | 0.750 | 0.500 | 892.8 | [dense-rerank-f50-tf-inferred](results/retrieval-dense-rerank-f50-tf-inferred-8f6ef861d7e7.json) |
-| dense, rerank fetch=100 | 0.620 | 0.602 | 0.482 | 0.499 | 0.655 | 0.701 | 0.500 | 1620.1 | [dense-rerank-f100](results/retrieval-dense-rerank-f100-84fdb1858a25.json) |
-| dense, rerank fetch=50 | 0.620 | 0.592 | 0.480 | 0.493 | 0.658 | 0.722 | 0.500 | 794.5 | [dense-rerank-f50](results/retrieval-dense-rerank-f50-1417a345c7b7.json) |
-| dense, rerank fetch=100, ticker=inferred | 0.606 | 0.588 | 0.486 | 0.497 | 0.655 | 0.715 | 0.462 | 1719.4 | [dense-rerank-f100-tf-inferred](results/retrieval-dense-rerank-f100-tf-inferred-ad3ace274d29.json) |
-| hybrid, rerank fetch=50, ticker=inferred | 0.606 | 0.588 | 0.489 | 0.498 | 0.680 | 0.739 | 0.462 | 1119.2 | [hybrid-rerank-f50-tf-inferred](results/retrieval-hybrid-rerank-f50-tf-inferred-2048c3da9784.json) |
-| hybrid, rerank fetch=50, ticker=oracle | 0.606 | 0.588 | 0.489 | 0.498 | 0.680 | 0.739 | 0.462 | 1114.4 | [hybrid-rerank-f50-tf-oracle](results/retrieval-hybrid-rerank-f50-tf-oracle-a401ac0308ac.json) |
-| hybrid, rerank fetch=50 | 0.592 | 0.574 | 0.471 | 0.482 | 0.637 | 0.711 | 0.462 | 1058.6 | [hybrid-rerank-f50](results/retrieval-hybrid-rerank-f50-0f8cb0cc6e95.json) |
-| hybrid, rerank fetch=25 | 0.578 | 0.560 | 0.469 | 0.474 | 0.623 | 0.708 | 0.462 | 630.1 | [hybrid-rerank-f25](results/retrieval-hybrid-rerank-f25-955ff196d13f.json) |
-| dense, rerank fetch=25 | 0.549 | 0.532 | 0.421 | 0.434 | 0.609 | 0.680 | 0.500 | 468.6 | [dense-rerank-f25](results/retrieval-dense-rerank-f25-c5ce21431f88.json) |
-| dense, ticker=inferred | 0.535 | 0.518 | 0.400 | 0.411 | 0.630 | 0.722 | 0.538 | 58.4 | [dense-tf-inferred](results/retrieval-dense-tf-inferred-e3e48c7eb861.json) |
-| dense, ticker=oracle | 0.535 | 0.518 | 0.400 | 0.411 | 0.630 | 0.722 | 0.538 | 59.9 | [dense-tf-oracle](results/retrieval-dense-tf-oracle-d313b1d8bbf6.json) |
-| dense | 0.507 | 0.489 | 0.357 | 0.373 | 0.588 | 0.680 | 0.462 | 17.5 | [dense](results/retrieval-dense-1e17cf5b5eab.json) |
-| hybrid, ticker=inferred | 0.507 | 0.500 | 0.404 | 0.405 | 0.651 | 0.750 | 0.346 | 303.8 | [hybrid-tf-inferred](results/retrieval-hybrid-tf-inferred-164c3493c177.json) |
-| hybrid, rrf_k=20 | 0.493 | 0.486 | 0.357 | 0.368 | 0.623 | 0.708 | 0.269 | 276.1 | [hybrid-rrf20](results/retrieval-hybrid-rrf20-09ddab803fac.json) |
-| hybrid | 0.479 | 0.472 | 0.357 | 0.363 | 0.623 | 0.708 | 0.269 | 257.9 | [hybrid](results/retrieval-hybrid-e22f0b7b3525.json) |
-| hybrid, fetch=50 | 0.479 | 0.472 | 0.363 | 0.368 | 0.620 | 0.722 | 0.269 | 270.9 | [hybrid-f50](results/retrieval-hybrid-f50-9c97122ce86b.json) |
-| hybrid, w=1.0/0.5 | 0.479 | 0.461 | 0.370 | 0.370 | 0.609 | 0.680 | 0.269 | 266.4 | [hybrid-sw0.5](results/retrieval-hybrid-sw0.5-7a07be6a37e4.json) |
-| hybrid, w=1.0/2.0 | 0.465 | 0.458 | 0.336 | 0.357 | 0.556 | 0.570 | 0.308 | 269.3 | [hybrid-sw2](results/retrieval-hybrid-sw2-fafb15d81f6c.json) |
-| bm25 | 0.352 | 0.352 | 0.304 | 0.298 | 0.458 | 0.570 | 0.154 | 241.5 | [bm25](results/retrieval-bm25-a308c41b72ea.json) |
+| dense, rerank fetch=50 | 0.662 | 0.630 | 0.529 | 0.538 | 0.665 | 0.743 | 0.481 | 785.2 | [dense-rerank-f50](results/retrieval-dense-rerank-f50-f685e695b18a.json) |
+| dense, rerank fetch=50, ticker=inferred | 0.662 | 0.630 | 0.541 | 0.546 | 0.680 | 0.771 | 0.481 | 750.9 | [dense-rerank-f50-tf-inferred](results/retrieval-dense-rerank-f50-tf-inferred-14ba1d196c5a.json) |
+| dense, rerank fetch=100 | 0.648 | 0.627 | 0.516 | 0.532 | 0.665 | 0.711 | 0.481 | 1549.8 | [dense-rerank-f100](results/retrieval-dense-rerank-f100-6a2b5a7610ae.json) |
+| dense, rerank fetch=100, ticker=inferred | 0.648 | 0.627 | 0.528 | 0.539 | 0.665 | 0.753 | 0.481 | 1606.0 | [dense-rerank-f100-tf-inferred](results/retrieval-dense-rerank-f100-tf-inferred-34f47fc55166.json) |
+| dense, rerank fetch=25 | 0.648 | 0.620 | 0.514 | 0.527 | 0.655 | 0.725 | 0.481 | 432.6 | [dense-rerank-f25](results/retrieval-dense-rerank-f25-c78dcd0e3370.json) |
+| hybrid, rerank fetch=25 | 0.634 | 0.623 | 0.523 | 0.533 | 0.658 | 0.750 | 0.481 | 574.6 | [hybrid-rerank-f25](results/retrieval-hybrid-rerank-f25-1d1fe4ddf911.json) |
+| hybrid, rerank fetch=50 | 0.634 | 0.623 | 0.522 | 0.532 | 0.669 | 0.718 | 0.481 | 979.3 | [hybrid-rerank-f50](results/retrieval-hybrid-rerank-f50-414e872bc3c7.json) |
+| hybrid, rerank fetch=50, ticker=inferred | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1043.8 | [hybrid-rerank-f50-tf-inferred](results/retrieval-hybrid-rerank-f50-tf-inferred-3bc6bb2b0efc.json) |
+| hybrid, rerank fetch=50, ticker=oracle | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1042.1 | [hybrid-rerank-f50-tf-oracle](results/retrieval-hybrid-rerank-f50-tf-oracle-7ec033cdeb78.json) |
+| hybrid, ticker=inferred | 0.606 | 0.599 | 0.430 | 0.457 | 0.672 | 0.792 | 0.444 | 30.6 | [hybrid-tf-inferred](results/retrieval-hybrid-tf-inferred-a70fd4a6a436.json) |
+| hybrid | 0.592 | 0.585 | 0.400 | 0.433 | 0.644 | 0.750 | 0.407 | 27.3 | [hybrid](results/retrieval-hybrid-a0c4d2d732c9.json) |
+| hybrid, rrf_k=20 | 0.592 | 0.585 | 0.394 | 0.428 | 0.644 | 0.750 | 0.407 | 30.3 | [hybrid-rrf20](results/retrieval-hybrid-rrf20-b87bdb385f31.json) |
+| hybrid, fetch=50 | 0.578 | 0.567 | 0.401 | 0.426 | 0.658 | 0.750 | 0.407 | 26.9 | [hybrid-f50](results/retrieval-hybrid-f50-5ad2e1d25835.json) |
+| hybrid, w=1.0/0.5 | 0.578 | 0.560 | 0.401 | 0.423 | 0.680 | 0.725 | 0.407 | 26.9 | [hybrid-sw0.5](results/retrieval-hybrid-sw0.5-7cd7332109b3.json) |
+| dense, ticker=inferred | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 22.0 | [dense-tf-inferred](results/retrieval-dense-tf-inferred-32f799903650.json) |
+| dense, ticker=oracle | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 23.1 | [dense-tf-oracle](results/retrieval-dense-tf-oracle-6affaa6c8917.json) |
+| hybrid, w=1.0/2.0 | 0.535 | 0.535 | 0.357 | 0.390 | 0.606 | 0.683 | 0.333 | 29.7 | [hybrid-sw2](results/retrieval-hybrid-sw2-d424a4aae4b7.json) |
+| dense | 0.507 | 0.489 | 0.358 | 0.369 | 0.595 | 0.725 | 0.370 | 13.6 | [dense](results/retrieval-dense-eb4d1b4fefba.json) |
+| bm25 | 0.394 | 0.394 | 0.299 | 0.300 | 0.578 | 0.683 | 0.148 | 12.6 | [bm25](results/retrieval-bm25-3bc53167968f.json) |
 
 **Read the rows against the baseline `dense` row (hit@5 0.507).** Findings 16
 and 17 are what the matrix shows.
@@ -354,22 +378,20 @@ RETRIEVAL_TICKER_FILTER=inferred
 
 | | dense (code default) | dense + rerank 50 + inferred ticker | change |
 |---|---|---|---|
-| hit@5 | 0.507 | **0.634** | +0.127 |
-| recall@5 | 0.489 | **0.606** | +0.116 |
-| MRR | 0.357 | **0.496** | +0.139 |
-| nDCG@5 | 0.373 | **0.507** | +0.135 |
-| recall@25 | 0.680 | **0.750** | +0.070 |
-| hit@5, table items (n = 26) | 0.462 | 0.500 | +0.038 |
-| hit@5, non-table items (n = 45) | 0.533 | **0.711** | +0.178 |
-| p50 latency per query | 17.5 ms | 893 ms | 51× |
+| hit@5 | 0.507 | **0.662** | +0.155 |
+| recall@5 | 0.489 | **0.630** | +0.141 |
+| MRR | 0.358 | **0.541** | +0.182 |
+| nDCG@5 | 0.369 | **0.546** | +0.176 |
+| recall@25 | 0.725 | **0.771** | +0.046 |
+| hit@5, table items (n = 27) | 0.370 | 0.481 | +0.111 |
+| hit@5, non-table items (n = 44) | 0.591 | **0.773** | +0.182 |
+| p50 latency per query | 13.6 ms | 751 ms | 55× |
 
-Item by item: the labelled chunk enters the top 5 on 15 items that dense
-missed and leaves it on 6 that dense had (`qa_0006`, `qa_0015`, `qa_0020`,
-`qa_0063`, `qa_0070`, `qa_0071`). Two of the six are `temporal` items whose
-retrieved neighbour states the same figure in a different table — finding 13's
-label-coverage caveat cuts both ways.
+Item by item: the labelled chunk enters the top 5 on 14 items that dense missed and leaves it on 3 that dense had (`qa_0015`, `qa_0063`, `qa_0064`), net +11.
 
 ### The winner inside the agent
+
+*Generated and judged on the first index; figure columns at version 4.*
 
 The retriever-only numbers say the right chunk is in front of the model more
 often. Whether the agent then answers better is a separate question, so the
@@ -383,8 +405,9 @@ answers.
 
 | judge-free metric | baseline: dense top-5 | dense + rerank 50 + inferred ticker | change |
 |---|---|---|---|
-| `figure_exact_rate` (n = 50) | 0.6400 | **0.8600** | +0.2200 |
-| `figure_recall` (n = 50) | 0.7320 | **0.9210** | +0.1890 |
+| `figure_primary_rate` (n = 45) | 0.7333 | **0.9111** | +0.1778 |
+| `figure_exact_rate` (n = 45) | 0.6000 | **0.8444** | +0.2444 |
+| `figure_recall` (n = 45) | 0.7022 | **0.9122** | +0.2100 |
 | `agent_hit_rate` (n = 71) | 0.4366 | **0.6620** | +0.2254 |
 | `agent_recall` | 0.4296 | **0.6514** | +0.2218 |
 | `agent_mrr` | 0.2942 | **0.4395** | +0.1453 |
@@ -393,13 +416,13 @@ answers.
 
 | stratum | n | figure_exact before → after | agent_hit before → after |
 |---|---|---|---|
-| single_hop | 17 | 1.000 → 1.000 | 0.647 → 0.882 |
+| single_hop | 17 | 1.000 → 1.000 (n = 4) | 0.647 → 0.882 |
 | numerical | 33 | 0.606 → **0.909** | 0.424 → 0.697 |
+| multi_hop | 1 | n/a | 1.000 → 1.000 |
+| comparative | 4 | 0.333 → **0.667** (n = 3) | 0.250 → 0.750 |
+| negative | 3 | n/a | 0.333 → 0.000 |
 | list | 8 | n/a | 0.125 → 0.375 |
 | temporal | 5 | 0.400 → 0.400 | 0.400 → 0.400 |
-| comparative | 4 | 0.333 → 0.667 | 0.250 → 0.750 |
-| negative | 3 | 1.000 → 1.000 (n = 1) | 0.333 → 0.000 |
-| multi_hop | 1 | n/a | 1.000 → 1.000 |
 
 Three things in this table are worth more than the headline.
 
@@ -437,7 +460,7 @@ hit, 3 lost one (`qa_0006`, `qa_0064`, `qa_0067`).
 and 11 September and these on 27 September, on the same model id; the
 run-to-run variance of finding 3 was not sampled separately, so a part of
 any single item's movement may be that variance. The aggregate movements —
-+0.22 on the figure check, −6 terminal failures net — are far outside what
++0.24 on the figure check, −6 terminal failures net — are far outside what
 finding 11's two repeat runs showed that variance to be (0.65 against 0.63
 faithfulness on ten items).
 
@@ -452,7 +475,7 @@ instrument (426 judge calls), against the schema-3 baseline. Evidence:
 | faithfulness | 0.8263 | **0.9315** | +0.1052 |
 | answer relevancy | 0.7639 | **0.8688** | +0.1049 |
 | context recall | 0.7183 | **0.8873** | +0.1690 |
-| `figure_exact_rate` (n = 50) | 0.6400 | **0.8600** | +0.2200 |
+| `figure_exact_rate` (n = 45) | 0.6000 | **0.8444** | +0.2444 |
 | `agent_hit_rate` (n = 71) | 0.4366 | **0.6620** | +0.2254 |
 | terminal failures | 7 | **1** | -6 |
 
@@ -520,6 +543,8 @@ model in between.
 
 ### Measured on the benchmark
 
+*Generated and judged on the first index; figure columns at version 4.*
+
 All 71 items regenerated with the fact tools available and the reranked
 retrieval switched on, `gemini-3.1-flash-lite`, then judged by
 `gemini-3.6-flash` (426 judge calls) under the schema-3 instrument. The
@@ -532,9 +557,9 @@ without the fact tools, and against the dense baseline. Evidence:
 | faithfulness | 0.8263 | 0.9315 | **0.9573** |
 | answer relevancy | 0.7639 | 0.8688 | **0.8935** |
 | context recall | 0.7183 | 0.8873 | **0.8521** |
-| `figure_primary_rate` (n = 50) — the figure the question asked for | 0.7600 | 0.9200 | **1.0000** |
-| `figure_exact_rate` — every ground-truth figure, context included | 0.6400 | 0.8600 | **0.9000** |
-| `figure_recall` | 0.7320 | 0.9210 | **0.9500** |
+| `figure_primary_rate` (n = 45) — the figure the question asked for | 0.7333 | 0.9111 | **1.0000** |
+| `figure_exact_rate` — every ground-truth figure, context included | 0.6000 | 0.8444 | **0.8889** |
+| `figure_recall` | 0.7022 | 0.9122 | **0.9444** |
 | `agent_hit_rate` (index chunks only) | 0.4366 | 0.6620 | 0.4225 |
 | terminal failures | 7 | 1 | **1** |
 | items that called the fact tool | — | — | 34 of 71 |
@@ -542,13 +567,13 @@ without the fact tools, and against the dense baseline. Evidence:
 
 | stratum | n | figure_primary: dense → rerank → facts | figure_exact: dense → rerank → facts | agent_hit: dense → rerank → facts |
 |---|---|---|---|---|
-| single_hop | 17 | 1.000 → 1.000 → **1.000** | 1.000 → 1.000 → **1.000** | 0.647 → 0.882 → 0.882 |
+| single_hop | 17 | 1.000 → 1.000 → **1.000** (n = 4) | 1.000 → 1.000 → **1.000** | 0.647 → 0.882 → 0.882 |
 | numerical | 33 | 0.697 → 1.000 → **1.000** | 0.606 → 0.909 → **0.970** | 0.424 → 0.697 → 0.242 |
+| multi_hop | 1 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 1.000 → 1.000 → 1.000 |
+| comparative | 4 | 0.667 → 0.667 → **1.000** (n = 3) | 0.333 → 0.667 → **1.000** | 0.250 → 0.750 → 0.500 |
+| negative | 3 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 0.333 → 0.000 → 0.000 |
 | list | 8 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 0.125 → 0.375 → 0.500 |
 | temporal | 5 | 0.800 → 0.400 → **1.000** | 0.400 → 0.400 → **0.200** | 0.400 → 0.400 → 0.000 |
-| comparative | 4 | 0.667 → 0.667 → **1.000** | 0.333 → 0.667 → **1.000** | 0.250 → 0.750 → 0.500 |
-| negative | 3 | 1.000 → 1.000 → **1.000** | 1.000 → 1.000 → **1.000** | 0.333 → 0.000 → 0.000 |
-| multi_hop | 1 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 1.000 → 1.000 → 1.000 |
 
 `agent_hit_rate` counts index chunks only, by design: an item answered from
 the fact table without a search shows no chunk hit and a correct figure, so
@@ -722,69 +747,54 @@ is how runs from before the contract are re-scored from cache.
 
 ## CI quality gate
 
-Every pull request now runs the retrieval instrument and fails below a
+Every pull request runs the retrieval instrument and fails below a
 threshold; the judged run is a workflow someone has to click. Both go
 through [`eval/ci_gate.py`](../eval/ci_gate.py) with the thresholds in
 [`eval/ci_gate.json`](../eval/ci_gate.json).
 
-**What runs on every PR.** The two configurations that matter — the dense
+**What runs on every PR.** The runner rebuilds the index from the committed
+filings (`python -m ingestion.pipeline`: about a minute of embedding since
+the cleaner reads only the 10-K document, cached on the filings' and the
+ingestion code's hash), then the two configurations that matter — the dense
 baseline every number in this document started from, and the configuration
 that ships (dense 50 → cross-encoder → 25 under the inferred ticker filter)
 — are scored with the retriever-only runner against the 71 labelled items:
-no LLM call, no secret, a few minutes on the runner once the index is
-cached (2 min 22 s on the development machine). Seven thresholds. Each hit
-rate is at or below two benchmark items under the value in the committed
-results file it names, so a two-item loss passes and a three-item loss
-fails; MRR and nDCG sit 0.03 under it. The dry-run that every build starts
-with refuses a threshold above its own source value, so the gate cannot be
-tightened past what was ever measured.
+no LLM call, no secret. Seven thresholds. Each hit rate is at or below two
+benchmark items under the value in the committed results file it names, so
+a two-item loss passes and a three-item loss fails; MRR and nDCG sit 0.03
+under it. The dry-run that every build starts with refuses a threshold above
+its own source value, so the gate cannot be tightened past what was ever
+measured, and the gate refuses an index whose chunk count is not the one the
+labels were made on, so a rebuilt index cannot be scored against stale
+labels.
 
-| configuration | metric | committed, full index | CI slice | threshold |
-|---|---|---|---|---|
-| dense | hit@5 | 0.507 | 0.507 | ≥ 0.478 |
-| dense | mrr | 0.357 | 0.357 | ≥ 0.328 |
-| dense | hit@25 | 0.704 | 0.704 | ≥ 0.676 |
-| shipped | hit@5 | 0.634 | 0.634 | ≥ 0.605 |
-| shipped | mrr | 0.496 | 0.497 | ≥ 0.468 |
-| shipped | ndcg@5 | 0.507 | 0.508 | ≥ 0.479 |
-| shipped | hit@25 | 0.789 | 0.789 | ≥ 0.760 |
+| configuration | metric | committed | threshold |
+|---|---|---|---|
+| dense | hit@5 | 0.507 | ≥ 0.478 |
+| dense | mrr | 0.358 | ≥ 0.328 |
+| dense | hit@25 | 0.747 | ≥ 0.718 |
+| shipped | hit@5 | 0.662 | ≥ 0.633 |
+| shipped | mrr | 0.541 | ≥ 0.510 |
+| shipped | ndcg@5 | 0.546 | ≥ 0.515 |
+| shipped | hit@25 | 0.803 | ≥ 0.774 |
 
-The slice column is the gate's own output from a slice index built the way
-the workflow builds it, committed as
-[`retrieval-ci-dense-a0bd9c206430.json`](results/retrieval-ci-dense-a0bd9c206430.json)
-and [`retrieval-ci-shipped-d8ca6cd2f348.json`](results/retrieval-ci-shipped-d8ca6cd2f348.json)
-(their config hashes carry the thresholds of the day; the numbers are the
-measurement).
-
-**The index CI scores against.** A full rebuild embeds 67,521 chunks — 25.7
-minutes measured on a 12-core laptop, longer on a hosted runner — so CI does not
-do it. [`eval/ci_corpus.py`](../eval/ci_corpus.py) cuts a slice of the index
-and commits it ([`eval/ci_corpus.jsonl.gz`](../eval/ci_corpus.jsonl.gz):
-3,991 chunks, 434 KB): for each benchmark question the 50 nearest chunks
-with no filter and the 50 nearest under the inferred ticker filter, every
-labelled chunk, every chunk the agent retrieved with its own queries in the
-committed schema-3 runs, and 2,000 seeded random distractors. A chunk's
-embedding depends only on its own text, so a question's ranking over the
-slice at depth ≤ 50 is its ranking over the full index, and neither gated
-configuration looks deeper than 50. The table above is that claim measured:
-the slice reproduces every hit rate exactly, and the one-thousandth on MRR
-and nDCG is a single tie reordering. Embedding the slice takes about 2.5
-minutes on the development machine and GitHub Actions caches the result on
-the fixture's hash. BM25 is
-not reproducible on a slice — its IDF is corpus-wide — and hybrid retrieval
-lost the ablation, so neither is gated. The gate also refuses to score an
-index whose chunk count is neither the slice's nor the labelled full index's,
-so a rebuilt index cannot be scored against stale labels.
+Run locally against the live index (`python -m eval.ci_gate retrieval`) the
+gate reproduces every committed value to the third decimal and passes 7 of 7;
+its per-item output goes to `eval/results/ci/` (gitignored) and, in CI, to a
+build artefact and the run's summary page. An earlier design embedded a
+committed 3,991-chunk slice of the old index because a full rebuild took 26
+minutes; it was retired when the rebuild became cheap.
 
 **The judged run, on a click.**
 [`.github/workflows/eval-judged.yml`](../.github/workflows/eval-judged.yml)
 runs the agent and the judge over ten fixed items — one or more from every
 stratum, chosen for stability: each was answered identically on the two
 committed runs of the shipped configuration 1.7 hours apart (`qa_0062`, which
-hits the recursion limit on every run of this configuration, and `qa_0064`, a correct "not
-disclosed" answer the judge scores 0, are left out on purpose) — and applies
-thresholds calibrated from what the committed judged run scored on those
-same ten items (`python -m eval.ci_gate calibrate`):
+hit the recursion limit on every run of this configuration on the first
+index, and `qa_0064`, a correct "not disclosed" answer the judge scores 0,
+are left out on purpose) —
+and applies thresholds calibrated from what the committed judged run scored
+on those same ten items (`python -m eval.ci_gate calibrate`):
 
 | metric | calibration (`facts-v3`, 10 items) | threshold |
 |---|---|---|
@@ -800,23 +810,25 @@ on a push or a schedule, and two clicks cannot run at once. It runs with
 before the output contract existed; under the contract all ten items
 verified with drafts identical to the calibration run (`contract-v3`), so
 the numbers would not differ, but the gate refuses a run whose mode differs
-from its calibration rather than assume that. A run whose
-agent model, retrieval configuration or item set differs from the
-calibration fails regardless of score, as does an incomplete one. A run
-under another judge — the free Groq cross-family judge is an input option —
-is scored but flagged, since two judges do not agree to the third decimal
-(finding 4).
+from its calibration rather than assume that. The calibration run was made
+on the first index; the ten items are answered from the fact table or from
+passages the rebuilt index retrieves as well, so the thresholds stand, and
+they will be recalibrated from the first judged run on the rebuilt index. A
+run whose agent model, retrieval configuration or item set differs from the
+calibration fails regardless of score, as does an incomplete one, one with a
+judge NaN the harness cannot explain, or one in which the agent raised. A
+run under another judge — the free Groq cross-family judge is an input
+option — is scored but flagged, since two judges do not agree to the third
+decimal (finding 4).
 
 **What it does and does not catch.** A retrieval regression in code — a
 reranker that stops reordering, a filter that stops filtering, a chunk id
 format change — fails the build; a chunking change that alters chunk ids
-fails it loudly, because the labels stop resolving, until the labels and the
-slice are regenerated (two commands). The judged smoke catches "the agent
-broke": recursion failures, lost faithfulness, wrong figures. It cannot see
-a one-item change, and on the slice the agent's own reworded queries meet a
-smaller haystack than in production, so its scores bound the full-corpus
-ones from above. Two items of slack on the retrieval gate means a one-item
-loss passes: it is a regression detector, not the measurement.
+fails it loudly, because the labels stop resolving, until the labels are
+regenerated (`python -m eval.chunk_labels`). The judged smoke catches "the
+agent broke": recursion failures, lost faithfulness, wrong figures. It cannot
+see a one-item change. Two items of slack on the retrieval gate means a one-
+or two-item loss passes: it is a regression detector, not the measurement.
 
 ---
 
@@ -1337,54 +1349,55 @@ serialisation of the context as much as on its content, and a harness that
 changes how contexts are formatted has changed the metric. Report the format
 with the number.
 
-### 16. A cross-encoder over 50 dense candidates is worth 12 points of hit@5; 100 candidates buys nothing more
+### 16. A cross-encoder over 50 dense candidates is worth 15 points of hit@5; 25 candidates get most of it and 100 buys nothing
 
 Re-ordering the dense retriever's top 50 with
 `cross-encoder/ms-marco-MiniLM-L-6-v2` and keeping the best 5 moves hit@5
-from 0.507 to 0.620 and MRR from 0.357 to 0.480, every stratum with n > 5
-included (`temporal`, n = 5, stayed at 0.400): `single_hop` 0.588 → 0.824,
-`numerical` 0.576 → 0.667, `list`
-0.250 → 0.375. Over 25 candidates the gain is a third of that (0.549); over
-100 it is the same as 50 (0.620) at twice the latency (1.6 s against 0.8 s).
+from 0.507 to 0.662 and MRR from 0.358 to 0.529 on the current
+index: `single_hop` 0.647 → 0.824, `numerical` 0.500 → 0.676,
+`list` 0.375 → 0.625, `temporal` 0.200 → 0.200. Over 25
+candidates the gain is nearly all there (0.648); over 100 it is no better
+than 50 (0.648) at twice the latency (1.5 s against 0.8 s).
 The relevant chunk, when dense retrieval finds it at all, is almost always in
-its top 50: the reranked list's recall@25 is 0.722 at fetch 50 and 0.701 at
-fetch 100, so a deeper fetch only gives the cross-encoder more wrong
-candidates to be confused by.
+its top 50, so a deeper fetch only gives the cross-encoder more wrong
+candidates to be confused by. On the first index the same step was worth 11
+points (0.507 → 0.620) and 25 candidates only 4: a cleaner haystack makes
+the shallow fetch enough (finding 22).
 
-The gain is uneven in an informative way. Non-table items go 0.533 → 0.689;
-table items 0.462 → 0.500. A cross-encoder reads prose well and a run of
+The gain is uneven in an informative way. Non-table items go 0.591 → 0.773;
+table items 0.370 → 0.481. A cross-encoder reads prose well and a run of
 numbers badly, and the 512-character chunks cut tables mid-row, so the row
 that answers a table question often does not carry the label that names it.
 Tables remain the weak stratum, and the lever for them is chunking, not
 ranking (ROADMAP item 1).
 
-Cost: 0.8 s of CPU per query on the development machine, against 18 ms for
-dense alone. An agent run made 2.1 retrieval calls on average under dense
-search and 1.7 reranked (0.8 once the fact tools arrived). On the free-tier
-Space, with fewer cores, expect the reranker to add several seconds to a
-question that already takes ten to thirty.
+Cost: 0.8 s of CPU per query on the development machine, against 14 ms
+for dense alone. An agent run made 2.1 retrieval calls on average under
+dense search and 1.7 reranked (0.8 once the fact tools arrived). On the
+free-tier Space, with fewer cores, the reranker is most of the tool time.
 
-### 17. Hybrid BM25 fusion loses to dense on this corpus; the inferred ticker filter is free and equals the oracle
+### 17. Hybrid BM25 fusion beats dense as a first stage on the clean index and loses to it under the reranker; the inferred ticker filter is free and equals the oracle
 
-**BM25 alone** puts a labelled chunk in the top 5 on 35% of items. **Fused
-with dense** by Reciprocal Rank Fusion it lands at 0.479, *below* dense's
-0.507, and the gap is concentrated where BM25 is weakest: table items fall
-from 0.462 to 0.269. Sweeping the fusion (rrf_k 60 → 20: 0.493; sparse
-weight 0.5: 0.479; sparse weight 2.0: 0.465; fetch 50: 0.479) does not
-recover it, and feeding the reranker hybrid candidates instead of dense ones
-scores lower too (0.592 against 0.620 at fetch 50). Hybrid's one advantage is
-depth — recall@25 up to 0.750 against 0.680 (the sweep ranges 0.570–0.750) —
-which never reaches the top 5.
+**BM25 alone** puts a labelled chunk in the top 5 on 39% of items. **Fused
+with dense** by Reciprocal Rank Fusion it lands at 0.592, *above* dense's
+0.507 — nine points, and table items go 0.370 → 0.407. The sweeps
+(rrf_k 60 → 20: 0.592; sparse weight 0.5: 0.578; sparse weight 2.0: 0.535;
+fetch 50: 0.578) do not beat the default fusion, and the inferred ticker
+filter lifts it to 0.606. But feeding the reranker hybrid candidates instead
+of dense ones scores lower (0.634 against 0.662 at fetch 50, with or
+without the filter): the cross-encoder already recovers what
+exact tokens add, and the BM25 candidates it is handed displace better dense
+ones. The shipped pipeline therefore stays dense → rerank, and hybrid stays
+in the code as the best *unreranked* option (30 ms against 0.75 s).
 
-Why, on a corpus that is supposedly full of exact tokens: a 10-K table row
-is a line-item name followed by three years of figures, and the question
-names the line item and a year. "2025", "million", "total", "revenue" appear
-in thousands of chunks, so IDF gives them nothing, and the figure itself is
-not in the question. Meanwhile the MSFT filing contributes half the index
-(32,886 chunks, largely exhibits), all of it eligible for exact-token
-matches on generic terms. BM25 has the right shape for a different corpus.
-This is a measured negative result and the hybrid mode stays in the code,
-off by default, because the measurement is what says it should be off.
+**This reverses the first measurement, and the reversal is the finding.** On
+the 67,521-chunk index hybrid fusion scored 0.479, *below* dense, because
+half that index was Microsoft's exhibits and XBRL context blocks — tens of
+thousands of chunks eligible for exact-token matches on "2025", "million",
+"revenue" and every context id. BM25 was not wrong about 10-Ks; it was
+scoring a haystack that was mostly not 10-Ks (finding 22). The earlier text
+here explained the loss by the structure of 10-K tables; that explanation
+was partly right and mostly the index.
 
 **The ticker filter.** Restricting search to the one company the question
 names (`retrieval/tickers.py`, a five-entry alias list) produces the same
@@ -1392,8 +1405,9 @@ numbers as the oracle filter that reads the benchmark's ticker column, on
 every metric, in every configuration tried — the files are identical row for
 row. Every single-company question in this benchmark names its company, so
 inference is exact here; multi-company questions correctly get no filter. It
-adds 0.028 to dense alone (0.535) and 0.014 on top of reranking (0.634), for
-about 40 ms. It is on in the shipped configuration.
+adds 0.042 to dense alone (0.549) and nothing to hit@5 on top of reranking
+(0.662 either way) but 0.012 of MRR and 0.028 of recall@25, for no latency. It is on
+in the shipped configuration.
 
 **Not measured, and why.** Table-aware chunking needs a re-ingested index and
 therefore new chunk labels; it is the next lever and its own pass. Query
@@ -1416,9 +1430,9 @@ argument, defaults to the filing's most recent year and says so, and
 returns one tagged value with its period. On the same five items the
 primary-figure rate goes to 1.000, and the answers read "for fiscal year
 2025 was $106,265 million" — the year asked, the figure asked, nothing
-else. Across all 50 figure items the primary-figure rate is 1.000 against
-0.920 with the reranker and 0.760 for the dense baseline, and the strict
-check reaches 0.900. Faithfulness rises again (0.9315 → 0.9573), and on the 34
+else. Across all 45 figure items the primary-figure rate is 1.000 against
+0.911 with the reranker and 0.733 for the dense baseline, and the strict
+check reaches 0.889. Faithfulness rises again (0.9315 → 0.9573), and on the 34
 items that used the fact tool it is 0.984.
 
 Three cautions. The five temporal items are five items. The comparison is
@@ -1458,13 +1472,29 @@ the instrument scored it worse. Two changes, together figure check
   exact-only, so 2024 still cannot pass for 2025, and a different figure
   ($43,229 million against $58,705 million) still fails.
 
-Under version 3, on the 50 items whose ground truth carries a figure:
+**Version 4**, after the review: a ground truth whose only figure is a
+year is *not applicable*. Version 3 had fallen back to the year as the
+primary figure, which let five items pass on the strength of a year alone —
+one of them a "not disclosed" answer whose ground truth stated no number at
+all. The five leave the denominator; nothing else changes. That item,
+`qa_0066`, was also wrong as a label: Meta's segment note and its tagged
+XBRL disclose Reality Labs revenue ($2,207 million for fiscal 2025) and the
+fact tool finds it, so its ground truth now states the figure and the item
+is `numerical`. Runs made on the corrected benchmark count 34 `numerical`
+and 2 `negative` items (the retrieval tables above); the runs generated
+before the correction keep the strata and the ground truth they were
+generated with.
+
+Under version 4, on the 45 items whose ground truth carries a figure other
+than a year (50 under version 3; the dense baseline was 0.760 / 0.640 /
+0.732 there, the reranker 0.920 / 0.860 / 0.921, the fact tools 1.000 /
+0.900 / 0.950):
 
 | run | figure_primary | figure_exact | figure_recall |
 |---|---|---|---|
-| dense baseline | 0.760 | 0.640 | 0.732 |
-| + reranker | 0.920 | 0.860 | 0.921 |
-| + reranker + fact tools | **1.000** | **0.900** | **0.950** |
+| dense baseline | 0.733 | 0.600 | 0.702 |
+| + reranker | 0.911 | 0.844 | 0.912 |
+| + reranker + fact tools | **1.000** | **0.889** | **0.944** |
 
 The general point is the same one findings 2, 14 and 15 made from other
 directions: a metric is a definition, and the definition has to be revisited
@@ -1523,6 +1553,106 @@ prose.
 
 ---
 
+### 22. Three-quarters of the index was XBRL markup, identifiers and metadata, not 10-K text; isolating the 10-K document changed the ablation's story and left its winner in place
+
+The cleaner read every `<DOCUMENT>` in each EDGAR submission. A submission
+holds the 10-K, its exhibits, the XBRL taxonomy files, images, and the XBRL
+instance document, whose text blocks are HTML-escaped copies of the notes —
+which BeautifulSoup decodes into literal `<td style=...>` prose. Nobody had
+looked. `python -m ingestion.audit` classifies every chunk by what it holds;
+on the first index — the one the judged runs were generated on — and on
+the rebuilt one:
+
+| class | first index (67,521 chunks) | rebuilt index (4,783 chunks) |
+|---|---|---|
+| prose | 22.7% | 85.9% |
+| numeric table | 1.2% | 1.7% |
+| escaped markup | 39.4% | 0 |
+| XBRL identifiers | 25.7% | 0 |
+| MetaLinks / JSON | 8.8% | 0 |
+| short fragment (< 120 chars) | 2.2% | 12.4% |
+
+Microsoft was 32,886 of the 67,521 chunks and 74% escaped markup; its chunk
+0 was a list of years and context ids from the inline XBRL header, which
+had passed the cleaner's prose test because "2004 2005 2006 …" is twenty
+characters with spaces. The fix ([`ingestion/submission.py`](../ingestion/submission.py),
+[`ingestion/cleaner.py`](../ingestion/cleaner.py)) keeps the 10-K document
+only, decomposes the `<ix:header>` block, and turns no-break-space table
+cells into whitespace. Per ticker the rebuilt index is 582 / 965 / 965 / 816
+/ 1,455 chunks (AAPL / MSFT / GOOGL / AMZN / META), a rebuild takes 72
+seconds instead of 26 minutes, and the index is 29 MB instead of 359.
+
+**What moved, configuration by configuration.** Every chunk id changed, so
+the labels were regenerated (65 exact, 3 prefix, 3 by hand) and the whole
+ablation re-run:
+
+| configuration | hit@5, first index | hit@5, rebuilt index | change | MRR first → rebuilt |
+|---|---|---|---|---|
+| dense, rerank fetch=50 | 0.620 | 0.662 | +0.042 | 0.480 → 0.529 |
+| dense, rerank fetch=50, ticker=inferred | 0.634 | 0.662 | +0.028 | 0.496 → 0.541 |
+| dense, rerank fetch=100 | 0.620 | 0.648 | +0.028 | 0.482 → 0.516 |
+| dense, rerank fetch=100, ticker=inferred | 0.606 | 0.648 | +0.042 | 0.486 → 0.528 |
+| dense, rerank fetch=25 | 0.549 | 0.648 | +0.099 | 0.421 → 0.514 |
+| hybrid, rerank fetch=25 | 0.578 | 0.634 | +0.056 | 0.469 → 0.523 |
+| hybrid, rerank fetch=50 | 0.592 | 0.634 | +0.042 | 0.471 → 0.522 |
+| hybrid, rerank fetch=50, ticker=inferred | 0.606 | 0.634 | +0.028 | 0.489 → 0.535 |
+| hybrid, rerank fetch=50, ticker=oracle | 0.606 | 0.634 | +0.028 | 0.489 → 0.535 |
+| hybrid, ticker=inferred | 0.507 | 0.606 | +0.099 | 0.404 → 0.430 |
+| hybrid | 0.479 | 0.592 | +0.113 | 0.357 → 0.400 |
+| hybrid, rrf_k=20 | 0.493 | 0.592 | +0.099 | 0.357 → 0.394 |
+| hybrid, fetch=50 | 0.479 | 0.578 | +0.099 | 0.363 → 0.401 |
+| hybrid, w=1.0/0.5 | 0.479 | 0.578 | +0.099 | 0.370 → 0.401 |
+| dense, ticker=inferred | 0.535 | 0.549 | +0.014 | 0.400 → 0.403 |
+| dense, ticker=oracle | 0.535 | 0.549 | +0.014 | 0.400 → 0.403 |
+| hybrid, w=1.0/2.0 | 0.465 | 0.535 | +0.070 | 0.336 → 0.357 |
+| dense | 0.507 | 0.507 | +0.000 | 0.357 → 0.358 |
+| bm25 | 0.352 | 0.394 | +0.042 | 0.304 → 0.299 |
+
+Three things to read off that table. Dense search alone did not move: the
+junk was never in its top 5, which is why the first instrument could not
+see it. Everything that used exact tokens moved a lot — BM25 alone +0.042,
+hybrid fusion +0.113 — and finding 17 reversed: on a clean index BM25 fusion is
+the best unreranked retriever. And the winner is the same pipeline with a
+better number: dense → cross-encoder over 50 → inferred filter, hit@5
+0.662 (was 0.634), MRR 0.541 (was 0.496), with reranking 25 candidates now
+nearly as good as 50.
+
+**The agent on the rebuilt index.** All 71 items regenerated once with the
+shipped configuration and the output contract in strict mode, judge-free
+([`reindex-v3-ed9525a07d24.json`](results/reindex-v3-ed9525a07d24.json); tracing on, LangSmith project
+`fra-eval-reindex-v3`), against the same configuration and contract on the
+first index (`contract-v3`):
+
+| judge-free, 71 items | rebuilt index (`reindex-v3`) | first index (`contract-v3`) |
+|---|---|---|
+| `figure_primary_rate` | **1.000** (n = 46) | 1.000 (n = 45) |
+| `figure_exact_rate` | 0.870 | 0.889 |
+| `grounded_rate` | 1.000 | 1.000 |
+| `agent_hit_rate_searched` | 0.789 (n = 38) | 0.789 (n = 38) |
+| verified, no repair needed | 70 of 70 | 70 of 70 |
+| terminal failures | 1 (`qa_0024`) | 1 (`qa_0062`) |
+| tokens in / out per query | 6,774 / 225 | 6,940 / 221 |
+| cost per query | $0.0020 | $0.0021 |
+| latency p50 / p95 | 3.2 s / 7.9 s | 3.7 s / 9.1 s |
+
+The figure n differs by one because `qa_0066` carries a figure since its
+correction (finding 19's version-4 note) and the first-index run was scored
+against the ground truth it was generated with. 51 of 71 drafts are
+byte-identical to the first-index run's; the recursion-limit item moved
+from `qa_0062` to `qa_0024`, which is not among the judged smoke's ten. The
+answer-quality judge has not been bought on this index (limitation 19); the
+figure check and the grounding check are the evidence that the answers did
+not get worse, and a judge pass (about $1.10) is the next spend.
+
+**What it says beyond this repository.** Every retrieval number in a RAG
+evaluation is a number about a corpus, and a corpus that nobody has sampled
+by hand can be mostly something else. The audit is now a command, the CI
+gate rebuilds the index it scores, and the first thing a reader should ask
+of any retrieval table here is the one the review asked: show me a random
+chunk.
+
+---
+
 ## Prior result: the n = 8 run
 
 Kept deliberately. The sequence matters: the quota constraint was real, it was
@@ -1576,6 +1706,7 @@ recursion limit 20, prompt version `sha256:d1bedac20eb2` (a hash of the live
 prompt text, so it cannot drift out of sync with the prompt it names), embeddings
 `sentence-transformers/all-MiniLM-L6-v2` (384-dim, used for both retrieval and the
 judge's relevancy comparison), corpus of 5 × FY2025 10-K filings at 67,521 chunks
+(the first index; 4,783 since finding 22)
 of 512 chars / 50 overlap, RAGAS 0.4.3 with seed 42, `max_workers` 2, 900 s
 per-job timeout, `bypass_n=True`.
 
@@ -1629,12 +1760,10 @@ VERIFY_MODE=off LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval \
 # Rebuild the leaderboard from every results file.
 python -m eval.leaderboard
 
-# The CI quality gate, locally. Cut the slice from the full index (30 s), embed
-# it apart from the shipped index (~2.5 min), score the gated configurations
-# against it; then the judged smoke thresholds next to their calibration values.
-python -m eval.ci_corpus build
-CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_corpus index
-CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_gate retrieval
+# What the index holds, class by class (finding 22); the CI quality gate against
+# the live index; the judged smoke thresholds next to their calibration values.
+python -m ingestion.audit
+python -m eval.ci_gate retrieval
 python -m eval.ci_gate calibrate
 
 # The output contract on the benchmark: every answer structured, verified,
@@ -1643,6 +1772,7 @@ python -m eval.ci_gate calibrate
 # VERIFY_MODE=off (the mode did not exist); set it to re-score their cache.
 VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
   python -m eval.run_eval --generate-only --label contract-v3 --cache-file eval/cache/agent_outputs_contract.json
+# The same on the rebuilt index (finding 22) was labelled reindex-v3.
 ```
 
 A run whose resolved configuration already has a complete results file prints
@@ -1740,12 +1870,13 @@ Including the ones that weaken the numbers above.
     dense baseline would have given it three answers to refuse (finding
     20); it was not re-run under the contract to keep the spend at one
     generation pass.
-18. **The CI gate measures a slice, and measures it with slack.** The
-    committed 3,991-chunk slice reproduces the full-index numbers for the two
-    gated configurations (the table under "CI quality gate"), but it cannot
-    score BM25 or hybrid retrieval at all, and its thresholds sit two items
-    under the committed values, so a one- or two-item regression passes. The judged
-    smoke run scores ten items on that slice, where the agent's own reworded
-    queries meet a smaller haystack than in production. Both gates are
-    regression detectors; the numbers in this document remain the
-    measurement.
+18. **The CI gate measures with slack.** Its thresholds sit two items under
+    the committed values, so a one- or two-item regression passes, and the
+    judged smoke run scores ten items. Both gates are regression detectors;
+    the numbers in this document remain the measurement.
+19. **Answer quality has not been judged on the rebuilt index.** The judged
+    runs (`baseline-v3`, `rerank-v3`, `facts-v3`) and the meter and contract
+    runs were made on the first index; the rebuilt index has a judge-free
+    run only (finding 22), whose figure and grounding checks say the answers
+    did not get worse. A judge pass costs about $1.10 and is the next spend;
+    until then the faithfulness and relevancy numbers describe the old index.
