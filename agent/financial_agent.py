@@ -491,6 +491,36 @@ _SYSTEM_PROMPT = (
 
 # ── Agent factory ─────────────────────────────────────────────────────────────
 
+def build_llm() -> ChatGoogleGenerativeAI:
+    """The agent's model at temperature 0.
+
+    One factory for every model call the system makes — the agent loop here,
+    and the output contract's structuring call (agent/contract.py) — so the
+    two can never drift onto different models or settings.
+
+    Raises
+    ------
+    EnvironmentError
+        If GEMINI_API_KEY is not set.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise EnvironmentError(
+            "GEMINI_API_KEY is not set. "
+            "Add it to your .env file:  GEMINI_API_KEY=your-key-here\n"
+            "Get a free key at https://aistudio.google.com/app/apikey"
+        )
+    return ChatGoogleGenerativeAI(
+        model=LLM_MODEL,
+        google_api_key=api_key,
+        # temperature=0 keeps the model deterministic.  In a tool-calling loop
+        # the model must reliably decide when to stop calling tools and produce
+        # a final answer.  Any temperature above 0 risks stochastic variation
+        # that can cause unnecessary extra tool calls or premature stopping.
+        temperature=0,
+    )
+
+
 def build_agent_executor():
     """Construct and return a ready-to-use LangGraph agent (LangChain 1.2 API).
 
@@ -522,23 +552,7 @@ def build_agent_executor():
     EnvironmentError
         If GEMINI_API_KEY is not set in the environment.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise EnvironmentError(
-            "GEMINI_API_KEY is not set. "
-            "Add it to your .env file:  GEMINI_API_KEY=your-key-here\n"
-            "Get a free key at https://aistudio.google.com/app/apikey"
-        )
-
-    llm = ChatGoogleGenerativeAI(
-        model=LLM_MODEL,
-        google_api_key=api_key,
-        # temperature=0 keeps the model deterministic.  In a tool-calling loop
-        # the model must reliably decide when to stop calling tools and produce
-        # a final answer.  Any temperature above 0 risks stochastic variation
-        # that can cause unnecessary extra tool calls or premature stopping.
-        temperature=0,
-    )
+    llm = build_llm()
 
     tools = [search_filings, list_available_companies, compare_companies,
              lookup_financial_fact, compute_metric]

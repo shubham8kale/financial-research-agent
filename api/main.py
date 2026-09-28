@@ -28,8 +28,9 @@ from langchain_core.messages import ToolMessage
 from pydantic import BaseModel
 
 from agent import financial_agent, mcp_agent
+from agent.contract import averify_answer
 from agent.meter import QueryMeter, public_meta
-from agent.observations import FALLBACK_RE, parse_observation
+from agent.observations import FALLBACK_RE, observation_text, parse_observation
 from agent.financial_agent import (
     OUTCOME_EMPTY_ANSWER,
     OUTCOME_RECURSION_LIMIT,
@@ -108,6 +109,9 @@ class SourceChunk(BaseModel):
     text: str
     ticker: str
     source_file: str
+    # True when a claim in the verified record cites this observation
+    # (agent/contract.py); the UI renders those as verified sources.
+    cited: bool = False
 
 
 class QueryResponse(BaseModel):
@@ -119,6 +123,11 @@ class QueryResponse(BaseModel):
     # LangSmith trace when tracing is on) and which backend answered.  Additive
     # to the contract; older clients ignore it.
     meta: Optional[Dict[str, Any]] = None
+    # The output contract's verdict (agent/contract.py): status verified |
+    # unverified | refused | skipped, the claims' figure counts, the failures
+    # by name, and which observation ids the record cites.  In strict mode a
+    # refused answer's `answer` is the refusal text, never the draft.
+    verification: Optional[Dict[str, Any]] = None
 
 
 # ── Source extraction ─────────────────────────────────────────────────────────
@@ -283,15 +292,36 @@ def _new_config(meter: QueryMeter) -> dict:
     return {"recursion_limit": 20, "callbacks": [meter]}
 
 
-def _meta(meter: QueryMeter, result: dict, backend: str) -> Dict[str, Any]:
-    """Public meter summary for one answered request."""
-    meta = public_meta(meter.summary(result.get("messages")))
+async def _complete(question: str, result: dict, meter: QueryMeter, backend: str):
+    """Everything that happens between the agent's draft and the response.
+
+    The draft is turned into a record of claims and verified against the
+    observations of this run (agent/contract.py): one structuring call, one
+    repair, then refused or flagged per VERIFY_MODE.  The structuring calls
+    are metered with the agent's own, so `meta` is the cost of the answer
+    served.  A terminal-failure draft is passed through untouched for the
+    caller's guard to classify.  Returns (answer, sources, meta, verification).
+    """
+    messages = result.get("messages") or []
+    draft = _final_answer(result)
+    sources = _extract_sources(messages)
+    extra: list = []
+    if classify_terminal_state(draft):
+        answer, verification = draft, {"status": "skipped", "reason": "terminal failure"}
+    else:
+        observations = [observation_text(m.content) for m in messages if isinstance(m, ToolMessage)]
+        answer, verdict, extra = await averify_answer(question, draft, observations, callbacks=[meter])
+        verification = verdict.as_dict()
+        for src in sources:
+            src.cited = src.source_file in verdict.cited
+    meter.mark_end()
+    meta = public_meta(meter.summary(list(messages) + extra))
     meta["backend"] = backend
-    return meta
+    return answer, sources, meta, verification
 
 
 async def _run_with_fallback(request: Request, question: str):
-    """Run the agent (MCP first, then direct) and return (answer, sources).
+    """Run the agent (MCP first, then direct) and return (answer, sources, meta, verification).
 
     Mirrors /query's fallback order and AGENT_TIMEOUT_SECONDS timeout (120 s by
     default) so the streaming endpoint has
@@ -312,7 +342,7 @@ async def _run_with_fallback(request: Request, question: str):
             answer = _final_answer(result)
             if not classify_terminal_state(answer):
                 logger.info("Stream answered via MCP agent")
-                return answer, _extract_sources(result["messages"]), _meta(meter, result, "mcp")
+                return await _complete(question, result, meter, "mcp")
             logger.warning("MCP agent produced no usable answer; falling back")
         except asyncio.TimeoutError:
             logger.warning("MCP agent timed out; falling back to direct agent")
@@ -332,11 +362,11 @@ async def _run_with_fallback(request: Request, question: str):
         timeout=AGENT_TIMEOUT_SECONDS,
     )
     logger.info("Stream answered via direct agent")
-    return _final_answer(result), _extract_sources(result["messages"]), _meta(meter, result, "direct")
+    return await _complete(question, result, meter, "direct")
 
 
 async def _sse_event_stream(request: Request, question: str):
-    """Async generator yielding SSE lines: token* → sources → done (or error)."""
+    """Async generator yielding SSE lines: token* → sources → verification → meta → done (or error)."""
     # Run the agent as a task and emit SSE keepalive comments while it works. The
     # chunked-answer design produces no output until the agent finishes, so on a
     # slow free-tier host that silent gap can trip a proxy idle-timeout and drop
@@ -349,7 +379,7 @@ async def _sse_event_stream(request: Request, question: str):
         yield ": keepalive\n\n"
 
     try:
-        answer, sources, meta = run.result()
+        answer, sources, meta, verification = run.result()
     except asyncio.TimeoutError:
         yield _sse({
             "type": "error",
@@ -400,10 +430,14 @@ async def _sse_event_stream(request: Request, question: str):
                 "ticker": s.ticker,
                 "chunk_idx": _chunk_idx_of(s.source_file),
                 "source": s.source_file,
+                "cited": s.cited,
             }
             for s in sources
         ],
     })
+    # The contract's verdict, after the sources it refers to and before the
+    # meter: status, figure counts, failures by name, cited observation ids.
+    yield _sse({"type": "verification", **verification})
     # What the answer cost, after the sources and before the terminal marker:
     # latency, model calls, tokens, dollars, tools and the trace id.  Additive
     # to the token/sources/done/error contract; a client that does not know
@@ -434,12 +468,13 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
                 # path is exactly the case the fallback exists for.
                 raise RuntimeError(f"MCP agent terminal failure: {mcp_outcome}")
             logger.info("Query answered via MCP agent")
-            meta = _meta(meter, result, "mcp")
+            answer, sources, meta, verification = await _complete(question, result, meter, "mcp")
             return QueryResponse(
                 answer=answer,
-                sources=_extract_sources(result["messages"]),
+                sources=sources,
                 tokens_used=(meta["input_tokens"] or 0) + (meta["output_tokens"] or 0) or None,
                 meta=meta,
+                verification=verification,
             )
         except asyncio.TimeoutError:
             logger.warning(
@@ -468,12 +503,13 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             logger.warning("Direct agent terminal failure: %s", outcome)
             raise _terminal_http_error(outcome)
         logger.info("Query answered via direct agent")
-        meta = _meta(meter, result, "direct")
+        answer, sources, meta, verification = await _complete(question, result, meter, "direct")
         return QueryResponse(
             answer=answer,
-            sources=_extract_sources(result["messages"]),
+            sources=sources,
             tokens_used=(meta["input_tokens"] or 0) + (meta["output_tokens"] or 0) or None,
             meta=meta,
+            verification=verification,
         )
     except HTTPException:
         # Already a deliberate, classified failure — do not re-wrap it as a 500.
@@ -500,6 +536,8 @@ async def query_stream(req: QueryRequest, request: Request):
     Emits one JSON object per SSE data line:
       {"type":"token","text":"<delta>"}   repeated — the answer text
       {"type":"sources","items":[...]}     once, after the tokens
+      {"type":"verification",...}          once: the output contract's verdict
+      {"type":"meta",...}                  once: latency, tokens, cost, trace id
       {"type":"done"}                       terminal success marker
       {"type":"error","message":"..."}     terminal error marker
     See the streaming-helpers comment above for why the final answer is chunked

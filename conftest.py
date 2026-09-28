@@ -14,3 +14,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 # module imports langchain; the harness and CLI entry points are unaffected.
 os.environ["LANGSMITH_TRACING"] = "false"
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
+
+# Tests must never make a model call either.  The output contract's
+# structuring call (agent/contract.py) runs on every served answer when
+# VERIFY_MODE is strict (the default), and a developer's .env may hold a real
+# key; off here means a fake agent's answer is served as-is.  Tests of the
+# contract itself set the mode explicitly and replace the model with a fake.
+os.environ["VERIFY_MODE"] = "off"

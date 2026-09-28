@@ -70,6 +70,15 @@ class QueryMeter(BaseCallbackHandler):
         if parent_run_id is None and str(run_id) == self.root_run_id:
             self._t_end = time.perf_counter()
 
+    def mark_end(self) -> None:
+        """Close the latency window now.
+
+        The agent's own chain ends before the output contract's structuring
+        call; a caller that verifies the draft calls this afterwards so the
+        latency it reports is the latency of the answer it served.
+        """
+        self._t_end = time.perf_counter()
+
     # ── model calls ────────────────────────────────────────────────────
 
     def on_chat_model_start(self, serialized, messages, **kwargs):

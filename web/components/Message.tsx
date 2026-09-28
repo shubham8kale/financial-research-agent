@@ -1,4 +1,4 @@
-import type { AnswerMeta, Citation } from "@/lib/api";
+import type { AnswerMeta, AnswerVerification, Citation } from "@/lib/api";
 
 /** UI model for one turn in the conversation (session-only, never persisted). */
 export interface ChatMessage {
@@ -12,6 +12,40 @@ export interface ChatMessage {
   error?: string;
   /** Latency, tokens, cost, tools and trace id; arrives after the sources. */
   meta?: AnswerMeta;
+  /** The output contract's verdict; arrives after the sources. */
+  verification?: AnswerVerification;
+}
+
+/**
+ * One line above the sources: did the answer verify against what was
+ * retrieved? Every count comes from the backend's deterministic check.
+ */
+function Verification({ verification }: { verification: AnswerVerification }) {
+  if (verification.status === "skipped") return null;
+  const figures =
+    verification.n_figures && verification.n_figures > 0
+      ? `${verification.n_supported ?? 0}/${verification.n_figures} figures found in cited sources`
+      : "no figures to check";
+  const first = verification.failures?.[0];
+  let tone = "text-muted";
+  let text = "";
+  if (verification.status === "verified") {
+    tone = "text-emerald-700";
+    text = `✓ Verified · ${verification.n_claims ?? 0} claims · ${figures}${
+      verification.repaired ? " · after one repair" : ""
+    }`;
+  } else if (verification.status === "unverified") {
+    tone = "text-amber-700";
+    text = `⚠ Unverified · ${first ? `${first.check.replace("_", " ")}: ${first.detail}` : "see failures"}`;
+  } else {
+    tone = "text-red-700";
+    text = "⛔ Answer withheld: it could not be verified against the filings";
+  }
+  return (
+    <p className={`mt-2 text-[11px] leading-4 ${tone}`} aria-label="Verification">
+      {text}
+    </p>
+  );
 }
 
 function formatTools(tools: Record<string, number>): string {
@@ -49,9 +83,14 @@ function Sources({ items }: { items: Citation[] }) {
         {items.map((c, i) => (
           <li
             key={`${c.source}-${i}`}
-            title={c.source}
-            className="rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted"
+            title={c.cited ? `${c.source} · cited by a verified claim` : c.source}
+            className={`rounded-full border px-2 py-0.5 text-xs ${
+              c.cited
+                ? "border-emerald-600 bg-background text-emerald-700"
+                : "border-border bg-background text-muted"
+            }`}
           >
+            {c.cited ? "✓ " : ""}
             {c.ticker}
             {c.chunk_idx ? ` · chunk ${c.chunk_idx}` : ""}
           </li>
@@ -102,6 +141,9 @@ export default function Message({ message }: { message: ChatMessage }) {
           </p>
         )}
 
+        {!isUser && !message.streaming && message.verification && (
+          <Verification verification={message.verification} />
+        )}
         {!isUser && message.citations.length > 0 && (
           <Sources items={message.citations} />
         )}

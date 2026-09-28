@@ -53,9 +53,23 @@ describe("chat streaming UI", () => {
     // Citations arrive and render as a Sources list.
     act(() =>
       opts.onSources([
-        { ticker: "AAPL", chunk_idx: "42", source: "AAPL_10K_chunk_42" },
+        { ticker: "AAPL", chunk_idx: "42", source: "AAPL_10K_chunk_42", cited: true },
+        { ticker: "AAPL", chunk_idx: "43", source: "AAPL_10K_chunk_43", cited: false },
       ]),
     );
+    // The contract's verdict arrives after the sources; it renders once the stream ends.
+    act(() =>
+      opts.onVerification?.({
+        status: "verified",
+        n_claims: 2,
+        n_figures: 3,
+        n_supported: 3,
+        failures: [],
+        cited: ["AAPL_10K_chunk_42"],
+        repaired: true,
+      }),
+    );
+    expect(screen.queryByLabelText("Verification")).not.toBeInTheDocument();
     // The meter arrives after the sources; it renders once the stream ends.
     act(() =>
       opts.onMeta?.({
@@ -74,11 +88,37 @@ describe("chat streaming UI", () => {
     act(() => opts.onDone());
 
     expect(screen.getByText("Sources")).toBeInTheDocument();
-    expect(screen.getByText(/AAPL · chunk 42/)).toBeInTheDocument();
+    expect(screen.getByText(/✓ AAPL · chunk 42/)).toBeInTheDocument();
+    expect(screen.getByText(/^AAPL · chunk 43/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Verification")).toHaveTextContent(
+      "✓ Verified · 2 claims · 3/3 figures found in cited sources · after one repair",
+    );
     const cost = screen.getByLabelText("Answer cost");
     expect(cost).toHaveTextContent("2.3 s · 4,120 tokens · $0.0012");
     expect(cost).toHaveTextContent("lookup_financial_fact ×2, compute_metric");
     expect(cost).toHaveTextContent("trace 01234567");
+  });
+
+  it("shows a withheld answer as refused", () => {
+    render(<Home />);
+    fireEvent.change(screen.getByLabelText("Ask a question"), {
+      target: { value: "What was the figure?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    const opts = lastStreamOptions();
+    act(() => opts.onToken("I could not verify my draft answer against the filings."));
+    act(() =>
+      opts.onVerification?.({
+        status: "refused",
+        n_claims: 1,
+        n_figures: 1,
+        n_supported: 0,
+        failures: [{ check: "unsupported_figure", claim: "x", detail: "$1,234 million" }],
+        cited: [],
+      }),
+    );
+    act(() => opts.onDone());
+    expect(screen.getByLabelText("Verification")).toHaveTextContent("Answer withheld");
   });
 
   it("shows error copy when the stream fails", () => {

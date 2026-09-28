@@ -376,14 +376,20 @@ def split_contexts(observations: list[str]) -> list[str]:
     ]
 
 
-def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
-    """Invoke the direct agent; return (final_answer, observations, n_messages, diag).
+def run_agent_capture(question: str, verify_mode: str = "off") -> tuple[str, list[str], int, dict]:
+    """Invoke the direct agent; return (served_answer, observations, n_messages, diag).
+
+    With *verify_mode* other than "off" the draft goes through the output
+    contract (agent/contract.py) exactly as the API does — structured,
+    verified against this run's observations, repaired once, refused or
+    flagged — and the SERVED answer is what comes back and gets scored.  The
+    draft and the verdict ride along in ``diag`` so both can be read later.
 
     We call ``build_agent_executor`` + ``.invoke`` directly (rather than the
     higher-level ``run_agent`` helper) because we need access to the full
     message history — ``run_agent`` returns only the last message's content.
     """
-    from agent.financial_agent import LLM_MODEL, build_agent_executor, content_text
+    from agent.financial_agent import LLM_MODEL, build_agent_executor, classify_terminal_state, content_text
     from agent.meter import QueryMeter
 
     agent = build_agent_executor()
@@ -404,6 +410,15 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
     final_answer = content_text(messages[-1].content)
     observations = _extract_observations(messages)
 
+    served, verification, extra = final_answer, None, []
+    if verify_mode != "off" and not classify_terminal_state(final_answer):
+        from agent.contract import verify_answer
+        from agent.financial_agent import build_llm
+        served, verification, extra = verify_answer(
+            question, final_answer, observations, llm=build_llm(), mode=verify_mode, callbacks=[meter],
+        )
+    meter.mark_end()
+
     # Provenance for the empty-answer case.  An empty final answer is
     # indistinguishable, in the stored record, between "the model deliberately
     # said nothing", "the response was truncated" and "we failed to extract the
@@ -419,13 +434,16 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
         # Keep a bounded repr so a degenerate response can be inspected later
         # without re-running the item (and re-paying for it).
         diag["empty_content_repr"] = repr(last.content)[:300]
-    diag["meter"] = meter.summary(messages)
-    return final_answer, observations, len(messages), diag
+    diag["meter"] = meter.summary(list(messages) + extra)
+    diag["draft_answer"] = final_answer
+    diag["verification"] = verification.as_dict() if verification else None
+    return served, observations, len(messages), diag
 
 
 # ── Agent-output cache ───────────────────────────────────────────────────────
 
-def _cache_key(item_id: str, agent_model: str, prompt_version: str, retrieval_tag: str = "") -> str:
+def _cache_key(item_id: str, agent_model: str, prompt_version: str, retrieval_tag: str = "",
+               contract_tag: str = "") -> str:
     """Build the cache key for one generated agent output.
 
     Keyed on every axis that changes what the agent produces — model, prompt
@@ -436,7 +454,11 @@ def _cache_key(item_id: str, agent_model: str, prompt_version: str, retrieval_ta
     tag existed stay valid.
     """
     key = f"{item_id}|{agent_model}|{prompt_version}"
-    return f"{key}|rc={retrieval_tag}" if retrieval_tag else key
+    if retrieval_tag:
+        key = f"{key}|rc={retrieval_tag}"
+    if contract_tag:
+        key = f"{key}|vc={contract_tag}"   # verify mode + contract version; "" = no contract, as cached before it existed
+    return key
 
 
 def load_cache(path: Path = CACHE_FILE) -> dict:
@@ -687,6 +709,14 @@ def print_report(payload: dict) -> None:
     print("\n  figure_*: ground-truth figures reproduced in the answer (n = items whose")
     print("  ground truth contains a figure).  agent_*: labelled relevant chunks that")
     print("  appeared in the agent's tool observations (n = labelled items).")
+    det = agg["overall"].get("deterministic") or {}
+    if det.get("n_grounding_applicable"):
+        print(f"\n  grounding: {det['grounded_rate']} of {det['n_grounding_applicable']} items have every draft figure "
+              f"in an observation ({det['grounded_figure_rate']} of figures).")
+    if det.get("n_verified_applicable"):
+        print(f"  verification ({det['n_verified_applicable']} items): verified {det['verified_rate']}, "
+              f"repaired {det['repaired_rate']}, refused {det['refused_rate']}; failures {det['verification_failures']}"
+              f"{'; draft figure_primary ' + str(det['figure_primary_rate_draft']) if det.get('figure_primary_rate_draft') is not None else ''}")
 
     cost = agg["overall"].get("cost") or {}
     if cost.get("n_metered"):
@@ -925,7 +955,7 @@ def resolve_judge(args) -> tuple[str, str, str]:
 # ── Generation phase ─────────────────────────────────────────────────────────
 
 def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True, retrieval_tag="",
-                     cache_path: Path = CACHE_FILE):
+                     cache_path: Path = CACHE_FILE, verify_mode: str = "off", contract_tag: str = ""):
     """Run the agent over *benchmark*, checkpointing to the cache each item.
 
     Returns (records, stop_reason).  ``stop_reason`` is None on a clean pass and
@@ -939,7 +969,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
 
     for i, row in enumerate(benchmark, start=1):
         item_id = row["id"]
-        key = _cache_key(item_id, agent_model, prompt_version, retrieval_tag)
+        key = _cache_key(item_id, agent_model, prompt_version, retrieval_tag, contract_tag)
 
         if use_cache and key in cache:
             records.append(_upgrade_record(cache[key]))
@@ -951,7 +981,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         logger.info("[%d/%d] %s — running agent: %s",
                     i, len(benchmark), item_id, row["question"][:70])
         try:
-            answer, observations, n_messages, diag = run_agent_capture(row["question"])
+            answer, observations, n_messages, diag = run_agent_capture(row["question"], verify_mode)
         except Exception as exc:  # noqa: BLE001 — any agent failure must be classified
             if _is_quota_error(exc):
                 # Do NOT record a stub: a quota refusal says nothing about the
@@ -1080,7 +1110,8 @@ def _upgrade_record(record: dict) -> dict:
 
 # ── Deterministic metrics (no judge) ─────────────────────────────────────────
 
-DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "figure_primary_rate", "agent_hit_rate", "agent_recall")
+DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "figure_primary_rate", "agent_hit_rate", "agent_recall",
+                         "grounded_rate", "verified_rate")
 
 
 def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> None:
@@ -1094,13 +1125,31 @@ def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> No
                retriever PLUS the agent's query wording; run_retrieval_eval.py
                measures the retriever alone.  Items without a label get None,
                never 0, so an unlabelled item cannot drag the mean.
+    grounding  agent/contract.py: are the figures in the draft present in
+               ANYTHING the agent saw (no citation required)?  Computable on
+               every record ever stored, which is what lets old runs be scored.
+    figure_draft  the figure check on the DRAFT when the served answer differs
+               from it (a refusal), so what the model got right and what the
+               verifier withheld can be read apart.
     """
+    from agent.contract import figure_grounding
     from eval.chunk_labels import scorable_groups
     from eval.figure_match import figure_match
     from eval.retrieval_metrics import group_hit_ranks, recall_at_k, reciprocal_rank
 
     for r in records:
         r["figure"] = figure_match(r.get("ground_truth", ""), r.get("answer", ""))
+        if (r.get("verification") or {}).get("status") == "refused":
+            # A refusal asserts no figure.  Its text names what it could not
+            # verify, so the check would otherwise credit the withheld number.
+            r["figure"].update({"n_found": 0, "figure_recall": 0.0 if r["figure"]["applicable"] else None,
+                                "figure_exact": False if r["figure"]["applicable"] else None,
+                                "figure_primary": False if r["figure"]["applicable"] else None,
+                                "missing": [r["figure"]["primary"]] if r["figure"]["applicable"] else [],
+                                "refused": True})
+        draft = r.get("draft_answer")
+        r["figure_draft"] = figure_match(r.get("ground_truth", ""), draft) if draft is not None and draft != r.get("answer") else None
+        r["grounding"] = figure_grounding(draft if draft is not None else r.get("answer", ""), r.get("observations") or [])
         groups = scorable_groups(labels, r["id"]) if labels else []
         ranked = r.get("retrieved_chunk_ids") or []
         if groups:
@@ -1161,7 +1210,10 @@ def _cost_block(rows: list[dict]) -> dict:
 def _deterministic_block(rows: list[dict]) -> dict:
     """Means of the judge-free metrics over *rows*, each with its own n."""
     fig = [r["figure"] for r in rows if (r.get("figure") or {}).get("applicable")]
+    drafts = [r.get("figure_draft") or r.get("figure") for r in rows if ((r.get("figure_draft") or r.get("figure")) or {}).get("applicable")]
     lab = [r["agent_retrieval"] for r in rows if (r.get("agent_retrieval") or {}).get("labelled")]
+    grd = [r["grounding"] for r in rows if (r.get("grounding") or {}).get("applicable")]
+    ver = [r["verification"] for r in rows if (r.get("verification") or {}).get("status") not in (None, "skipped")]
 
     def _mean(vals):
         return round(sum(vals) / len(vals), 4) if vals else None
@@ -1171,11 +1223,31 @@ def _deterministic_block(rows: list[dict]) -> dict:
         "figure_recall": _mean([f["figure_recall"] for f in fig]),
         "figure_exact_rate": _mean([1.0 if f["figure_exact"] else 0.0 for f in fig]),
         "figure_primary_rate": _mean([1.0 if f.get("figure_primary") else 0.0 for f in fig]),
+        # the draft's figure check: what the model got right before the verifier withheld anything
+        "figure_primary_rate_draft": _mean([1.0 if f.get("figure_primary") else 0.0 for f in drafts]),
         "n_labelled": len(lab),
         "agent_hit_rate": _mean([1.0 if a["hit"] else 0.0 for a in lab]),
         "agent_recall": _mean([a["recall"] for a in lab]),
         "agent_mrr": _mean([a["mrr"] for a in lab]),
+        # grounding: every figure in the draft is in something the agent saw (n = items with a figure in the draft)
+        "n_grounding_applicable": len(grd),
+        "grounded_rate": _mean([1.0 if g["grounded"] else 0.0 for g in grd]),
+        "grounded_figure_rate": _mean([g["n_grounded"] / g["n_figures"] for g in grd]),
+        # verification: the contract's verdict (n = items that went through it)
+        "n_verified_applicable": len(ver),
+        "verified_rate": _mean([1.0 if v["status"] == "verified" else 0.0 for v in ver]),
+        "repaired_rate": _mean([1.0 if v.get("repaired") else 0.0 for v in ver]),
+        "refused_rate": _mean([1.0 if v["status"] == "refused" else 0.0 for v in ver]),
+        "verification_failures": _count_failures(ver),
     }
+
+
+def _count_failures(verifications: list[dict]) -> dict:
+    counts: dict[str, int] = {}
+    for v in verifications:
+        for f in v.get("failures") or []:
+            counts[f.get("check", "?")] = counts.get(f.get("check", "?"), 0) + 1
+    return dict(sorted(counts.items()))
 
 
 # ── Scoring phase ────────────────────────────────────────────────────────────
@@ -1407,9 +1479,9 @@ def main() -> int:
     commit, dirty = _git_commit()
     label = args.label or ("smoke" if args.smoke else "baseline")
 
-    logger.info("Benchmark %s (%d items) | agent %s | judge %s/%s | prompt %s",
+    logger.info("Benchmark %s (%d items) | agent %s | judge %s/%s | prompt %s | verify %s",
                 benchmark_path.name, len(benchmark), AGENT_MODEL,
-                judge_provider, judge_model, prompt_version)
+                judge_provider, judge_model, prompt_version, os.getenv("VERIFY_MODE") or "strict")
 
     # ── Configuration record + hash ──────────────────────────────────────────
     from eval.chunk_labels import LABELS_FILE, load_labels
@@ -1423,6 +1495,12 @@ def main() -> int:
     # not the shipped default, folded into the cache key.
     retrieval_config = RetrievalConfig.from_env()
     retrieval_tag = "" if retrieval_config == RetrievalConfig() else config_hash(retrieval_config.as_dict())[:8]
+    # The output contract (agent/contract.py) decides what is SERVED, so its
+    # mode and version are hashed and tagged into the cache key; "off" leaves
+    # the key as it was before the contract existed, so those entries stay valid.
+    from agent.contract import CONTRACT_VERSION, verify_mode as _verify_mode
+    verify_mode = _verify_mode()
+    contract_tag = "" if verify_mode == "off" else f"{verify_mode}-{CONTRACT_VERSION[:8]}"
     labels = load_labels(LABELS_FILE) if LABELS_FILE.exists() else None
     if labels is None:
         logger.warning("No chunk labels at %s — agent_* metrics will be None. "
@@ -1466,6 +1544,8 @@ def main() -> int:
         "deterministic_metrics": list(DETERMINISTIC_METRICS),
         "figure_match_version": FIGURE_MATCH_VERSION,
         "price_table_date": PRICE_TABLE_DATE,
+        "verify_mode": verify_mode,
+        "contract_version": None if verify_mode == "off" else CONTRACT_VERSION,
     }
     config["config_hash"] = config_hash({k: v for k, v in config.items() if k not in _UNHASHED_CONFIG_KEYS})
 
@@ -1485,7 +1565,7 @@ def main() -> int:
         records = []
         missing = []
         for row in benchmark:
-            key = _cache_key(row["id"], AGENT_MODEL, prompt_version, retrieval_tag)
+            key = _cache_key(row["id"], AGENT_MODEL, prompt_version, retrieval_tag, contract_tag)
             if key in cache:
                 records.append(_upgrade_record(cache[key]))
             else:
@@ -1507,6 +1587,7 @@ def main() -> int:
         records, stop_reason = generate_outputs(
             benchmark, AGENT_MODEL, prompt_version, cache,
             use_cache=not args.no_cache, retrieval_tag=retrieval_tag, cache_path=cache_path,
+            verify_mode=verify_mode, contract_tag=contract_tag,
         )
 
     # Judge-free metrics are computed for EVERY record, including on

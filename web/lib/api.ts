@@ -13,6 +13,8 @@ export interface Citation {
   ticker: string;
   chunk_idx: string;
   source: string;
+  /** True when a claim in the verified record cites this observation. */
+  cited?: boolean;
 }
 
 export interface TokenEvent {
@@ -42,6 +44,37 @@ export interface MetaEvent extends AnswerMeta {
   type: "meta";
 }
 
+export interface VerificationFailure {
+  check: string;
+  claim: string;
+  detail: string;
+}
+
+/**
+ * The output contract's verdict (agent/contract.py): the draft was split into
+ * claims with cited observation ids and checked against what the agent
+ * retrieved. `refused` means the backend withheld the draft and `content`
+ * holds its refusal; `skipped` means verification was off for this answer.
+ */
+export interface AnswerVerification {
+  status: "verified" | "unverified" | "refused" | "skipped";
+  mode?: string;
+  n_claims?: number;
+  n_figures?: number;
+  n_supported?: number;
+  failures?: VerificationFailure[];
+  cited?: string[];
+  not_disclosed?: boolean;
+  attempts?: number;
+  repaired?: boolean;
+  error?: string | null;
+  reason?: string;
+}
+
+export interface VerificationEvent extends AnswerVerification {
+  type: "verification";
+}
+
 export interface DoneEvent {
   type: "done";
 }
@@ -54,6 +87,7 @@ export interface ErrorEvent {
 export type StreamEvent =
   | TokenEvent
   | SourcesEvent
+  | VerificationEvent
   | MetaEvent
   | DoneEvent
   | ErrorEvent;
@@ -65,6 +99,8 @@ export interface StreamQueryOptions {
   ticker: string | null;
   onToken: (text: string) => void;
   onSources: (items: Citation[]) => void;
+  /** Optional: the output contract's verdict, after the sources. */
+  onVerification?: (verification: AnswerVerification) => void;
   /** Optional: latency, tokens, cost, tools and trace id for the answer. */
   onMeta?: (meta: AnswerMeta) => void;
   onDone: () => void;
@@ -79,8 +115,17 @@ export interface StreamQueryOptions {
  * Never throws — transport and parse failures are surfaced via onError.
  */
 export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
-  const { question, ticker, onToken, onSources, onMeta, onDone, onError, signal } =
-    opts;
+  const {
+    question,
+    ticker,
+    onToken,
+    onSources,
+    onVerification,
+    onMeta,
+    onDone,
+    onError,
+    signal,
+  } = opts;
 
   let res: Response;
   try {
@@ -119,6 +164,12 @@ export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
       case "sources":
         onSources(evt.items);
         break;
+      case "verification": {
+        const { type: _vtype, ...verification } = evt;
+        void _vtype;
+        onVerification?.(verification);
+        break;
+      }
       case "meta": {
         const { type: _type, ...meta } = evt;
         void _type;
