@@ -107,7 +107,7 @@ def _ret_row(path: Path, p: dict) -> str:
         p.get("run_id", path.stem), _date(p), rc.get("mode", "—"), str(rc.get("k", "—")),
         _fmt(rc.get("ticker_filter")), str(ov.get("n_items", "—")),
         _fmt(ov.get("hit@5")), _fmt(ov.get("recall@5")), _fmt(ov.get("mrr")), _fmt(ov.get("ndcg@5")),
-        _fmt(ov.get("recall@25")), _fmt(lat.get("p50")),
+        _fmt(ov.get("recall@25")), ("—" if lat.get("p50") is None else f"{lat['p50']:.1f}"),
         f"`{cfg.get('config_hash', '—')}`", f"[{path.name}]({path.name})",
     ]) + " |"
 
