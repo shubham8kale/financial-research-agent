@@ -271,18 +271,20 @@ def search_filings(query: str) -> str:
     Returns "No results found." if the vector store is empty or the query
     matches nothing above the similarity threshold.
     """
-    vs = _get_vectorstore()
-    docs = vs.similarity_search(query, k=TOP_K)
+    # Every retrieval goes through retrieval/retriever.py, configured from the
+    # RETRIEVAL_* environment.  The default is dense top-k over the shared
+    # vectorstore — exactly what this tool always did — so a retrieval variant
+    # is a configuration change, measured before it is switched on.
+    from retrieval.retriever import get_retriever
+    chunks = get_retriever().retrieve(query, k=TOP_K)
 
-    if not docs:
+    if not chunks:
         return "No results found."
 
     lines = []
-    for i, doc in enumerate(docs, start=1):
-        ticker = doc.metadata.get("ticker", "unknown")
-        chunk_idx = doc.metadata.get("chunk_idx", "?")
-        snippet = doc.page_content[:500].replace("\n", " ").strip()
-        lines.append(f"[{i}] ticker={ticker}  chunk_idx={chunk_idx}\n    {snippet}")
+    for i, c in enumerate(chunks, start=1):
+        snippet = c.text[:500].replace("\n", " ").strip()
+        lines.append(f"[{i}] ticker={c.ticker}  chunk_idx={c.chunk_idx}\n    {snippet}")
 
     return "\n\n".join(lines)
 
@@ -330,7 +332,8 @@ def compare_companies(question: str, tickers: str) -> str:
     A formatted string with a labelled section for each company containing up
     to 5 relevant chunks.  Returns a note for any ticker that has no results.
     """
-    vs = _get_vectorstore()
+    from retrieval.retriever import get_retriever
+    retriever = get_retriever()
 
     ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     if not ticker_list:
@@ -347,21 +350,16 @@ def compare_companies(question: str, tickers: str) -> str:
     search_query = question
     sections = []
     for ticker in ticker_list:
-        docs = vs.similarity_search(
-            search_query,
-            k=TOP_K,
-            filter={"ticker": ticker},
-        )
+        chunks = retriever.retrieve(search_query, k=TOP_K, ticker=ticker)
 
-        if not docs:
+        if not chunks:
             sections.append(f"=== {ticker} ===\nNo results found for this ticker.")
             continue
 
         lines = []
-        for i, doc in enumerate(docs, start=1):
-            chunk_idx = doc.metadata.get("chunk_idx", "?")
-            snippet = doc.page_content[:500].replace("\n", " ").strip()
-            lines.append(f"  [{i}] chunk_idx={chunk_idx}\n      {snippet}")
+        for i, c in enumerate(chunks, start=1):
+            snippet = c.text[:500].replace("\n", " ").strip()
+            lines.append(f"  [{i}] chunk_idx={c.chunk_idx}\n      {snippet}")
 
         sections.append(f"=== {ticker} ===\n" + "\n\n".join(lines))
 

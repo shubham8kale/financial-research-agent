@@ -80,6 +80,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
 from ingestion.embedder import build_vectorstore
+from retrieval.retriever import RetrievalConfig, Retriever
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +115,12 @@ async def _lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
     logger.info("MCP server starting — loading ChromaDB vectorstore …")
     vectorstore = build_vectorstore()
     logger.info("ChromaDB vectorstore ready.")
+    # Same retriever the in-process tools use, configured from RETRIEVAL_*
+    # env vars, built once so a reranker or BM25 index loads once per process.
+    retriever = Retriever(RetrievalConfig.from_env(), vectorstore=vectorstore)
+    logger.info("Retriever config: %s", retriever.config.as_dict())
     try:
-        yield {"vectorstore": vectorstore}
+        yield {"vectorstore": vectorstore, "retriever": retriever}
     finally:
         # ChromaDB (LangChain Chroma wrapper) has no explicit close() method;
         # the underlying sqlite3 connection is managed by the Chroma client and
@@ -227,20 +232,18 @@ async def search_filings(
     ctx: Context,
 ) -> str:
     """Return the top-5 most relevant 10-K filing chunks for the query."""
-    vs = ctx.request_context.lifespan_context["vectorstore"]
+    retriever = ctx.request_context.lifespan_context["retriever"]
 
     await ctx.info(f"Searching filings for: {query!r}")
-    docs = vs.similarity_search(query, k=TOP_K)
+    chunks = retriever.retrieve(query, k=TOP_K)
 
-    if not docs:
+    if not chunks:
         return "No results found."
 
     lines = []
-    for i, doc in enumerate(docs, start=1):
-        ticker = doc.metadata.get("ticker", "unknown")
-        chunk_idx = doc.metadata.get("chunk_idx", "?")
-        snippet = doc.page_content[:500].replace("\n", " ").strip()
-        lines.append(f"[{i}] ticker={ticker}  chunk_idx={chunk_idx}\n    {snippet}")
+    for i, c in enumerate(chunks, start=1):
+        snippet = c.text[:500].replace("\n", " ").strip()
+        lines.append(f"[{i}] ticker={c.ticker}  chunk_idx={c.chunk_idx}\n    {snippet}")
 
     return "\n\n".join(lines)
 
@@ -299,7 +302,7 @@ async def compare_companies(
     ctx: Context,
 ) -> str:
     """Return per-company filing passages grouped under labelled headers."""
-    vs = ctx.request_context.lifespan_context["vectorstore"]
+    retriever = ctx.request_context.lifespan_context["retriever"]
 
     ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     if not ticker_list:
@@ -322,21 +325,16 @@ async def compare_companies(
 
     sections: list[str] = []
     for ticker in ticker_list:
-        docs = vs.similarity_search(
-            search_query,
-            k=TOP_K,
-            filter={"ticker": ticker},
-        )
+        chunks = retriever.retrieve(search_query, k=TOP_K, ticker=ticker)
 
-        if not docs:
+        if not chunks:
             sections.append(f"=== {ticker} ===\nNo results found for this ticker.")
             continue
 
         lines: list[str] = []
-        for i, doc in enumerate(docs, start=1):
-            chunk_idx = doc.metadata.get("chunk_idx", "?")
-            snippet = doc.page_content[:500].replace("\n", " ").strip()
-            lines.append(f"  [{i}] chunk_idx={chunk_idx}\n      {snippet}")
+        for i, c in enumerate(chunks, start=1):
+            snippet = c.text[:500].replace("\n", " ").strip()
+            lines.append(f"  [{i}] chunk_idx={c.chunk_idx}\n      {snippet}")
 
         sections.append(f"=== {ticker} ===\n" + "\n\n".join(lines))
 

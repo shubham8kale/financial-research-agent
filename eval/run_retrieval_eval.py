@@ -3,12 +3,13 @@
 # PURPOSE
 # -------
 # Score the RETRIEVER on its own — no agent, no judge, no LLM call of any kind.
-# Each benchmark question is sent verbatim to the retriever, the top-k chunk
-# ids come back, and eval/retrieval_metrics.py compares them against the
-# labelled chunks in eval/benchmark_chunks.json.  A full pass over the
-# benchmark takes about a minute on CPU and costs nothing, which is what makes
-# it usable as a per-configuration instrument: every retrieval switch upgrade 2
-# adds is measured here first, and only the winner is spent on with the judge.
+# Each benchmark question is sent verbatim to a configured retriever, the
+# top-k chunk ids come back, and eval/retrieval_metrics.py compares them
+# against the labelled chunks in eval/benchmark_chunks.json.  A full pass over
+# the benchmark takes under a minute on CPU and costs nothing, which is what
+# makes it usable as a per-configuration instrument: every retrieval switch in
+# retrieval/retriever.py is measured here first, alone and in combination, and
+# only a winner is spent on with the judge.
 #
 # WHAT THIS DOES AND DOES NOT MEASURE
 # -----------------------------------
@@ -20,8 +21,8 @@
 # the agent's query composition.  When they disagree, the query is the problem.
 #
 # Latency is recorded per query (wall clock around the retrieval call, after a
-# warm-up query so the embedding model load is not counted) so that upgrade 2's
-# ablation table can show what each technique costs as well as what it gains.
+# warm-up query so model loading is not counted) so that the ablation table
+# can show what each technique costs as well as what it gains.
 
 import argparse
 import json
@@ -51,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 RESULT_KIND = "retrieval"
 SCHEMA_VERSION = 3
-FETCH_K = max(DEFAULT_KS)
+RANKED_K = max(DEFAULT_KS)
 
 
 def _percentile(values: list[float], pct: float) -> float | None:
@@ -76,7 +77,7 @@ def _breakdown(items: list[dict], key: str, order: tuple[str, ...] | None = None
     return out
 
 
-def evaluate_items(rows: list[dict], labels: dict, retrieve_fn, k: int, ticker_filter: bool) -> tuple[list[dict], list[str]]:
+def evaluate_items(rows: list[dict], labels: dict, retrieve_fn, k: int, oracle_ticker: bool) -> tuple[list[dict], list[str]]:
     """Run *retrieve_fn(question, k, ticker)* for every labelled row; return (items, skipped ids)."""
     items: list[dict] = []
     skipped: list[str] = []
@@ -87,9 +88,9 @@ def evaluate_items(rows: list[dict], labels: dict, retrieve_fn, k: int, ticker_f
             continue
         ticker = (row.get("ticker") or "").strip().upper() or None
         t0 = time.perf_counter()
-        ranked = retrieve_fn(row["question"], k, ticker if ticker_filter else None)
+        ranked = retrieve_fn(row["question"], k, ticker if oracle_ticker else None)
         latency_ms = (time.perf_counter() - t0) * 1000
-        item = {
+        items.append({
             "id": row["id"],
             "question_type": row.get("question_type", ""),
             "ticker": ticker or "",
@@ -100,8 +101,7 @@ def evaluate_items(rows: list[dict], labels: dict, retrieve_fn, k: int, ticker_f
             "ranked_chunk_ids": ranked,
             "latency_ms": round(latency_ms, 1),
             **item_metrics(ranked, groups),
-        }
-        items.append(item)
+        })
     return items, skipped
 
 
@@ -154,16 +154,36 @@ def print_report(payload: dict) -> None:
               + ", ".join(f"{q} n={n}" for q, n in thin))
 
 
+def default_label(cfg) -> str:
+    parts = [cfg.mode]
+    if cfg.rerank:
+        parts.append("rerank")
+    if cfg.ticker_filter != "none":
+        parts.append(f"tf-{cfg.ticker_filter}")
+    return "-".join(parts)
+
+
 def build_parser() -> argparse.ArgumentParser:
+    from retrieval.rerank import DEFAULT_RERANKER
+    from retrieval.retriever import MODES, TICKER_FILTERS
+
     p = argparse.ArgumentParser(description="Score the retriever against labelled chunks. No LLM calls.")
     p.add_argument("--benchmark", type=Path, default=None, help="Benchmark CSV (default: full benchmark).")
     p.add_argument("--smoke", action="store_true", help=f"Use {SMOKE_BENCHMARK_FILE.name}.")
     p.add_argument("--labels", type=Path, default=LABELS_FILE, help="Chunk labels JSON from eval.chunk_labels.")
-    p.add_argument("--k", type=int, default=FETCH_K, help=f"Chunks fetched per query (default {FETCH_K}).")
-    p.add_argument("--ticker-filter", action="store_true",
-                   help="Apply the benchmark row's ticker as a metadata filter (an oracle filter: "
-                        "the agent does not know the ticker unless it infers it).")
-    p.add_argument("--label", default="dense", help="Run label used in the results filename.")
+    p.add_argument("--k", type=int, default=RANKED_K, help=f"Length of the ranked list scored (default {RANKED_K}).")
+    # Retrieval switches — each one is a field on RetrievalConfig.
+    p.add_argument("--mode", choices=MODES, default="dense")
+    p.add_argument("--fetch-k", type=int, default=25, help="Candidates per source before fusion / reranking.")
+    p.add_argument("--rrf-k", type=int, default=60, help="Reciprocal Rank Fusion constant (hybrid).")
+    p.add_argument("--dense-weight", type=float, default=1.0)
+    p.add_argument("--sparse-weight", type=float, default=1.0)
+    p.add_argument("--rerank", action="store_true", help="Re-order fetch_k candidates with a cross-encoder.")
+    p.add_argument("--rerank-model", default=DEFAULT_RERANKER)
+    p.add_argument("--ticker-filter", choices=TICKER_FILTERS, default="none",
+                   help="oracle = the benchmark row's ticker (an upper bound the agent cannot see); "
+                        "inferred = the one company the question names; none = search everything.")
+    p.add_argument("--label", default=None, help="Run label used in the results filename (default: derived from the config).")
     p.add_argument("--out", type=Path, default=None, help="Explicit results path.")
     p.add_argument("--force", action="store_true", help="Re-run even if this exact configuration already has a complete results file.")
     p.add_argument("--dry-run", action="store_true", help="Load the benchmark and labels, report coverage, make no retrieval calls.")
@@ -185,9 +205,14 @@ def main() -> int:
         return 0 if n_labelled else 1
 
     from ingestion.embedder import EMBEDDING_MODEL
-    from retrieval.retriever import RetrievalConfig, retrieve
+    from retrieval.retriever import RetrievalConfig, Retriever
 
-    rc = RetrievalConfig(mode="dense", k=args.k, ticker_filter=args.ticker_filter)
+    rc = RetrievalConfig(
+        mode=args.mode, k=args.k, fetch_k=args.fetch_k, rrf_k=args.rrf_k,
+        dense_weight=args.dense_weight, sparse_weight=args.sparse_weight,
+        rerank=args.rerank, rerank_model=args.rerank_model, ticker_filter=args.ticker_filter,
+    )
+    label = args.label or default_label(rc)
     bench_version = benchmark_version(benchmark_path, args.labels)
     config = {
         "result_kind": RESULT_KIND,
@@ -205,28 +230,27 @@ def main() -> int:
     config["config_hash"] = cfg_hash
 
     existing = find_existing_result(RESULTS_DIR, cfg_hash)
-    if existing and not args.force:
+    if existing and not args.force and not args.out:
         with open(existing, encoding="utf-8") as f:
             payload = json.load(f)
         print(f"This configuration ({cfg_hash}) already has a complete run: {existing.relative_to(REPO_ROOT)}")
         print_report(payload)
         return 0
 
-    from agent.financial_agent import _get_vectorstore
-    vs = _get_vectorstore()
-    vs.similarity_search("warm-up query", k=1)  # load the embedding model before timing anything
+    retriever = Retriever(rc)
+    retriever.retrieve("warm-up query about total net sales", args.k)  # load models before timing anything
 
     def retrieve_fn(question: str, k: int, ticker: str | None) -> list[str]:
-        return [c.chunk_id for c in retrieve(question, k, ticker=ticker, vectorstore=vs)]
+        return [c.chunk_id for c in retriever.retrieve(question, k, ticker)]
 
     logger.info("Retrieval eval: %d items, %d labelled, config %s", len(rows), n_labelled, json.dumps(rc.as_dict()))
-    items, skipped = evaluate_items(rows, labels, retrieve_fn, args.k, args.ticker_filter)
+    items, skipped = evaluate_items(rows, labels, retrieve_fn, args.k, oracle_ticker=(rc.ticker_filter == "oracle"))
     commit, dirty = _git_commit()
     payload = {
         "schema_version": SCHEMA_VERSION,
         "result_kind": RESULT_KIND,
-        "run_id": f"retrieval-{args.label}-{cfg_hash}",
-        "label": args.label,
+        "run_id": f"retrieval-{label}-{cfg_hash}",
+        "label": label,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": commit,
         "git_dirty": dirty,
@@ -241,7 +265,7 @@ def main() -> int:
         "aggregates": build_aggregates(items) if items else None,
         "results": items,
     }
-    out_path = args.out or (RESULTS_DIR / f"retrieval-{args.label}-{cfg_hash}.json")
+    out_path = args.out or (RESULTS_DIR / f"retrieval-{label}-{cfg_hash}.json")
     save_results(payload, out_path)
     print_report(payload)
     print(f"\nPer-item evidence: {_display_path(out_path)}")

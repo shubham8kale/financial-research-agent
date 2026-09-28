@@ -47,6 +47,14 @@ langchain-text-splitters==1.1.2
 #           Space, so changing it needs an index-compatibility re-check.
 chromadb==1.5.7
 
+# ── Sparse retrieval ───────────────────────────────────────────────────────────
+# rank-bm25          : pure-Python BM25 over the same chunks the dense index
+#                     holds (retrieval/sparse.py).  Matches exact tokens — a
+#                     ticker, "Item 7A", "128,725" — that a 384-dim embedding
+#                     blurs, and is the sparse half of hybrid retrieval.  No
+#                     model, no service; the index is a pickle under data/.
+rank-bm25==0.2.2
+
 # ── Tokenisation ───────────────────────────────────────────────────────────────
 # tiktoken          : OpenAI's fast BPE tokeniser. We use it in the chunker to
 #                     measure chunk sizes in *tokens* rather than characters,
