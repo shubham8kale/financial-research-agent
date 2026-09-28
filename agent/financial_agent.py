@@ -5,22 +5,11 @@
 # Implement a ReAct (Reasoning + Acting) agent that answers financial research
 # questions by iteratively reasoning over SEC 10-K filings stored in ChromaDB.
 #
-# WHAT IS ReAct?
-# --------------
-# ReAct (Yao et al., 2022 — https://arxiv.org/abs/2210.03629) is a prompting
-# strategy that interleaves chain-of-thought *reasoning* with *acting* (tool
-# calls), forming a loop:
-#
-#   Thought  → the model explains what it needs to do next
-#   Action   → the model calls a tool with specific inputs
-#   Observation → the tool's return value is injected back into the context
-#   (repeat until the model produces a Final Answer)
-#
-# This loop gives the agent two capabilities a single LLM call lacks:
-#   1. Multi-step retrieval — it can call search_filings for AAPL, then again
-#      for MSFT, then synthesise both results, rather than getting one shot.
-#   2. Self-correction — if an observation is unhelpful, the Thought step can
-#      recognise that and try a different query or tool before answering.
+# ReAct (Yao et al., 2022) alternates a tool call with a look at its result
+# until the model answers.  That loop is what lets the agent search once per
+# company for a comparison and try another query when the first one misses;
+# the cost is that the query text is model output, which eval/EVALUATION.md
+# finding 3 measures.
 #
 # HOW langgraph.prebuilt.create_react_agent WORKS
 # --------------------------------------
