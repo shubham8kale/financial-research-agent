@@ -37,11 +37,13 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
    ┌──────────────────┐
    │    ChromaDB      │   persistent vector store, 67,521 chunks
    │ (data/chroma_db) │   metadata: ticker, chunk_idx, source path
+   │  + facts.sqlite  │   6,089 tagged XBRL facts: concept, period, unit, segment
    └────────┬─────────┘
             ▼
    ┌──────────────────┐
    │  ReAct Agent     │   LangGraph create_react_agent, tool-calling loop
-   │ (agent/…)        │   tools: search_filings, list_companies, compare
+   │ (agent/…)        │   tools: search_filings, list_companies, compare,
+   │                  │          lookup_financial_fact, compute_metric
    └────────┬─────────┘
             ▼
    ┌──────────────────┐       ┌──────────────────┐
@@ -82,12 +84,13 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | Sparse index | `rank-bm25` over the same chunks, built from Chroma in ~10 s, pickled under `data/` (hybrid mode only) |
 | Embeddings | HuggingFace `sentence-transformers/all-MiniLM-L6-v2` (local, 384-dim) |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` (local CPU, ~90 MB), switched on by `RETRIEVAL_RERANK` |
+| Structured facts | Inline XBRL parsed from the same filings into SQLite (`data/facts.sqlite`, 6,089 facts, built in ~3 s) — see [docs/adr/0001](docs/adr/0001-sqlite-for-xbrl-facts.md) |
 | LLM | Google Gemini, set by `LLM_MODEL`. Default `gemini-3.1-flash-lite` across the agent, MCP agent and query engine |
 | Tool protocol | Model Context Protocol (MCP), streamable-HTTP transport |
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 117 tests, no network / API key / index required |
+| Backend tests | pytest — 155 tests, no network / API key / index required |
 | Frontend tests | Vitest + React Testing Library — 2 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
@@ -142,6 +145,31 @@ turned on; the matrix is in [eval/EVALUATION.md](eval/EVALUATION.md).
 | `RETRIEVAL_FETCH_K` | integer, default `25` | Candidates per source before fusion or reranking |
 | `RETRIEVAL_TICKER_FILTER` | `none` (default), `inferred` | Restrict search to the one company the question names; no restriction when it names zero or several |
 | `RETRIEVAL_RRF_K`, `RETRIEVAL_DENSE_WEIGHT`, `RETRIEVAL_SPARSE_WEIGHT` | | Hybrid fusion knobs |
+
+### Structured facts: exact figures and a calculator
+
+Every headline number in a 10-K is machine-tagged inside the filing (inline
+XBRL) with its US-GAAP concept, period, unit and segment. The ingestion
+pipeline parses those tags from the same submissions it chunks
+([ingestion/xbrl.py](ingestion/xbrl.py)) into `data/facts.sqlite`, and the
+agent gets two tools on top of it ([retrieval/facts.py](retrieval/facts.py)):
+
+- **`lookup_financial_fact(ticker, concept, fiscal_year, segment)`** — the
+  tagged value for a plain-language concept ("total net sales", "diluted EPS",
+  "Google Cloud revenue"), resolved through a synonym table and a name search
+  that returns candidates rather than guessing. The fiscal year is a filter:
+  unset means the most recent year in the filing, and the tool says so. Every
+  result is cited like a passage (`AAPL_10K_fact_123`).
+- **`compute_metric(operation, a, b)`** — growth, difference, margin, ratio
+  and CAGR in Python, with the formula shown. The model picks the operands;
+  it never does the arithmetic.
+
+The system prompt sends figure questions to the fact tool first and
+narrative questions to search. Build the table on its own with:
+
+```bash
+python -m ingestion.xbrl
+```
 
 ---
 
@@ -273,11 +301,14 @@ the 50.7% the plain question achieved.
 
 ### Figure check (no LLM)
 
-Every figure in the ground truth must appear in the answer; years must match
-exactly. On the 50 items whose ground truth contains a figure, the cached
-`gemini-3.1-flash-lite` answers pass **62.0%** (`figure_exact_rate`). This is
-the check that scores a right-figure-wrong-year answer as a failure where
-faithfulness scored it 1.00 (finding 14).
+Two views of whether the answer got the number right, both with years
+matched exactly and a candidate accepted when it rounds to the ground truth
+at the precision the ground truth was written in. `figure_primary`: the
+answer contains the figure the question asked for. `figure_exact`: it
+contains every figure in the ground truth, context included. On the 50 items
+whose ground truth carries a figure, the dense baseline scores **76.0%** and
+**64.0%**. This is the check that scores a right-figure-wrong-year answer as
+a failure where faithfulness scored it 1.00 (findings 14 and 18).
 
 ### Answer quality, schema 3 (contexts scored per chunk, with provenance)
 
@@ -288,7 +319,7 @@ failures (7, all recursion-limit) count as 0. Evidence and per-stratum rows:
 
 | n | faithfulness | answer relevancy | context recall | figure_exact | agent_hit |
 |---|---|---|---|---|---|
-| 71 | **0.826** | 0.764 | 0.718 | 0.620 (n = 50) | 0.437 |
+| 71 | **0.826** | 0.764 | 0.718 | 0.640 (n = 50) | 0.437 |
 
 On the 62 answers shared with the schema-2 run below, the new instrument
 returned the same `context_recall` on every item and faithfulness within two
@@ -306,7 +337,8 @@ judge:
 
 | | dense top-5 (baseline) | dense + rerank 50 + inferred ticker | change |
 |---|---|---|---|
-| `figure_exact` (n = 50) | 0.620 | **0.860** | +0.24 |
+| `figure_primary` (n = 50) | 0.760 | **0.920** | +0.16 |
+| `figure_exact` (n = 50) | 0.640 | **0.860** | +0.22 |
 | `agent_hit` (n = 71) | 0.437 | **0.662** | +0.23 |
 | terminal failures (recursion limit) | 7 | **1** | −6 |
 
@@ -315,6 +347,28 @@ one with a figure to get right getting it right: the agent was searching
 without finding until its step budget ran out. The `temporal` items did not move — the model still quotes the prior
 year when the year is unstated — which is a period-selection problem, not a
 retrieval one. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-764b3da65d36.json](eval/results/rerank-v3-764b3da65d36.json).
+
+### The fact tools inside the agent
+
+All 71 items regenerated with `lookup_financial_fact` and `compute_metric`
+available on top of the reranked retrieval, judged the same way:
+
+| | + reranker | + reranker + fact tools |
+|---|---|---|
+| `figure_primary` — the figure the question asked for (n = 50) | 0.920 | **1.000** |
+| `figure_exact` — every ground-truth figure (n = 50) | 0.860 | **0.900** |
+| faithfulness | 0.931 | **0.957** |
+| answer relevancy | 0.869 | **0.894** |
+| context recall | 0.887 | 0.852 |
+| terminal failures | 1 | 1 |
+
+The fact tool was used on 34 items and the calculator on 8. The `temporal`
+items, which retrieval could not move, now all name the year asked: the
+fiscal year is an argument to a lookup, not a column the model picks. On
+the items that used the fact tool faithfulness is 0.984. Context recall
+fell on those same items because the metric was built for passages and is
+now handed fact rows (EVALUATION.md limitation 16). Evidence:
+[facts-v3-70db17ff5e31.json](eval/results/facts-v3-70db17ff5e31.json).
 
 ### Answer quality, schema 2 (contexts scored as observation blobs)
 
@@ -424,7 +478,7 @@ parallel jobs:
 1. Install `requirements.txt` (CPU PyTorch extra index)
 2. `flake8 .` with `--max-line-length 120 --ignore E501,W503`
 3. `python -m eval.run_eval --dry-run`
-4. `pytest` (117 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (155 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
@@ -442,6 +496,8 @@ The whole stack runs on free tiers:
 
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
 - **Backend → Hugging Face Spaces (Docker SDK).** Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets. To run the measured retrieval configuration rather than plain dense search, also set `RETRIEVAL_RERANK=true`, `RETRIEVAL_FETCH_K=50` and `RETRIEVAL_TICKER_FILTER=inferred` as Space variables; the cross-encoder (~90 MB) downloads on first start, which adds to the cold start once per rebuild, and reranking adds roughly a second of CPU per retrieval call on the free tier's two cores.
+
+  The Space ships a prebuilt index and skips the ingestion pipeline, so it also needs `python -m ingestion.xbrl` run once (about three seconds) to create `data/facts.sqlite`; without it the fact tools tell the agent to fall back to search.
 
   Note that this repo's [Dockerfile](Dockerfile) and the one in the deployed Space differ deliberately. Here, the image **rebuilds** the Chroma index at build time from the committed filings under `data/sec_filings/` using local MiniLM embeddings, so the ~360–370 MB index never has to live in git. Re-embedding 67,521 chunks exceeds Hugging Face's build timeout on the free CPU builder, so the Space instead **ships a prebuilt index via Git LFS** and skips the rebuild. Copying this Dockerfile into the Space would produce a build that times out.
 
@@ -493,19 +549,27 @@ financial-research-agent/
 │   ├── cleaner.py                  # HTML/iXBRL stripping
 │   ├── chunker.py                  # Recursive splitter, 512 chars / 50 overlap
 │   ├── embedder.py                 # MiniLM → ChromaDB upsert
-│   └── pipeline.py                 # download → clean → chunk → embed
+│   ├── xbrl.py                     # Inline XBRL → data/facts.sqlite (6,089 tagged facts)
+│   └── pipeline.py                 # download → clean → chunk → embed → facts
 ├── mcp_server/
 │   └── server.py                   # FastMCP server, streamable-HTTP transport
 ├── retrieval/
 │   ├── query_engine.py             # Single-shot RAG (no agent loop)
-│   └── retriever.py                # The one retrieval call, behind RetrievalConfig
-├── tests/                          # 117 tests; no network, key or index needed
+│   ├── retriever.py                # The one retrieval call, behind RetrievalConfig
+│   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
+├── tests/                          # 155 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   ├── test_query_stream.py        # SSE streaming contract (2)
-│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (24)
-│   └── test_eval_harness.py        # per-chunk contexts, cache upgrade, deterministic aggregation (8)
+│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (25)
+│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, deterministic aggregation (8)
+│   ├── test_retriever.py           # fusion, BM25, ticker inference, retrieval switches (13)
+│   ├── test_tool_wiring.py         # tool observations round-trip through the parser (4)
+│   ├── test_ablation.py            # ablation matrix rendering (2)
+│   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator (10)
+│   └── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
+├── docs/adr/                       # Architecture decision records
 ├── ROADMAP.md                      # Three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
@@ -525,5 +589,5 @@ financial-research-agent/
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 117 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, both terminal-failure states, list-shaped message content through every entry point that flattens it, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 155 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, both terminal-failure states, list-shaped message content through every entry point that flattens it, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).

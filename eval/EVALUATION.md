@@ -450,6 +450,119 @@ failures count as 0 in every mean, and the judge's own run-to-run variance
 
 ---
 
+## Structured facts: exact figures and a calculator
+
+Retrieval put the right passage in front of the model far more often, and
+the `temporal` stratum did not move at all: the model still quoted the prior
+year on the same items. That is not a retrieval failure. A 10-K's income
+statement is a table with three years side by side, and once it is in front
+of the model, choosing the column is the model's decision. Upgrade 3 takes
+that decision away from it.
+
+### What changed
+
+Every headline figure in a 10-K is machine-tagged inside the filing (inline
+XBRL) with its concept, period, unit and segment. [`ingestion/xbrl.py`](../ingestion/xbrl.py)
+parses those tags from the five submissions already on disk into
+`data/facts.sqlite` — 6,089 facts, about three seconds, the last step of the
+ingestion pipeline ([ADR 0001](../docs/adr/0001-sqlite-for-xbrl-facts.md)
+is why SQLite). Two tools sit on top of it ([`retrieval/facts.py`](../retrieval/facts.py)),
+on the in-process agent and the MCP server alike:
+
+- **`lookup_financial_fact(ticker, concept, fiscal_year, segment)`** resolves
+  a plain-language concept through a synonym table ("total net sales" → the
+  revenue concepts), a segment alias table ("AWS", "Intelligent Cloud",
+  "iPhone"), and a name search that returns *candidates* rather than
+  guessing. The fiscal year is a filter, not a choice: unset means the most
+  recent year in the filing, and the tool says so in its output. A phrase
+  that folds the segment into the concept ("Google Cloud revenue") is split
+  before resolving.
+- **`compute_metric(operation, a, b)`** does difference, sum, ratio,
+  percentage change, margin and CAGR in Python and returns the formula with
+  the result. The model picks the operands.
+
+Both tools emit observations in the same header format as the retrieval
+tools (`[n] ticker=AAPL  fact_id=123`, `[n] calc=pct_change`), so the
+shared parser treats a fact as a citable source and a calculation as
+evidence for the judge, and neither counts as an index chunk in the
+retrieval metrics. The system prompt gained two rules: figure questions go
+to the fact tool first; arithmetic is never done in the model's head.
+
+Every spot check against the benchmark's ground truths matches the tagged
+value exactly — $416,161M Apple net sales, $209,586M iPhone, $106,265M
+Intelligent Cloud, $58,705M Google Cloud, $128,725M AWS, $2,207M Reality
+Labs — because they are the same numbers, read from the same file, without a
+model in between.
+
+### Measured on the benchmark
+
+All 71 items regenerated with the fact tools available and the reranked
+retrieval switched on, `gemini-3.1-flash-lite`, then judged by
+`gemini-3.6-flash` (426 judge calls) under the schema-3 instrument. The
+comparison is against the reranked run, which is the shipped configuration
+without the fact tools, and against the dense baseline. Evidence:
+[`facts-v3-70db17ff5e31.json`](results/facts-v3-70db17ff5e31.json).
+
+| metric | dense baseline | + reranker | + reranker + fact tools |
+|---|---|---|---|
+| faithfulness | 0.8263 | 0.9315 | **0.9573** |
+| answer relevancy | 0.7639 | 0.8688 | **0.8935** |
+| context recall | 0.7183 | 0.8873 | **0.8521** |
+| `figure_primary_rate` (n = 50) — the figure the question asked for | 0.7600 | 0.9200 | **1.0000** |
+| `figure_exact_rate` — every ground-truth figure, context included | 0.6400 | 0.8600 | **0.9000** |
+| `figure_recall` | 0.7320 | 0.9210 | **0.9500** |
+| `agent_hit_rate` (index chunks only) | 0.4366 | 0.6620 | 0.4225 |
+| terminal failures | 7 | 1 | **1** |
+| items that called the fact tool | — | — | 34 of 71 |
+| items that called the calculator | — | — | 8 of 71 |
+
+| stratum | n | figure_primary: dense → rerank → facts | figure_exact: dense → rerank → facts | agent_hit: dense → rerank → facts |
+|---|---|---|---|---|
+| single_hop | 17 | 1.000 → 1.000 → **1.000** | 1.000 → 1.000 → **1.000** | 0.647 → 0.882 → 0.882 |
+| numerical | 33 | 0.697 → 1.000 → **1.000** | 0.606 → 0.909 → **0.970** | 0.424 → 0.697 → 0.242 |
+| list | 8 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 0.125 → 0.375 → 0.500 |
+| temporal | 5 | 0.800 → 0.400 → **1.000** | 0.400 → 0.400 → **0.200** | 0.400 → 0.400 → 0.000 |
+| comparative | 4 | 0.667 → 0.667 → **1.000** | 0.333 → 0.667 → **1.000** | 0.250 → 0.750 → 0.500 |
+| negative | 3 | 1.000 → 1.000 → **1.000** | 1.000 → 1.000 → **1.000** | 0.333 → 0.000 → 0.000 |
+| multi_hop | 1 | n/a → n/a → **n/a** | n/a → n/a → **n/a** | 1.000 → 1.000 → 1.000 |
+
+`agent_hit_rate` counts index chunks only, by design: an item answered from
+the fact table without a search shows no chunk hit and a correct figure, so
+on this run the figure check is the metric to read and the hit rate is
+context. Terminal failures count as 0 in every judge mean.
+
+**What moved, and why.** The fact tools were called on 34 of the 71 items
+and the calculator on 8. On the items that used the fact tool, faithfulness
+is 0.984 (n = 34) against 0.932 on the items that did not (n = 37): a
+figure read off a tagged value with its period attached is very hard to
+misstate. The primary-figure rate reaches 1.000 and the `temporal` stratum,
+which two upgrades of retrieval could not move, goes from 0.400 to 1.000 on
+the figure the question asked — because the year is now an argument to a
+query, not a column the model picks from a table.
+
+`context_recall` is the one judge metric that fell (0.887 → 0.852; 3 items
+up, 6 down), and it fell on the fact-tool items (0.794 against 0.905 on the
+rest). RAGAS attributes each sentence of the ground truth to the contexts,
+and a context that reads `us-gaap:Revenue… | FY2025 | $416,161 million |
+consolidated` supports the figure but not the prose around it; a ground
+truth that also mentions a percentage change or a prior year finds no
+passage for those. The metric was built for passages and is being handed
+rows. It is reported as measured, not adjusted; limitation 16 records it.
+
+`agent_hit_rate` falls from 0.662 to 0.423 for the reason stated above the
+table: 34 items no longer searched the index at all. It has become a
+diagnostic of which path answered rather than a quality score, and the
+figure metrics are what to read on this run.
+
+One terminal failure remains, and it is a different one: `qa_0062`, the
+incorporation question, which the reranked run answered and this run
+searched nine times without concluding — run-to-run variance on a
+`comparative` item (n = 4), of the kind finding 11 measured. `qa_0064`, a
+`negative` item, lost faithfulness on a correct refusal, which is the
+refusal-scoring quirk finding 11 also recorded.
+
+---
+
 ## Findings
 
 Ranked. The first two are the ones worth your time.
@@ -1023,6 +1136,77 @@ measured within this budget. A larger reranker (`BAAI/bge-reranker-base`,
 1.1 GB) was not measured; the small one already saturates at fetch 50 and
 the free-tier Space has 16 GB of RAM to share with everything else.
 
+### 19. The wrong-year answers were never a retrieval problem, and a filter fixed what two retrievers could not
+
+Finding 2 showed the agent quoting the prior year on four of five `temporal`
+items with faithfulness scoring three of them 1.00. Upgrade 2 put the right
+passage in front of the model far more often (hit@5 0.51 → 0.63, agent_hit
+0.44 → 0.66) and the `temporal` figure check did not move: 0.40 before,
+0.40 after. The three-year table was in front of the model both times; the
+model chose the column.
+
+The fact tools remove the choice. A lookup takes `fiscal_year` as an
+argument, defaults to the filing's most recent year and says so, and
+returns one tagged value with its period. On the same five items the
+primary-figure rate goes to 1.000, and the answers read "for fiscal year
+2025 was $106,265 million" — the year asked, the figure asked, nothing
+else. Across all 50 figure items the primary-figure rate is 1.000 against
+0.920 with the reranker and 0.760 for the dense baseline, and the strict
+check reaches 0.900. Faithfulness rises again (0.9315 → 0.9573), and on the 34
+items that used the fact tool it is 0.984.
+
+Three cautions. The five temporal items are five items. The comparison is
+against answers generated the day before on the same model id, not a
+same-session regeneration. And the fact table covers what the filing
+tagged: a line item the resolver does not know ("Google Search & other
+revenues") falls back to search, which on that item still answered
+correctly through the calculator.
+
+### 18. When answers became more exact than the labels, the figure check had to learn what a label means
+
+The first run with the fact tools looked like a regression on the strict
+figure check: `temporal` fell from 0.40 to 0.20 and three `numerical` items
+flipped to failing. Every one of those answers was right.
+
+| item | answer with the fact tools | why the strict check failed it |
+|---|---|---|
+| qa_0067 | "$106,265 million for fiscal year 2025" | the ground truth adds "(fiscal 2024: $87,464 million)" as context, and the check demanded it |
+| qa_0068, 0070, 0071 | the correct current-year figure, no prior year listed | same: parenthetical prior-year context in the ground truth |
+| qa_0007 | "an increase of 13.51%" computed from the tagged figures | the filing's prose, and the ground truth, round it to "14%" |
+| qa_0021 | "19.68%" | ground truth "20%" |
+| qa_0034 | "$26,448 million" read from the table | ground truth "$26.4 billion" |
+
+Earlier runs had passed the temporal items only because the model recited
+all three years' figures, so the prior-year context happened to be present.
+An answer that names exactly the year asked and nothing else is better, and
+the instrument scored it worse. Two changes, together figure check
+**version 3**, applied to every schema-3 results file by
+`recompute_deterministic.py` with judge scores untouched:
+
+- **`figure_primary`**: the first non-year figure in the ground truth is the
+  figure the question is about; the check reports whether the answer
+  contains it. `figure_exact` stays as the strict, every-figure view.
+- **Precision-aware matching**: a candidate matches when it rounds to the
+  ground-truth figure at the precision the ground truth was written in —
+  13.51% rounds to 14%, $26,448 million to $26.4 billion. Years remain
+  exact-only, so 2024 still cannot pass for 2025, and a different figure
+  ($43,229 million against $58,705 million) still fails.
+
+Under version 3, on the 50 items whose ground truth carries a figure:
+
+| run | figure_primary | figure_exact | figure_recall |
+|---|---|---|---|
+| dense baseline | 0.760 | 0.640 | 0.732 |
+| + reranker | 0.920 | 0.860 | 0.921 |
+| + reranker + fact tools | **1.000** | **0.900** | **0.950** |
+
+The general point is the same one findings 2, 14 and 15 made from other
+directions: a metric is a definition, and the definition has to be revisited
+every time the system gets good enough to expose its edges. What is
+different here is that the fix was to the instrument's reading of the
+*label*, not of the answer — and it took a system that answered more
+precisely than the people who wrote the labels to show it.
+
 ---
 
 ## Prior result: the n = 8 run
@@ -1191,3 +1375,10 @@ Including the ones that weaken the numbers above.
     answer that quotes the right figure and the wrong one side by side passes
     unless a year is missing. The verbatim-citation verifier is the tighter
     instrument and is not built yet.
+16. **`context_recall` was designed for passages and is now handed fact
+    rows.** On items answered from the XBRL table the contexts are terse
+    structured lines, and RAGAS finds no support in them for the prose parts
+    of a ground truth (a percentage change, a prior-year mention), so recall
+    on those items reads 0.794 against 0.905 elsewhere. Reported as measured.
+    `agent_hit_rate` likewise counts index chunks only and drops when a
+    question is answered without a search.

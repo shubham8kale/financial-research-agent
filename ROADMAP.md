@@ -50,6 +50,34 @@ measured negative result.
 
 ---
 
+## Done: structured facts and a calculator
+
+**Was.** Every figure came from reading prose or a table chunk. With the
+fiscal year unstated the model quoted the prior year on the temporal items
+(finding 2), and better retrieval did not change that: `temporal`
+figure_exact was 0.40 before and after the reranker.
+
+**Now.** The inline XBRL in each filing on disk is parsed into
+`data/facts.sqlite` (6,089 tagged facts, three seconds, last step of the
+ingestion pipeline; [docs/adr/0001](docs/adr/0001-sqlite-for-xbrl-facts.md))
+and the agent has `lookup_financial_fact` and `compute_metric`
+([eval/EVALUATION.md](eval/EVALUATION.md), "Structured facts"). The fiscal
+year is a filter, the calculator does the arithmetic. On the 50 benchmark
+items with a figure, the answer contains the figure the question asked for
+on **100%** (`figure_primary`), against 92% with the reranker alone and 76%
+for the dense baseline; every temporal item now names the year asked. The
+fact tool was used on 34 of 71 items and the calculator on 8.
+
+**Left open.** `agent_hit_rate` counts index chunks only, so it falls when
+a question is answered from the fact table without a search (0.66 to 0.42);
+read it now as which path answered, not as quality. One `comparative` item
+(`qa_0062`) hit the recursion limit on this run and not on the previous one
+— run-to-run variance on an n = 4 stratum. The concept resolver is a synonym
+table plus a name search; a line item it does not know ("Google Search &
+other revenues") falls back to search, which still answered correctly.
+
+---
+
 ## 1. Table-aware chunking, then re-label
 
 **Now.** 26 of 71 items depend on a table and they are the stratum nothing
