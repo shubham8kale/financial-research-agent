@@ -228,6 +228,19 @@ def run_pipeline(
     if succeeded:
         _run_verification_search(vectorstore)
 
+    # The structured half: every tagged figure in the same submissions goes
+    # into data/facts.sqlite (ingestion/xbrl.py), a few seconds of work that
+    # gives the agent exact lookups next to the semantic index.  A failure
+    # here must not discard the index that was just built, so it is logged
+    # and the pipeline still exits normally.
+    try:
+        from ingestion.xbrl import FACTS_DB, build_facts_db
+        filings = build_facts_db()
+        logger.info("XBRL fact table: %d facts from %d filings -> %s",
+                    sum(f.n_facts for f in filings), len(filings), FACTS_DB)
+    except Exception as exc:  # noqa: BLE001 — the index is the primary artefact
+        logger.error("XBRL fact table was NOT built (%s). Run `python -m ingestion.xbrl` separately.", exc)
+
 
 def _run_verification_search(vectorstore) -> None:
     """Run a test query and print the top 3 results with metadata.

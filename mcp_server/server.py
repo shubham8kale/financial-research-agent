@@ -80,6 +80,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
 from ingestion.embedder import build_vectorstore
+from retrieval.facts import FactStore, compute, format_fact_observation
 from retrieval.retriever import RetrievalConfig, Retriever
 
 logger = logging.getLogger(__name__)
@@ -120,7 +121,13 @@ async def _lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
     retriever = Retriever(RetrievalConfig.from_env(), vectorstore=vectorstore)
     logger.info("Retriever config: %s", retriever.config.as_dict())
     try:
-        yield {"vectorstore": vectorstore, "retriever": retriever}
+        facts = FactStore()
+        logger.info("XBRL fact store ready (%s).", ", ".join(facts.tickers()))
+    except FileNotFoundError as exc:
+        facts = None
+        logger.warning("XBRL fact store unavailable: %s — lookup_financial_fact will say so.", exc)
+    try:
+        yield {"vectorstore": vectorstore, "retriever": retriever, "facts": facts}
     finally:
         # ChromaDB (LangChain Chroma wrapper) has no explicit close() method;
         # the underlying sqlite3 connection is managed by the Chroma client and
@@ -339,6 +346,55 @@ async def compare_companies(
         sections.append(f"=== {ticker} ===\n" + "\n\n".join(lines))
 
     return "\n\n".join(sections)
+
+
+@mcp.tool(
+    description=(
+        "Look up an exact financial figure from a company's 10-K XBRL data: revenue, "
+        "net income, operating income, EPS, total assets, cash flow, capital expenditures, "
+        "or a segment/product figure (iPhone, Intelligent Cloud, Google Cloud, AWS, Reality "
+        "Labs). Returns the tagged value with its fiscal year, period and unit. Use FIRST for "
+        "any headline number; leave fiscal_year unset for the most recent year in the filing."
+    ),
+    annotations={"readOnlyHint": True, "openWorldHint": False},
+)
+async def lookup_financial_fact(
+    ticker: Annotated[str, Field(description="Indexed ticker, e.g. 'AAPL'.")],
+    concept: Annotated[str, Field(description="Plain language ('total net sales', 'diluted EPS') or a concept name ('us-gaap:Revenues').")],
+    ctx: Context,
+    fiscal_year: Annotated[int | None, Field(description="Fiscal year wanted, e.g. 2025. Unset = most recent in the filing.")] = None,
+    segment: Annotated[str | None, Field(description="Segment or product to restrict to, e.g. 'iPhone', 'AWS'. Unset = consolidated.")] = None,
+) -> str:
+    """Return tagged XBRL facts as '[n] ticker=... fact_id=...' entries."""
+    store = ctx.request_context.lifespan_context.get("facts")
+    if store is None:
+        return "Fact database unavailable on this server. Use search_filings instead."
+    await ctx.info(f"Fact lookup: {ticker} {concept!r} fy={fiscal_year} segment={segment!r}")
+    rows, info = store.lookup(ticker, concept, fiscal_year, segment)
+    return format_fact_observation(rows, info, concept)
+
+
+@mcp.tool(
+    description=(
+        "Deterministic arithmetic on figures from lookup_financial_fact. operation: difference (a-b), "
+        "sum, ratio (a/b), pct_change ((a-b)/b*100, a=newer), margin_pct (a/b*100), cagr_pct (b->a over n). "
+        "Never compute in your head; quote the result as returned."
+    ),
+    annotations={"readOnlyHint": True, "openWorldHint": False},
+)
+async def compute_metric(
+    operation: Annotated[str, Field(description="difference | sum | ratio | pct_change | margin_pct | cagr_pct")],
+    a: Annotated[float, Field(description="First operand (the newer figure for pct_change).")],
+    b: Annotated[float, Field(description="Second operand (the older figure for pct_change).")],
+    ctx: Context,
+    n: Annotated[int | None, Field(description="Number of periods, for cagr_pct only.")] = None,
+) -> str:
+    """Return the computed value with the formula used."""
+    out = compute(operation, a, b, n)
+    if "error" in out:
+        return f"Error: {out['error']}"
+    n_note = f", n={n}" if n else ""
+    return f"[1] calc={out['operation']}\n    {out['formula']} with a={a:,.10g}, b={b:,.10g}{n_note} = {out['result']:,.2f}"
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

@@ -366,6 +366,74 @@ def compare_companies(question: str, tickers: str) -> str:
     return "\n\n".join(sections)
 
 
+@tool
+def lookup_financial_fact(ticker: str, concept: str, fiscal_year: int | None = None,
+                          segment: str | None = None) -> str:
+    """Look up an exact financial figure from the company's 10-K XBRL data.
+
+    Every headline number in a 10-K is machine-tagged with its concept, period
+    and unit. This tool returns those tagged values, so it is the reliable way
+    to get a figure: use it FIRST for revenue, net sales, net income, operating
+    income, gross profit, EPS, total assets, cash, debt, operating cash flow,
+    capital expenditures, share repurchases, and segment or product revenue
+    (e.g. iPhone, Intelligent Cloud, Google Cloud, AWS, Reality Labs).
+
+    Parameters
+    ----------
+    ticker:
+        One of the indexed tickers, e.g. "AAPL".
+    concept:
+        Plain language ("total net sales", "net income", "diluted EPS") or an
+        exact concept name ("us-gaap:Revenues").
+    fiscal_year:
+        The fiscal year wanted, e.g. 2025. Leave unset for the most recent
+        fiscal year in the filing; the result says which year it used.
+    segment:
+        A segment or product name to restrict to, e.g. "iPhone", "AWS",
+        "Google Cloud", "Intelligent Cloud". Leave unset for the consolidated
+        total.
+
+    Returns
+    -------
+    One "[n] ticker=... fact_id=..." entry per tagged value with its concept,
+    period, value, unit and segment; or an explanation of what could not be
+    resolved and what is available.
+    """
+    from retrieval.facts import format_fact_observation, get_fact_store
+
+    try:
+        store = get_fact_store()
+    except FileNotFoundError as exc:
+        return f"Fact database unavailable ({exc}). Use search_filings instead."
+    rows, info = store.lookup(ticker, concept, fiscal_year, segment)
+    return format_fact_observation(rows, info, concept)
+
+
+@tool
+def compute_metric(operation: str, a: float, b: float, n: int | None = None) -> str:
+    """Do arithmetic on figures you looked up. Never compute in your head.
+
+    operation is one of:
+      difference   a - b
+      sum          a + b
+      ratio        a / b
+      pct_change   (a - b) / b * 100      a = newer figure, b = older figure
+      margin_pct   a / b * 100            a = profit line, b = revenue
+      cagr_pct     compound annual growth from b to a over n periods
+
+    Pass the figures exactly as returned by lookup_financial_fact (in the same
+    unit for both). Quote the result as returned.
+    """
+    from retrieval.facts import compute
+
+    out = compute(operation, a, b, n)
+    if "error" in out:
+        return f"Error: {out['error']}"
+    n_note = f", n={n}" if n else ""
+    return (f"[1] calc={out['operation']}\n"
+            f"    {out['formula']} with a={a:,.10g}, b={b:,.10g}{n_note} = {out['result']:,.2f}")
+
+
 # ── System prompt ─────────────────────────────────────────────────────────────
 #
 # create_react_agent() takes a plain `prompt` string rather
@@ -404,7 +472,20 @@ _SYSTEM_PROMPT = (
     "most recent data available. If a query asks to compare companies without "
     "specifying which ones, use list_available_companies first to discover what's "
     "available, then proceed. Never ask the user for clarification when you can "
-    "resolve the ambiguity by searching."
+    "resolve the ambiguity by searching.\n"
+    "7. For any exact financial figure - revenue or net sales, net income, "
+    "operating income, gross profit, EPS, total assets, cash, debt, cash flow, "
+    "capital expenditures, buybacks, or a segment or product figure such as "
+    "iPhone, Intelligent Cloud, Google Cloud, AWS or Reality Labs - call "
+    "lookup_financial_fact FIRST. It returns the value tagged in the filing's "
+    "XBRL with its fiscal year, which is more reliable than reading a table out "
+    "of search results. Pass fiscal_year when the question names one. When it "
+    "does not, the tool uses the most recent fiscal year in the filing: report "
+    "that figure and state the year. Use search_filings for narrative, "
+    "qualitative or policy questions, and when the fact lookup finds nothing.\n"
+    "8. Never do arithmetic yourself. For a growth rate, difference, margin or "
+    "ratio, call compute_metric with the figures you looked up and report its "
+    "result."
 )
 
 
@@ -459,7 +540,8 @@ def build_agent_executor():
         temperature=0,
     )
 
-    tools = [search_filings, list_available_companies, compare_companies]
+    tools = [search_filings, list_available_companies, compare_companies,
+             lookup_financial_fact, compute_metric]
 
     # create_react_agent() from langgraph.prebuilt binds the LLM and tools,
     # then compiles a LangGraph StateGraph that drives the model→tools→model

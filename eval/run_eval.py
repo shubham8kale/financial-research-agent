@@ -369,8 +369,8 @@ def split_contexts(observations: list[str]) -> list[str]:
     from agent.observations import parse_observation
 
     return [
-        f"[{chunk.ticker} 10-K, chunk {chunk.chunk_idx}] {chunk.text}"
-        for obs in observations for chunk in parse_observation(obs)
+        (f"[{c.ticker} 10-K, {c.label}] {c.text}" if c.kind != "calc" else f"[{c.label}] {c.text}")
+        for obs in observations for c in parse_observation(obs)
     ]
 
 

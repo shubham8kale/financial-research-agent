@@ -27,6 +27,10 @@ from dataclasses import dataclass
 SECTION_RE = re.compile(r"^===\s*(\S+)\s*===")
 # "[1] ticker=AAPL  chunk_idx=395"  or  "  [1] chunk_idx=395" (ticker from section).
 CHUNK_HEADER_RE = re.compile(r"^\s*\[\d+\]\s*(?:ticker=(\S+)\s+)?chunk_idx=(\S+)")
+# "[1] ticker=AAPL  fact_id=123" — a tagged XBRL fact from lookup_financial_fact.
+FACT_HEADER_RE = re.compile(r"^\s*\[\d+\]\s*ticker=(\S+)\s+fact_id=(\S+)")
+# "[1] calc=pct_change" — a compute_metric result; evidence for the eval judge, never a citation.
+CALC_HEADER_RE = re.compile(r"^\s*\[\d+\]\s*calc=(\S+)")
 # Last-resort pattern for an observation whose layout has drifted.
 FALLBACK_RE = re.compile(r"ticker=(\S+)\s+chunk_idx=(\S+)")
 
@@ -48,14 +52,30 @@ def parse_chunk_id(cid: str) -> tuple[str, int] | None:
 
 @dataclass(frozen=True)
 class ObservedChunk:
-    """One retrieved passage as it appeared in a tool observation."""
+    """One passage, fact or calculation as it appeared in a tool observation.
+
+    kind is "chunk" (a passage from the index), "fact" (a tagged XBRL value)
+    or "calc" (a compute_metric result).  Only chunks count toward retrieval
+    metrics; chunks and facts are citable; all three are contexts for the judge.
+    """
     ticker: str
     chunk_idx: str
     text: str
+    kind: str = "chunk"
 
     @property
     def chunk_id(self) -> str:
+        if self.kind == "fact":
+            return f"{self.ticker}_10K_fact_{self.chunk_idx}"
+        if self.kind == "calc":
+            return f"calc_{self.chunk_idx}"
         return chunk_id(self.ticker, self.chunk_idx)
+
+    @property
+    def label(self) -> str:
+        """Provenance phrase for a context prefix: 'chunk 395', 'XBRL fact 123', 'calculator pct_change'."""
+        return {"fact": f"XBRL fact {self.chunk_idx}", "calc": f"calculator {self.chunk_idx}"}.get(
+            self.kind, f"chunk {self.chunk_idx}")
 
 
 def observation_text(content) -> str:
@@ -109,37 +129,51 @@ def parse_observation(content: str) -> list[ObservedChunk]:
             continue
 
         header = CHUNK_HEADER_RE.match(line)
+        kind = "chunk"
+        if not header:
+            header = FACT_HEADER_RE.match(line)
+            kind = "fact" if header else kind
+        if not header:
+            calc = CALC_HEADER_RE.match(line)
+            if calc:
+                header, kind = calc, "calc"
         if header:
-            ticker = (header.group(1) or current_ticker or "UNKNOWN").upper()
-            chunk_idx = header.group(2).strip().rstrip(",")
+            if kind == "calc":
+                ticker, chunk_idx = "", header.group(1).strip()
+            else:
+                ticker = (header.group(1) or current_ticker or "UNKNOWN").upper()
+                chunk_idx = header.group(2).strip().rstrip(",")
             i += 1
             snippet_lines: list[str] = []
             while i < len(lines):
                 nxt = lines[i]
                 if not nxt.strip():
                     break
-                if SECTION_RE.match(nxt) or CHUNK_HEADER_RE.match(nxt):
+                if SECTION_RE.match(nxt) or CHUNK_HEADER_RE.match(nxt) or FACT_HEADER_RE.match(nxt) or CALC_HEADER_RE.match(nxt):
                     break
                 snippet_lines.append(nxt.strip())
                 i += 1
             text = " ".join(snippet_lines).strip()
             if text:
-                chunks.append(ObservedChunk(ticker=ticker, chunk_idx=chunk_idx, text=text))
+                chunks.append(ObservedChunk(ticker=ticker, chunk_idx=chunk_idx, text=text, kind=kind))
             continue
         i += 1
     return chunks
 
 
 def retrieved_chunk_ids(observations: list[str]) -> list[str]:
-    """Unique chunk ids across *observations*, in order of first appearance.
+    """Unique INDEX chunk ids across *observations*, in order of first appearance.
 
     Order of first appearance is the agent-level rank: the position at which the
-    agent first saw the chunk across its whole tool-calling trajectory.
+    agent first saw the chunk across its whole tool-calling trajectory.  Facts
+    and calculations are not chunks and are left out.
     """
     seen: set[str] = set()
     ordered: list[str] = []
     for obs in observations:
         for c in parse_observation(obs):
+            if c.kind != "chunk":
+                continue
             if c.chunk_id not in seen:
                 seen.add(c.chunk_id)
                 ordered.append(c.chunk_id)

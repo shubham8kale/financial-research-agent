@@ -133,6 +133,7 @@ def _parse_tool_content(content: str) -> List[SourceChunk]:
     return [
         SourceChunk(text=c.text, ticker=c.ticker, source_file=c.chunk_id)
         for c in parse_observation(content)
+        if c.kind != "calc"   # a computed number is not a source
     ]
 
 
@@ -260,8 +261,16 @@ def _sse(payload: dict) -> str:
 
 
 def _chunk_idx_of(source_file: str) -> str:
-    """Recover the chunk index from a 'TICKER_10K_chunk_IDX' source_file string."""
-    return source_file.rsplit("_chunk_", 1)[-1] if "_chunk_" in source_file else ""
+    """Recover the chunk index from a 'TICKER_10K_chunk_IDX' source_file string.
+
+    A tagged XBRL fact ('TICKER_10K_fact_ID') is reported as 'fact ID' so the
+    UI can label it as a fact rather than a passage.
+    """
+    if "_chunk_" in source_file:
+        return source_file.rsplit("_chunk_", 1)[-1]
+    if "_fact_" in source_file:
+        return "fact " + source_file.rsplit("_fact_", 1)[-1]
+    return ""
 
 
 async def _run_with_fallback(request: Request, question: str):
