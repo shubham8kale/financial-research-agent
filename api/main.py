@@ -25,7 +25,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import ToolMessage
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from agent import financial_agent, mcp_agent
 from agent.contract import averify_answer
@@ -52,6 +52,10 @@ MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8000")
 # CPU deployment (HF Spaces) needs more headroom for multi-step reasoning +
 # per-call query embedding + Gemini latency. Default 120s for deployed use.
 AGENT_TIMEOUT_SECONDS = float(os.getenv("AGENT_TIMEOUT_SECONDS", "120"))
+# One budget for the whole request: the MCP attempt and the direct fallback
+# share it, so the worst case is AGENT_TIMEOUT_SECONDS, not twice that.
+MAX_QUESTION_CHARS = 2000
+SSE_KEEPALIVE_SECONDS = 10.0
 
 # Browser origins allowed to call the API (CORS). The Next.js dev server runs on
 # http://localhost:3000; the deployed Vercel domain is supplied at deploy time
@@ -101,8 +105,12 @@ app.add_middleware(
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
 class QueryRequest(BaseModel):
-    question: str
-    ticker: Optional[str] = None
+    # Bounded: every character of the question is a model-call token paid for
+    # twice (the agent turn and the structuring call); an unbounded body on a
+    # public endpoint is an invitation.  2,000 characters is ten times the
+    # longest benchmark question.
+    question: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
+    ticker: Optional[str] = Field(default=None, max_length=10)
 
 
 class SourceChunk(BaseModel):
@@ -292,6 +300,11 @@ def _new_config(meter: QueryMeter) -> dict:
     return {"recursion_limit": 20, "callbacks": [meter]}
 
 
+def _remaining(deadline: float) -> float:
+    """Seconds left until *deadline* on the running loop's clock; never below a tenth of a second."""
+    return max(0.1, deadline - asyncio.get_running_loop().time())
+
+
 async def _complete(question: str, result: dict, meter: QueryMeter, backend: str):
     """Everything that happens between the agent's draft and the response.
 
@@ -331,6 +344,7 @@ async def _run_with_fallback(request: Request, question: str):
     exception if it fails, so the caller can emit an SSE error event.
     """
     payload = {"messages": [("human", question)]}
+    deadline = asyncio.get_running_loop().time() + AGENT_TIMEOUT_SECONDS
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
     if mcp_exec is not None:
@@ -338,7 +352,7 @@ async def _run_with_fallback(request: Request, question: str):
         try:
             result = await asyncio.wait_for(
                 mcp_exec.ainvoke(payload, config=_new_config(meter)),
-                timeout=AGENT_TIMEOUT_SECONDS,
+                timeout=_remaining(deadline),
             )
             answer = _final_answer(result)
             if not classify_terminal_state(answer):
@@ -360,7 +374,7 @@ async def _run_with_fallback(request: Request, question: str):
     meter = QueryMeter(model=financial_agent.LLM_MODEL)
     result = await asyncio.wait_for(
         direct_exec.ainvoke(payload, config=_new_config(meter)),
-        timeout=AGENT_TIMEOUT_SECONDS,
+        timeout=_remaining(deadline),
     )
     logger.info("Stream answered via direct agent")
     return await _complete(question, result, meter, "direct")
@@ -373,11 +387,22 @@ async def _sse_event_stream(request: Request, question: str):
     # slow free-tier host that silent gap can trip a proxy idle-timeout and drop
     # the connection. Comment lines (": ...") are ignored by SSE clients.
     run = asyncio.create_task(_run_with_fallback(request, question))
-    while True:
-        finished, _ = await asyncio.wait({run}, timeout=10)
-        if finished:
-            break
-        yield ": keepalive\n\n"
+    try:
+        while True:
+            finished, _ = await asyncio.wait({run}, timeout=SSE_KEEPALIVE_SECONDS)
+            if finished:
+                break
+            if await request.is_disconnected():
+                # The browser left: stop paying for an answer nobody will read.
+                logger.info("Stream client disconnected; cancelling the agent run")
+                run.cancel()
+                return
+            yield ": keepalive\n\n"
+    finally:
+        # Closing the generator early (client gone, server shutting down) must
+        # not leave the agent task running to completion on its own.
+        if not run.done():
+            run.cancel()
 
     try:
         answer, sources, meta, verification = run.result()
@@ -453,6 +478,7 @@ async def _sse_event_stream(request: Request, question: str):
 async def query(req: QueryRequest, request: Request) -> QueryResponse:
     question = _build_question(req)
     payload = {"messages": [("human", question)]}
+    deadline = asyncio.get_running_loop().time() + AGENT_TIMEOUT_SECONDS
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
     if mcp_exec is not None:
@@ -460,7 +486,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             meter = QueryMeter(model=financial_agent.LLM_MODEL)
             result = await asyncio.wait_for(
                 mcp_exec.ainvoke(payload, config=_new_config(meter)),
-                timeout=AGENT_TIMEOUT_SECONDS,
+                timeout=_remaining(deadline),
             )
             answer = _final_answer(result)
             mcp_outcome = classify_terminal_state(answer)
@@ -496,7 +522,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
         meter = QueryMeter(model=financial_agent.LLM_MODEL)
         result = await asyncio.wait_for(
             direct_exec.ainvoke(payload, config=_new_config(meter)),
-            timeout=AGENT_TIMEOUT_SECONDS,
+            timeout=_remaining(deadline),
         )
         answer = _final_answer(result)
         outcome = classify_terminal_state(answer)
