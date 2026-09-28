@@ -135,6 +135,32 @@ slice together; both are regenerated with two commands.
 
 ---
 
+## Done: an output contract, verified before the answer leaves the API
+
+**Was.** The answer was prose with sources listed beside it. Nothing checked
+that a figure in the prose came from a source, and finding 20 shows the
+judge cannot: three in-head calculations on the dense baseline scored a
+faithfulness of 1.0.
+
+**Now.** Every answer becomes claims with cited observation ids (one extra
+model call) and is checked deterministically — cited ids exist, every figure
+is in an observation its sentence cites, nothing dropped — repaired once,
+then refused ([agent/contract.py](agent/contract.py)). The API returns the
+verdict and marks cited sources; in strict mode it serves a refusal instead
+of an unverifiable draft; the UI shows both. Measured over all 71 items:
+**70 of 70** verified on the first attempt, 77 of 77 figures supported, 0
+refused, drafts unchanged; +$0.0004 and +2.2 s per query
+([eval/EVALUATION.md](eval/EVALUATION.md), "Output contract").
+
+**Left open.** The verifier attributes figures, not years: a right figure
+for the wrong year that is in the cited passage verifies (limitation 15).
+The structuring call doubles p50 latency (finding 21); a smaller model for
+it, or a record emitted in the agent's final turn, would take that back.
+Zero refusals here means the refusal path is exercised by tests and one live
+incident, not by benchmark traffic (limitation 18).
+
+---
+
 ## 1. Table-aware chunking, then re-label
 
 **Now.** 26 of 71 items depend on a table and they are the stratum nothing

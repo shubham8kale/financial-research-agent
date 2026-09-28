@@ -262,7 +262,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0002",
@@ -360,7 +368,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0003",
@@ -458,7 +474,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0004",
@@ -556,7 +580,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0005",
@@ -666,7 +698,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0006",
@@ -754,7 +794,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0007",
@@ -868,7 +916,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0008",
@@ -982,7 +1038,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0009",
@@ -1070,7 +1134,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0010",
@@ -1158,7 +1230,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0011",
@@ -1246,7 +1326,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0012",
@@ -1350,7 +1438,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0013",
@@ -1448,7 +1544,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0014",
@@ -1597,7 +1701,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0015",
@@ -1695,7 +1807,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0016",
@@ -1793,7 +1913,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0017",
@@ -1891,7 +2019,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0018",
@@ -1985,7 +2121,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0019",
@@ -2074,7 +2218,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0020",
@@ -2162,7 +2314,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0021",
@@ -2274,7 +2434,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0022",
@@ -2362,7 +2530,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0023",
@@ -2460,7 +2636,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0024",
@@ -2596,7 +2780,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0025",
@@ -2694,7 +2886,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0026",
@@ -2792,7 +2992,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0027",
@@ -2890,7 +3098,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0028",
@@ -3004,7 +3220,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0029",
@@ -3102,7 +3326,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0030",
@@ -3190,7 +3422,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0031",
@@ -3278,7 +3518,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0032",
@@ -3366,7 +3614,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0033",
@@ -3454,7 +3710,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0034",
@@ -3575,7 +3839,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0035",
@@ -3673,7 +3945,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0036",
@@ -3771,7 +4051,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0037",
@@ -3869,7 +4157,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0038",
@@ -3967,7 +4263,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0039",
@@ -4065,7 +4369,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0040",
@@ -4190,7 +4502,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0041",
@@ -4300,7 +4620,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0042",
@@ -4388,7 +4716,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0043",
@@ -4483,7 +4819,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0044",
@@ -4587,7 +4931,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0045",
@@ -4685,7 +5037,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0046",
@@ -4783,7 +5143,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0047",
@@ -4881,7 +5249,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0048",
@@ -4979,7 +5355,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0049",
@@ -5077,7 +5461,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0050",
@@ -5191,7 +5583,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0051",
@@ -5289,7 +5689,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0052",
@@ -5377,7 +5785,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0053",
@@ -5495,7 +5911,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0054",
@@ -5583,7 +6007,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0055",
@@ -5671,7 +6103,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0056",
@@ -5759,7 +6199,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0057",
@@ -5857,7 +6305,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0058",
@@ -5955,7 +6411,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0059",
@@ -6053,7 +6517,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0060",
@@ -6169,7 +6641,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 5,
+        "n_grounded": 5,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0061",
@@ -6307,7 +6787,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 5,
+        "n_grounded": 5,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0062",
@@ -6518,7 +7006,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0063",
@@ -6621,7 +7117,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0064",
@@ -6727,7 +7231,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0065",
@@ -6848,7 +7360,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0066",
@@ -6936,7 +7456,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0067",
@@ -7027,7 +7555,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0068",
@@ -7126,7 +7662,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0069",
@@ -7221,7 +7765,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0070",
@@ -7312,7 +7864,15 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
     },
     {
       "id": "qa_0071",
@@ -7412,7 +7972,23 @@
         "context_recall": null
       },
       "judge_model": "gemini-3.6-flash",
-      "judge_provider": "google"
+      "judge_provider": "google",
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      }
+    }
+  ],
+  "recomputed": [
+    {
+      "what": "deterministic metrics (figure_*, agent_*) and aggregates",
+      "at": "2026-09-28T17:00:12+00:00",
+      "figure_match_version": "3",
+      "labels_file": "eval/benchmark_chunks.json"
     }
   ]
 }

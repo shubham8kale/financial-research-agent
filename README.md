@@ -90,10 +90,11 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 182 tests, no network / API key / index required |
-| Frontend tests | Vitest + React Testing Library — 2 tests |
+| Backend tests | pytest — 201 tests, no network / API key / index required |
+| Frontend tests | Vitest + React Testing Library — 3 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
+| Verification | Output contract: every answer becomes claims with cited observation ids and is checked against what was retrieved this turn, with no model in the check; fail-closed (`agent/contract.py`) |
 | Hosting | Vercel (frontend) + Hugging Face Spaces (backend), both free tier |
 | CI | GitHub Actions: lint, tests, build, and a retrieval quality gate on every PR (thresholds in `eval/ci_gate.json`, scored on a committed index slice); the judged run is a manual, paid workflow |
 
@@ -236,15 +237,29 @@ curl -X POST http://localhost:8080/query \
       "source_file": "AAPL_10K_chunk_395"
     }
   ],
-  "tokens_used": null
+  "tokens_used": 5080,
+  "verification": {
+    "status": "verified",
+    "n_claims": 1, "n_figures": 1, "n_supported": 1,
+    "failures": [], "cited": ["AAPL_10K_chunk_395"],
+    "attempts": 1, "repaired": false
+  }
 }
 ```
 
-Each source is `{text, ticker, source_file}` — the chunk index is encoded in
-`source_file` as `TICKER_10K_chunk_N`, and the SSE endpoint splits it out into a
-separate `chunk_idx` field. There is no `backend` field: which agent served the
-request is logged server-side, not returned. `tokens_used` is currently always
-`null`.
+Each source is `{text, ticker, source_file, cited}` — the chunk index is encoded
+in `source_file` as `TICKER_10K_chunk_N` (a tagged XBRL fact is
+`TICKER_10K_fact_N`), the SSE endpoint splits it out into a separate
+`chunk_idx` field, and `cited` is true when a claim in the verified record
+cites that observation. Which agent served the request is in `meta.backend`.
+
+`verification` is the output contract's verdict (see "Verified answers"
+below): `status` is `verified`, `unverified`, `refused` or `skipped`;
+`failures` names each check that failed (`unknown_source`, `uncited_figure`,
+`unsupported_figure`, `dropped_figure`, `no_contract`) with the sentence and
+the figure; `cited` lists the observation ids the record rests on. When the
+status is `refused`, `answer` is a refusal that says what could not be
+verified, never the draft.
 
 Optional `ticker` field narrows retrieval to a single company.
 
@@ -282,10 +297,13 @@ curl -N -X POST http://localhost:8080/query/stream \
 ```
 
 Each line is one JSON event: `{"type":"token","text":...}` (repeated),
-then `{"type":"sources","items":[...]}`, then `{"type":"meta", ...}` with
-the same fields as `/query`'s `meta`, then `{"type":"done"}`
-(or `{"type":"error","message":...}`). The chat UI renders `meta` under each
-answer as seconds, tokens, dollars, tools called and the trace id. CORS origins are controlled by the
+then `{"type":"sources","items":[...]}`, then `{"type":"verification", ...}`
+with the same fields as `/query`'s `verification`, then `{"type":"meta", ...}`
+with the same fields as `/query`'s `meta`, then `{"type":"done"}`
+(or `{"type":"error","message":...}`). The chat UI renders the verdict as a
+line above the sources (cited sources carry a check mark, a withheld answer
+is marked as such) and `meta` under each answer as seconds, tokens, dollars,
+tools called and the trace id. CORS origins are controlled by the
 `FRONTEND_ORIGINS` env var (comma-separated; defaults include `http://localhost:3000`).
 
 ---
@@ -316,6 +334,44 @@ Measured on the shipped configuration over the 71-item benchmark
 6,199 tokens in and 94 out per query; **$0.0017 per query**,
 $0.12 for the whole benchmark. A judge pass over the same answers costs about
 $1.10, which is why evaluation spend is gated on the judge-free metrics first.
+
+---
+
+## Verified answers
+
+The agent's final message is prose, and prose is not checkable. So before an
+answer leaves the API it is turned into a record — one claim per sentence,
+each with the ids of the observations that support it — by a second, cheaper
+model call that sees the question, the draft and the observations with their
+ids ([agent/contract.py](agent/contract.py)). The record is then checked with
+no model in the loop:
+
+| check | fails when |
+|---|---|
+| `unknown_source` | a cited id is not an observation from this turn |
+| `uncited_figure` | a sentence states a figure and cites nothing |
+| `unsupported_figure` | a figure is not in any observation the sentence cites |
+| `dropped_figure` | a figure in the draft appears in no sentence of the record |
+
+A figure counts as present under the same rules the evaluation's figure check
+uses ([agent/figures.py](agent/figures.py)), read the way a verifier needs
+them: a claim may round its source ("$26.4 billion" for "$26,448 million") but
+may not be more precise than it, a bare integer must match exactly, and a
+percentage may be written without its sign in the source (the calculator
+prints `= 19.68`). Years are exempt; a wrong-year figure is the figure check's
+and the fact tool's job, not this one's.
+
+**Fail-closed.** One repair attempt — the structuring model is shown the
+failures — then the answer is refused. `VERIFY_MODE=strict` (default): a
+refused answer is served as a refusal that names what could not be verified,
+HTTP 200, `verification.status = "refused"`. `warn`: the draft is served with
+the verdict attached. `off`: no structuring call, no check — the behaviour
+before the contract existed, kept for cost comparison. The structuring calls
+are metered with the agent's own, so `meta.cost_usd` is the cost of the
+answer served. Measured over all 71 benchmark items: **70 of 70** answers
+verified on the first attempt, 77 of 77 figures supported by a cited
+observation, 0 refused, drafts unchanged; +$0.0004 and +2.2 s per query
+([eval/EVALUATION.md](eval/EVALUATION.md), "Output contract").
 
 ---
 
@@ -541,7 +597,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
    and `python -m eval.ci_gate retrieval --dry-run` — the last one checks that
    every threshold in `eval/ci_gate.json` sits at or below the committed value
    it was set from, so the gate cannot be edited past what was measured
-4. `pytest` (182 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (201 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Retrieval quality gate (`retrieval-gate`)**
 1. Embed the committed index slice ([`eval/ci_corpus.jsonl.gz`](eval/ci_corpus.jsonl.gz),
@@ -558,7 +614,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
 2. `npm run lint`
-3. `npm test` (2 Vitest tests on the SSE streaming client; Node 22 — vitest 4 requires >=20.19)
+3. `npm test` (3 Vitest tests on the SSE streaming client; Node 22 — vitest 4 requires >=20.19)
 4. `npm run build`
 
 `.github/workflows/eval-judged.yml` is the paid half, run by hand from the
@@ -608,7 +664,11 @@ financial-research-agent/
 ├── agent/
 │   ├── financial_agent.py          # Direct in-process ReAct agent
 │   ├── mcp_agent.py                # Same ReAct loop, tools sourced from MCP
-│   └── observations.py             # Tool-output parser + canonical chunk id, shared by API and eval
+│   ├── observations.py             # Tool-output parser + canonical chunk id, shared by API and eval
+│   ├── contract.py                 # Output contract: claims + cited ids, deterministic checks, repair, refuse
+│   ├── figures.py                  # What a figure is and when two match, shared by the verifier and the eval
+│   ├── meter.py                    # Per-run latency, tokens, cost, tool timings, trace id
+│   └── pricing.py                  # Dated price table behind every cost figure
 ├── api/
 │   └── main.py                     # FastAPI app, MCP-first + direct fallback
 ├── data/
@@ -645,7 +705,7 @@ financial-research-agent/
 │   ├── query_engine.py             # Single-shot RAG (no agent loop)
 │   ├── retriever.py                # The one retrieval call, behind RetrievalConfig
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 182 tests; no network, key or index needed
+├── tests/                          # 201 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
@@ -657,9 +717,10 @@ financial-research-agent/
 │   ├── test_ablation.py            # ablation matrix rendering (2)
 │   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator (10)
 │   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
-│   └── test_ci_gate.py             # gate thresholds, judged checks, the index slice (17)
+│   ├── test_ci_gate.py             # gate thresholds, judged checks, the index slice (17)
+│   └── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (19)
 ├── docs/adr/                       # Architecture decision records
-├── ROADMAP.md                      # Three next steps, each from a finding
+├── ROADMAP.md                      # Six upgrades done, three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
 ├── requirements.txt

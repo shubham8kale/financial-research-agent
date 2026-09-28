@@ -621,6 +621,74 @@ this benchmark; a change smaller than it is not a finding.
 
 ---
 
+## Output contract and fail-closed verification
+
+The agent's final message is prose, and prose cannot be checked. Every
+answer is now turned into a record — one claim per sentence, each with the
+ids of the observations that support it — by a second, cheaper model call
+that sees the question, the draft and the observations with their ids, and
+the record is checked with no model in the loop
+([`agent/contract.py`](../agent/contract.py)): a cited id must be an
+observation from this turn (`unknown_source`), a sentence that states a
+figure must cite something (`uncited_figure`), the figure must be in an
+observation the sentence cites (`unsupported_figure`), and the record must
+not lose a figure the draft had (`dropped_figure`). "In" uses the figure
+grammar the figure check uses ([`agent/figures.py`](../agent/figures.py)),
+read the way a verifier needs it: a claim may round its source but may not
+be more precise than it, a percentage may be unsigned in the source (the
+calculator prints `= 19.68`), and years are exempt. One repair attempt —
+the structuring model is shown the failures — then the answer is refused:
+in strict mode, the default, the API serves a refusal that names what it
+could not verify, and the UI marks the answer as withheld.
+
+**Measured on the benchmark**, shipped configuration plus the contract, all
+71 items regenerated with tracing on (LangSmith project
+`fra-eval-contract-v3`), no judge pass. Evidence:
+[`contract-v3-1587bfef1bd1.json`](results/contract-v3-1587bfef1bd1.json);
+the comparison column is the same configuration without the contract, one
+day earlier.
+
+| | contract-v3 | cost-v3 (no contract) |
+|---|---|---|
+| items through the contract | 70 (the one recursion failure, `qa_0062`, passes through untouched) | — |
+| verified on the first attempt | **70 of 70** | — |
+| repaired / refused | 0 / 0 | — |
+| claims / figures checked / figures supported | 104 / 77 / 77 | — |
+| observations cited | 79 passages, 49 tagged facts, 8 calculator results | — |
+| `figure_primary`, served (draft) | 1.00 (1.00) | 1.00 |
+| `grounded_rate` | 1.00 | 1.00 |
+| drafts byte-identical to cost-v3 | 68 of 71 | — |
+| model calls per query | 3.66 | 2.68 |
+| tokens in / out per query | 6,940 / 221 | 6,199 / 94 |
+| cost per query | $0.0021 | $0.0017 |
+| latency p50 / p95 | 3.7 s / 9.1 s | 1.9 s / 5.9 s |
+
+**What this shows and does not show.** Nothing was refused, and that is the
+measurement rather than a failure of the instrument: with the fact tool and
+the calculator in the loop, every figure the agent serves is a figure it was
+shown (finding 20: `grounded_rate` 1.00 on the three runs since the
+calculator, 0.93 before it), so a check that every figure is attributable to
+a cited observation has nothing left to catch on this benchmark. What the
+contract adds is that the property is now *checked on every answer* rather
+than measured once on 71: the API's `verification` block says which
+observations each answer rests on, and an answer that cannot be attributed
+does not leave the server. The checks fire in the tests, and they fired once
+live during development, when a test hit the model with a synthetic
+observation: the structuring model cited a fact id that did not exist,
+`unknown_source` caught it, and the answer was refused — the failure mode
+the contract exists for, seen on its first day, on traffic the benchmark
+does not contain.
+
+The price is a second, sequential model call: +742 input tokens and
++$0.0004 per query (+22%), and +2.2 s of latency — the p50 doubles, because
+a schema-constrained call on `gemini-3.1-flash-lite` takes longer than one
+of the agent's own turns. The drafts themselves did not move: 68 of 71
+byte-identical to the previous run, the noise floor measured under "Cost
+and latency". `VERIFY_MODE=off` restores the previous cost and latency, and
+is how runs from before the contract are re-scored from cache.
+
+---
+
 ## CI quality gate
 
 Every pull request now runs the retrieval instrument and fails below a
@@ -1352,6 +1420,48 @@ precisely than the people who wrote the labels to show it.
 
 ---
 
+### 20. Three answers did arithmetic in the model's head; the judge scored all three 1.0, and a citation-free grounding check catches them for nothing
+
+The output contract's figure test (`agent/contract.py`, `figure_grounding`)
+can be run without citations against any stored record: is every figure in
+the answer present in *something* the agent saw? On the dense baseline
+([`baseline-v3`](results/baseline-v3-aea128d62403.json)) 3 of 41 answers
+with a figure fail it — `qa_0007` ($12,989 million, the difference between
+two Services net sales figures), `qa_0034` ($26,448 million, the difference
+between two revenue figures) and `qa_0053` (23.40%, a growth rate) — each a
+number the model computed itself from figures that were in its passages.
+Faithfulness scored all three 1.0. The figure check credits two of the three.
+With the calculator in the loop (`rerank-v3`, `facts-v3`, `cost-v3`) 0 of
+48, 48 and 47 answers fail: every figure served is a figure the agent was
+shown, because rule 8 of the prompt sends arithmetic to `compute_metric`
+and the result comes back as an observation.
+
+This is the class of error a faithfulness judge cannot see — a derivation
+from grounded numbers reads as grounded — and the class the contract's
+`uncited_figure` and `unsupported_figure` checks exist for. `grounded_rate`
+is now recorded on every generation results file
+(`python -m eval.recompute_deterministic` added it to the committed ones).
+
+---
+
+### 21. Verifying an answer costs 22% in dollars and 116% in latency; the second round trip, not the tokens, is the price
+
+The output contract adds one model call per answer: the question, the draft
+and the observations with their ids, returning a schema-constrained record.
+Over the 71 items it added 742 input tokens and $0.0004 per query, and 2.2 s
+per query — a p50 of 1.9 s became 3.7 s
+([`contract-v3`](results/contract-v3-1587bfef1bd1.json) against
+[`cost-v3`](results/cost-v3-f5faee254363.json)). The tokens are cheap on a
+flash-lite model; the wall clock is not, because the call is sequential
+(it needs the draft) and structured output on this model runs slower than a
+plain turn. Two ways to take the latency back, neither measured: a smaller
+model for the structuring call, or a prompt that has the agent emit the
+record alongside its draft in the final turn, which removes the round trip
+but puts the citation discipline inside the same call that writes the
+prose.
+
+---
+
 ## Prior result: the n = 8 run
 
 Kept deliberately. The sequence matters: the quota constraint was real, it was
@@ -1450,6 +1560,13 @@ python -m eval.ci_corpus build
 CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_corpus index
 CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_gate retrieval
 python -m eval.ci_gate calibrate
+
+# The output contract on the benchmark: every answer structured, verified,
+# repaired once, refused on failure. Agent calls plus one structuring call per
+# item, no judge: about $0.15. Runs from before the contract were made with
+# VERIFY_MODE=off (the mode did not exist); set it to re-score their cache.
+VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
+  python -m eval.run_eval --generate-only --label contract-v3 --cache-file eval/cache/agent_outputs_contract.json
 ```
 
 A run whose resolved configuration already has a complete results file prints
@@ -1524,8 +1641,11 @@ Including the ones that weaken the numbers above.
     has not been run.
 15. **The figure check tests presence, not attribution** (finding 14). An
     answer that quotes the right figure and the wrong one side by side passes
-    unless a year is missing. The verbatim-citation verifier is the tighter
-    instrument and is not built yet.
+    unless a year is missing. The output contract's verifier ("Output
+    contract" above) is the tighter instrument at serving time — every figure
+    must be in an observation the sentence cites — but it verifies against
+    what was retrieved, not against the ground truth, so a wrong-year figure
+    that is in the passage still verifies.
 16. **`context_recall` was designed for passages and is now handed fact
     rows.** On items answered from the XBRL table the contexts are terse
     structured lines, and RAGAS finds no support in them for the prose parts
@@ -1533,7 +1653,17 @@ Including the ones that weaken the numbers above.
     on those items reads 0.794 against 0.905 elsewhere. Reported as measured.
     `agent_hit_rate` likewise counts index chunks only and drops when a
     question is answered without a search.
-17. **The CI gate measures a slice, and measures it with slack.** The
+18. **The contract refused nothing on the benchmark.** 70 of 70 answers
+    verified on the first attempt, so the refusal path — one repair, then a
+    refusal that names what could not be verified — is covered by the tests
+    and by one live incident during development, not by benchmark traffic.
+    The verified rate is a property of the shipped configuration (every
+    served figure is a retrieved figure, finding 20), not evidence of how
+    well the verifier discriminates on a system that hallucinates. The
+    dense baseline would have given it three answers to refuse (finding
+    20); it was not re-run under the contract to keep the spend at one
+    generation pass.
+19. **The CI gate measures a slice, and measures it with slack.** The
     committed 3,991-chunk slice reproduces the full-index numbers for the two
     gated configurations (the table under "CI quality gate"), but it cannot
     score BM25 or hybrid retrieval at all, and its thresholds sit two items
