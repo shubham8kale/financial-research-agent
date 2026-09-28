@@ -76,7 +76,8 @@ def _gen_row(path: Path, p: dict) -> str:
 
     return "| " + " | ".join([
         p.get("run_id", path.stem), _date(p), cfg.get("agent_model", "—"),
-        f"{cfg.get('judge_provider', '')}/{cfg.get('judge_model', '')}", str(ov.get("n_items", "—")),
+        f"{cfg.get('judge_provider', '')}/{cfg.get('judge_model', '')}", cfg.get("context_format", "chunk"),
+        str(ov.get("n_items", "—")),
         m("faithfulness"), m("answer_relevancy"), m("context_recall"),
         _fmt(det.get("figure_exact_rate")), _fmt(det.get("agent_hit_rate")),
         f"`{cfg.get('config_hash', '—')}`", f"[{path.name}]({path.name})",
@@ -128,10 +129,10 @@ def render(results: list[tuple[Path, dict]]) -> str:
         "",
         "## Generation runs (schema 3: per-chunk contexts)",
         "",
-        "| run | date | agent | judge | n | faithfulness | answer_rel | context_recall | figure_exact | agent_hit | config | file |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | agent_hit | config | file |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
-    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | |"]
+    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | |"]
     lines += [
         "",
         "`figure_exact`: share of items whose answer contains every ground-truth figure (deterministic, no judge). "

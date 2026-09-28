@@ -47,9 +47,10 @@ def test_extract_observations_keeps_every_tool_message_verbatim():
 
 def test_split_contexts_is_per_chunk_and_drops_passage_free_observations():
     ctx = run_eval.split_contexts([OBS_A, OBS_B])
+    # provenance stays on the context: the agent saw the ticker in the header
     assert ctx == [
-        "Total net sales were $416,161 million in fiscal 2025.",
-        "iPhone net sales were $209,586 million.",
+        "[AAPL 10-K, chunk 395] Total net sales were $416,161 million in fiscal 2025.",
+        "[AAPL 10-K, chunk 396] iPhone net sales were $209,586 million.",
     ]
 
 
@@ -69,6 +70,11 @@ def test_upgrade_record_derives_chunk_view_from_schema_2_cache_entry():
     assert new["contexts"] == run_eval.split_contexts([OBS_A, OBS_B])
     assert new["retrieved_chunk_ids"] == ["AAPL_10K_chunk_395", "AAPL_10K_chunk_396"]
     assert old["contexts"] == [OBS_A, OBS_B]  # the cache entry itself is untouched
+    # a record cached before the guard existed gets its terminal state classified
+    assert new["terminal_failure"] is None and new["recursion_limit_hit"] is False
+    limit = run_eval._upgrade_record({"id": "x", "answer": "Sorry, need more steps to process this request.",
+                                      "ground_truth": "g", "contexts": []})
+    assert limit["recursion_limit_hit"] is True
     # already-upgraded records pass through unchanged
     assert run_eval._upgrade_record(new)["contexts"] == new["contexts"]
 

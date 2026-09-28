@@ -358,10 +358,20 @@ def split_contexts(observations: list[str]) -> list[str]:
     An observation with no passage in it (list_available_companies returns a
     ticker list) contributes nothing: it is not evidence, and scoring it as a
     context would let faithfulness credit a claim to a list of tickers.
+
+    Each context keeps its provenance as a prefix, "[META 10-K, chunk 412] ...",
+    because the agent saw exactly that header in the observation.  Chunk text
+    almost always says "the Company"; the header is what tells the agent, and
+    must tell the judge, whose filing it is.  Without it a claim such as
+    "Meta's revenue was X" cannot be verified against a passage that never
+    names Meta, and faithfulness scores the agent for evidence it did have.
     """
     from agent.observations import parse_observation
 
-    return [chunk.text for obs in observations for chunk in parse_observation(obs)]
+    return [
+        f"[{chunk.ticker} 10-K, chunk {chunk.chunk_idx}] {chunk.text}"
+        for obs in observations for chunk in parse_observation(obs)
+    ]
 
 
 def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
@@ -407,14 +417,18 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
 
 # ── Agent-output cache ───────────────────────────────────────────────────────
 
-def _cache_key(item_id: str, agent_model: str, prompt_version: str) -> str:
+def _cache_key(item_id: str, agent_model: str, prompt_version: str, retrieval_tag: str = "") -> str:
     """Build the cache key for one generated agent output.
 
-    Keyed on all three axes that change what the agent produces, so a model
-    swap or a prompt edit invalidates the entry instead of letting a stale
-    generation be re-scored under a new configuration's label.
+    Keyed on every axis that changes what the agent produces — model, prompt
+    and, when it differs from the shipped default, the retrieval configuration
+    — so a swap of any of them invalidates the entry instead of letting a
+    stale generation be re-scored under a new configuration's label.  The
+    default retrieval leaves the key unchanged so entries cached before the
+    tag existed stay valid.
     """
-    return f"{item_id}|{agent_model}|{prompt_version}"
+    key = f"{item_id}|{agent_model}|{prompt_version}"
+    return f"{key}|rc={retrieval_tag}" if retrieval_tag else key
 
 
 def load_cache(path: Path = CACHE_FILE) -> dict:
@@ -889,7 +903,7 @@ def resolve_judge(args) -> tuple[str, str, str]:
 
 # ── Generation phase ─────────────────────────────────────────────────────────
 
-def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True):
+def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True, retrieval_tag=""):
     """Run the agent over *benchmark*, checkpointing to the cache each item.
 
     Returns (records, stop_reason).  ``stop_reason`` is None on a clean pass and
@@ -903,7 +917,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
 
     for i, row in enumerate(benchmark, start=1):
         item_id = row["id"]
-        key = _cache_key(item_id, agent_model, prompt_version)
+        key = _cache_key(item_id, agent_model, prompt_version, retrieval_tag)
 
         if use_cache and key in cache:
             records.append(_upgrade_record(cache[key]))
@@ -1013,6 +1027,12 @@ def _upgrade_record(record: dict) -> dict:
     rec = dict(record)
     if "observations" not in rec:
         rec["observations"] = list(rec.get("contexts") or [])
+    if "terminal_failure" not in rec:
+        # Cached before the terminal-failure guard existed: classify the stored
+        # answer so the aggregate can count it as 0 rather than as unexplained.
+        from agent.financial_agent import OUTCOME_RECURSION_LIMIT, classify_terminal_state
+        rec["terminal_failure"] = classify_terminal_state(rec.get("answer", ""))
+        rec["recursion_limit_hit"] = rec["terminal_failure"] == OUTCOME_RECURSION_LIMIT
     rec["n_observations"] = len(rec["observations"])
     rec["contexts"] = split_contexts(rec["observations"])
     rec["n_contexts"] = len(rec["contexts"])
@@ -1314,6 +1334,11 @@ def main() -> int:
     from eval.experiment import benchmark_version, config_hash, find_existing_result
     from retrieval.retriever import RetrievalConfig
 
+    # The agent's tools retrieve through retrieval/retriever.py, configured by
+    # RETRIEVAL_* env vars; the same config is recorded here and, when it is
+    # not the shipped default, folded into the cache key.
+    retrieval_config = RetrievalConfig.from_env()
+    retrieval_tag = "" if retrieval_config == RetrievalConfig() else config_hash(retrieval_config.as_dict())[:8]
     labels = load_labels(LABELS_FILE) if LABELS_FILE.exists() else None
     if labels is None:
         logger.warning("No chunk labels at %s — agent_* metrics will be None. "
@@ -1323,6 +1348,9 @@ def main() -> int:
         "result_kind": "generation",
         "schema_version": SCHEMA_VERSION,
         "context_granularity": "chunk",
+        # Hashed: the same answers scored 0.13 lower on faithfulness when the
+        # provenance prefix was absent (eval/EVALUATION.md finding 15).
+        "context_format": "chunk+provenance",
         "agent_model": AGENT_MODEL,
         "agent_provider": "google",
         "judge_model": judge_model,
@@ -1339,7 +1367,7 @@ def main() -> int:
         "answer_relevancy_strictness": 3,
         "embedding_model": EMBEDDING_MODEL,
         "k": TOP_K,
-        "retrieval": RetrievalConfig(k=TOP_K).as_dict(),
+        "retrieval": retrieval_config.as_dict(),
         "prompt_version": prompt_version,
         "ragas_version": ragas.__version__,
         "ragas_seed": RAGAS_SEED,
@@ -1370,7 +1398,7 @@ def main() -> int:
         records = []
         missing = []
         for row in benchmark:
-            key = _cache_key(row["id"], AGENT_MODEL, prompt_version)
+            key = _cache_key(row["id"], AGENT_MODEL, prompt_version, retrieval_tag)
             if key in cache:
                 records.append(_upgrade_record(cache[key]))
             else:
@@ -1391,7 +1419,7 @@ def main() -> int:
     else:
         records, stop_reason = generate_outputs(
             benchmark, AGENT_MODEL, prompt_version, cache,
-            use_cache=not args.no_cache,
+            use_cache=not args.no_cache, retrieval_tag=retrieval_tag,
         )
 
     # Judge-free metrics are computed for EVERY record, including on
