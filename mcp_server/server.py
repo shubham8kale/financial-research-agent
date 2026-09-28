@@ -9,47 +9,23 @@
 # agent — can call them over a network transport rather than importing Python
 # functions directly.
 #
-# WHAT IS MCP?
-# ------------
-# The Model Context Protocol (MCP, https://modelcontextprotocol.io) is an
-# open standard that defines a JSON-RPC 2.0 wire format for LLMs to discover
-# and call tools hosted by external servers.  Key concepts:
-#
-#   Tool       — a named, typed function the model can call (like a REST
-#                endpoint).  Described by a JSON Schema so the model knows
-#                what parameters to pass.
-#   Transport  — the byte-level channel.  We use "streamable-http" (HTTP/1.1
-#                with optional SSE streaming) so the server is reachable from
-#                any language and from remote machines.
-#   Lifespan   — an async context manager that runs once at startup/shutdown,
-#                used here to load the ChromaDB index once and share it across
-#                all requests via ctx.request_context.lifespan_context.
-#
-# WHY FastMCP?
-# ------------
-# FastMCP (bundled with the `mcp` SDK) is the high-level Python server API.
-# It handles:
-#   - Tool registration via the @mcp.tool() decorator
-#   - JSON Schema generation from Python type hints and Pydantic Field metadata
-#   - Transport negotiation (stdio / SSE / streamable-http)
-#   - Context injection: ctx.request_context.lifespan_context carries state
-#     initialised in the lifespan hook into every tool call, avoiding globals.
-#     (Note: older docs/tutorials call this attribute ``lifespan_state`` —
-#     in mcp >= 1.9 it is named ``lifespan_context`` and holds the raw value
-#     yielded by the lifespan async context manager.)
+# WHY FastMCP
+# -----------
+# FastMCP (in the `mcp` SDK) turns a decorated Python function into a tool
+# with a JSON Schema generated from its type hints and Field descriptions,
+# negotiates the transport, and injects the lifespan state (the vectorstore,
+# the retriever, the fact store, loaded once) into every call through
+# ctx.request_context.lifespan_context — no module globals.  The tool bodies
+# are the same functions the in-process agent uses, so an MCP client and the
+# direct agent see identical observations (tests/test_mcp_contract.py).
 #
 # ARCHITECTURE
 # ------------
-#                          ┌─────────────────────────────────┐
-#   MCP client             │   FastMCP server (port 8000)    │
-#   (LangChain /           │                                 │
-#    Claude Desktop /  ────► search_filings                  │
-#    custom agent)    ────► list_available_companies   ──────► ChromaDB
-#                    ────► compare_companies                  │
-#                          │                                 │
-#                          │  lifespan: vectorstore loaded   │
-#                          │  once at startup                │
-#                          └─────────────────────────────────┘
+#   MCP client                FastMCP server (port 8000)
+#   (LangChain agent,   ────► search_filings, compare_companies ──► ChromaDB index
+#    Claude Desktop,    ────► lookup_financial_fact ─────────────► SQLite fact table
+#    any MCP client)    ────► compute_metric, list_available_companies
+#                             lifespan: index, retriever and facts loaded once
 #
 # TRANSPORT: streamable-http
 # --------------------------
@@ -71,11 +47,13 @@
 # The server listens on http://0.0.0.0:8000 by default.
 # MCP clients connect to http://<host>:8000/mcp/
 
+import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Annotated, Any, AsyncIterator
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
@@ -92,10 +70,19 @@ logger = logging.getLogger(__name__)
 # without hitting the database, keeping that tool instant.
 INDEXED_TICKERS: list[str] = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 
-# Number of chunks returned per similarity search call.  Five gives the model
-# enough evidence for a single-company question without flooding the context.
-# compare_companies multiplies this by the number of tickers requested.
-TOP_K: int = 5
+# Chunks per search come from the retriever's own configuration (RETRIEVAL_K,
+# default 5 — retrieval/retriever.py), the same source the in-process tools
+# use, so the two paths cannot retrieve different depths.
+
+# Host names this server may be addressed by.  DNS-rebinding protection checks
+# the Host header against this list; docker-compose publishes the port on the
+# host and the api-server reaches it by service name, so both spellings are
+# allowed, on any port.  Extend with MCP_ALLOWED_HOSTS (comma-separated) when
+# the server is exposed under another name.
+_DEFAULT_ALLOWED_HOSTS = ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "mcp-server", "mcp-server:*"]
+ALLOWED_HOSTS: list[str] = _DEFAULT_ALLOWED_HOSTS + [
+    h.strip() for h in os.getenv("MCP_ALLOWED_HOSTS", "").split(",") if h.strip()
+]
 
 
 # ── Lifespan: load ChromaDB once at server startup ────────────────────────────
@@ -147,49 +134,30 @@ mcp = FastMCP(
     instructions=(
         "SEC 10-K filing research server. "
         "Use search_filings for open-ended queries across all companies, "
-        "list_available_companies to discover indexed tickers, and "
-        "compare_companies for side-by-side retrieval of per-company evidence."
+        "list_available_companies to discover indexed tickers, "
+        "compare_companies for side-by-side retrieval of per-company evidence, "
+        "lookup_financial_fact for an exact tagged figure (revenue, net income, EPS, "
+        "a segment) by fiscal year, and compute_metric for any arithmetic on those figures."
     ),
+    # A browser page on another origin can make a victim's browser talk to a
+    # server bound on localhost by rebinding a DNS name; the check rejects any
+    # Host header that is not one of ours.  It was previously switched off with
+    # no note, on a port docker-compose publishes.
     transport_security=TransportSecuritySettings(
-        enable_dns_rebinding_protection=False,
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=ALLOWED_HOSTS,
+        allowed_origins=[f"http://{h}" for h in ALLOWED_HOSTS] + [f"https://{h}" for h in ALLOWED_HOSTS],
     ),
 )
 
 
-# ── Pydantic input models ─────────────────────────────────────────────────────
+# ── Tool argument schemas ────────────────────────────────────────────────────
 #
 # FastMCP generates the JSON Schema that clients receive during tool discovery
-# from Python type annotations.  Using Pydantic Field() on Annotated parameters
-# embeds description strings directly into the schema, giving the calling model
-# precise guidance on what each argument means.
-#
-# We define lightweight models here for tools that take multiple parameters so
-# that the schema groups related fields clearly.  Single-parameter tools use
-# Annotated[str, Field(...)] inline for brevity.
-
-class CompareCompaniesInput(BaseModel):
-    """Input schema for the compare_companies tool."""
-
-    question: Annotated[
-        str,
-        Field(
-            description=(
-                "The comparison question or topic to search for within each "
-                "company's filings, e.g. 'total revenue fiscal year 2024' or "
-                "'cloud segment growth drivers'."
-            )
-        ),
-    ]
-    tickers: Annotated[
-        str,
-        Field(
-            description=(
-                "Comma-separated ticker symbols to compare, e.g. 'AAPL, MSFT'. "
-                "Each ticker must be one of the values returned by "
-                "list_available_companies."
-            )
-        ),
-    ]
+# from the Python type annotations; Field() descriptions on Annotated
+# parameters land in that schema, which is what guides the calling model.
+# Every tool declares its arguments inline; tests/test_mcp_contract.py pins
+# the schemas and the observation format each tool returns.
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
@@ -239,11 +207,14 @@ async def search_filings(
     ],
     ctx: Context,
 ) -> str:
-    """Return the top-5 most relevant 10-K filing chunks for the query."""
+    """Return the most relevant 10-K filing chunks for the query (k from the retriever's configuration)."""
     retriever = ctx.request_context.lifespan_context["retriever"]
 
     await ctx.info(f"Searching filings for: {query!r}")
-    chunks = retriever.retrieve(query, k=TOP_K)
+    # Retrieval is synchronous CPU work (embedding the query, and about a
+    # second of cross-encoder time when reranking is on); run it in a worker
+    # thread so one search does not stall every other client of the server.
+    chunks = await asyncio.to_thread(retriever.retrieve, query)
 
     if not chunks:
         return "No results found."
@@ -333,7 +304,7 @@ async def compare_companies(
 
     sections: list[str] = []
     for ticker in ticker_list:
-        chunks = retriever.retrieve(search_query, k=TOP_K, ticker=ticker)
+        chunks = await asyncio.to_thread(retriever.retrieve, search_query, None, ticker)
 
         if not chunks:
             sections.append(f"=== {ticker} ===\nNo results found for this ticker.")
@@ -371,7 +342,7 @@ async def lookup_financial_fact(
     if store is None:
         return "Fact database unavailable on this server. Use search_filings instead."
     await ctx.info(f"Fact lookup: {ticker} {concept!r} fy={fiscal_year} segment={segment!r}")
-    rows, info = store.lookup(ticker, concept, fiscal_year, segment)
+    rows, info = await asyncio.to_thread(store.lookup, ticker, concept, fiscal_year, segment)
     return format_fact_observation(rows, info, concept)
 
 
