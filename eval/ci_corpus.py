@@ -4,7 +4,7 @@
 # -------
 # A fixed slice of the index, committed as eval/ci_corpus.jsonl.gz, so that
 # CI can score retrieval on every pull request without the full index.
-# Embedding all 67,521 chunks takes about 27 minutes on a 12-core laptop and
+# Embedding all 67,521 chunks takes about 26 minutes on a 12-core laptop and
 # longer on a hosted runner; embedding the slice takes a few minutes once,
 # and GitHub Actions caches the result on the fixture's hash.
 #

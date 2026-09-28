@@ -48,15 +48,16 @@
 #   │  │   LLM: ChatGoogleGenerativeAI (Gemini)       │    │
 #   │  │   system_prompt: financial analyst persona   │    │
 #   │  │   Tools: search_filings                      │    │
-#   │  │           list_available_companies            │    │
-#   │  │           compare_companies                  │    │
+#   │  │          list_available_companies            │    │
+#   │  │          compare_companies                   │    │
+#   │  │          lookup_financial_fact               │    │
+#   │  │          compute_metric                      │    │
 #   │  └──────────────────────────────────────────────┘    │
 #   │                      │                               │
-#   │             ┌────────▼────────┐                      │
-#   │             │  ChromaDB       │                      │
-#   │             │  (SEC 10-K      │                      │
-#   │             │   embeddings)   │                      │
-#   │             └─────────────────┘                      │
+#   │      ┌───────────────▼──────────────┐                │
+#   │      │  ChromaDB (chunk embeddings)  │                │
+#   │      │  SQLite   (tagged XBRL facts) │                │
+#   │      └──────────────────────────────┘                │
 #   └──────────────────────────────────────────────────────┘
 
 import logging
@@ -276,7 +277,7 @@ def search_filings(query: str) -> str:
     # vectorstore — exactly what this tool always did — so a retrieval variant
     # is a configuration change, measured before it is switched on.
     from retrieval.retriever import get_retriever
-    chunks = get_retriever().retrieve(query, k=TOP_K)
+    chunks = get_retriever().retrieve(query)   # k from RetrievalConfig (TOP_K unless RETRIEVAL_K is set)
 
     if not chunks:
         return "No results found."
@@ -350,7 +351,7 @@ def compare_companies(question: str, tickers: str) -> str:
     search_query = question
     sections = []
     for ticker in ticker_list:
-        chunks = retriever.retrieve(search_query, k=TOP_K, ticker=ticker)
+        chunks = retriever.retrieve(search_query, ticker=ticker)
 
         if not chunks:
             sections.append(f"=== {ticker} ===\nNo results found for this ticker.")
@@ -534,7 +535,7 @@ def build_agent_executor():
     Assembly steps
     --------------
     1. Build the Gemini LLM (temperature=0 for deterministic financial answers).
-    2. Collect the three domain tools into a list.
+    2. Collect the five domain tools into a list.
     3. Call create_react_agent() with the LLM, tools, and prompt.  Internally
        this builds a two-node LangGraph (model node ↔ tool node) that loops
        until the model emits an AIMessage with no tool calls.
@@ -602,9 +603,9 @@ def run_agent(question: str) -> str:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    # Smoke test: run a multi-company comparison question that exercises all
-    # three tools — list_available_companies (to confirm tickers), then
-    # compare_companies (to retrieve per-company evidence), then synthesis.
+    # Smoke test: run a multi-company comparison question that exercises the
+    # search tools — list_available_companies (to confirm tickers), then
+    # compare_companies or lookup_financial_fact per company, then synthesis.
     #   python -m agent.financial_agent
     logging.basicConfig(
         level=logging.INFO,

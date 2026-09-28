@@ -22,12 +22,14 @@
 # crash partway through must not discard the work that already succeeded:
 #
 #   1. Agent outputs are written to eval/cache/agent_outputs.json after EVERY
-#      item, keyed by (item id, agent model id, prompt version).  A rerun skips
-#      any item already cached under the same key — so resuming after a quota
-#      wall costs only the items that had not completed.
-#   2. The cache key includes the model and the prompt hash, so changing either
-#      correctly invalidates the cached generation instead of silently scoring
-#      stale outputs against a new configuration.
+#      item, keyed by (item id, agent model id, prompt version) plus, when they
+#      differ from the shipped defaults, the retrieval configuration and the
+#      output contract's mode and version.  A rerun skips any item already
+#      cached under the same key — so resuming after a quota wall costs only
+#      the items that had not completed.
+#   2. The cache key includes everything that changes what is served, so
+#      changing any of it correctly invalidates the cached generation instead
+#      of silently scoring stale outputs against a new configuration.
 #   3. --score-only re-judges purely from cache (or from a prior results file),
 #      making a judge-model comparison free of generation cost.
 #   4. On quota exhaustion the run stops, persists what completed, and prints
@@ -417,6 +419,7 @@ def run_agent_capture(question: str, verify_mode: str = "off") -> tuple[str, lis
         served, verification, extra = verify_answer(
             question, final_answer, observations, llm=build_llm(), mode=verify_mode, callbacks=[meter],
         )
+        _raise_if_quota_wall(verification)
     meter.mark_end()
 
     # Provenance for the empty-answer case.  An empty final answer is
@@ -438,6 +441,20 @@ def run_agent_capture(question: str, verify_mode: str = "off") -> tuple[str, lis
     diag["draft_answer"] = final_answer
     diag["verification"] = verification.as_dict() if verification else None
     return served, observations, len(messages), diag
+
+
+def _raise_if_quota_wall(verification) -> None:
+    """A quota refusal inside the structuring call is a quota wall, not a verdict.
+
+    verify_answer swallows the provider's exception into ``Verification.error``
+    so the API can fail closed; here that would cache a refusal as the item's
+    answer and score it — the poisoning generate_outputs exists to prevent.
+    Re-raised so the run stops with EXIT_QUOTA_EXHAUSTED and the item is retried.
+    """
+    if verification is not None and verification.error:
+        probe = RuntimeError(f"structuring call: {verification.error}")
+        if _is_quota_error(probe):
+            raise probe
 
 
 # ── Agent-output cache ───────────────────────────────────────────────────────
@@ -495,9 +512,13 @@ def save_cache(cache: dict, path: Path = CACHE_FILE) -> None:
 # ── Persistence ──────────────────────────────────────────────────────────────
 
 def _display_path(path: Path) -> str:
-    """Repo-relative when possible; absolute when --out points elsewhere."""
+    """Repo-relative with forward slashes when the path is inside the repo; the path as given otherwise.
+
+    Resolved first, so a relative ``--benchmark eval/benchmark.csv`` (what the
+    resume hint prints) is not compared against the absolute repo root.
+    """
     try:
-        return str(path.relative_to(REPO_ROOT))
+        return str(Path(path).resolve().relative_to(REPO_ROOT)).replace("\\", "/")
     except ValueError:
         return str(path)
 
@@ -1032,8 +1053,9 @@ def _record(row, agent_model, prompt_version, *, answer, observations, n_message
     in isolation, pulled into a table, or compared against a row from a
     different run.
     """
-    from agent.financial_agent import TOP_K, OUTCOME_RECURSION_LIMIT, classify_terminal_state
+    from agent.financial_agent import OUTCOME_RECURSION_LIMIT, classify_terminal_state
     from agent.observations import retrieved_chunk_ids
+    from retrieval.retriever import RetrievalConfig
 
     terminal_failure = classify_terminal_state(answer)
     contexts = split_contexts(observations)
@@ -1057,7 +1079,7 @@ def _record(row, agent_model, prompt_version, *, answer, observations, n_message
         "recursion_limit_hit": terminal_failure == OUTCOME_RECURSION_LIMIT,
         "agent_model": agent_model,
         "agent_provider": "google",
-        "k": TOP_K,
+        "k": RetrievalConfig.from_env().k,   # what the tools retrieved: TOP_K unless RETRIEVAL_K was set
         "prompt_version": prompt_version,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "error": error,
@@ -1260,8 +1282,9 @@ def score_records(records, judge_provider, judge_model, judge_key, max_judge_cal
     pass is recoverable via --score-only, losing the generations is not.
 
     ``max_judge_calls`` caps the work by truncating the scored subset up-front
-    (4 judge calls per item with the three configured metrics), which is what
-    keeps a tightly-throttled cross-family pass inside a small token budget.
+    (JUDGE_CALLS_PER_ITEM: 6 with the three configured metrics and
+    bypass_n, 4 without), which is what keeps a tightly-throttled
+    cross-family pass inside a small token budget.
     """
     from datasets import Dataset
     from ragas import evaluate
@@ -1471,7 +1494,7 @@ def main() -> int:
         return 1
 
     import ragas
-    from agent.financial_agent import LLM_MODEL as AGENT_MODEL, TOP_K
+    from agent.financial_agent import LLM_MODEL as AGENT_MODEL
     from ingestion.embedder import EMBEDDING_MODEL
 
     prompt_version = _prompt_version()
@@ -1528,7 +1551,7 @@ def main() -> int:
         "judge_requests_per_second": judge_rps(judge_provider),
         "answer_relevancy_strictness": 3,
         "embedding_model": EMBEDDING_MODEL,
-        "k": TOP_K,
+        "k": retrieval_config.k,   # what the tools retrieve (RETRIEVAL_K), TOP_K unless overridden
         "retrieval": retrieval_config.as_dict(),
         "prompt_version": prompt_version,
         "ragas_version": ragas.__version__,
@@ -1536,7 +1559,7 @@ def main() -> int:
         "ragas_max_workers": RAGAS_MAX_WORKERS,
         "agent_sleep_seconds": AGENT_SLEEP_SECONDS,
         "agent_recursion_limit": 20,
-        "benchmark_file": str(benchmark_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+        "benchmark_file": _display_path(benchmark_path),
         "benchmark_version": bench_version,
         "benchmark_n": len(benchmark),
         "benchmark_item_ids": sorted(r["id"] for r in benchmark),

@@ -166,12 +166,26 @@ def test_warn_mode_serves_the_draft_flagged_and_off_makes_no_call():
 
 
 def test_a_failed_structuring_call_is_a_verification_failure_not_a_crash():
-    llm = _FakeLLM(RuntimeError("503 from the model"), (None, _raw(), ValueError("bad json")))
+    llm = _FakeLLM(RuntimeError("503 from the model (quotaId x, model gemini-3.1-flash-lite)"),
+                   (None, _raw(), ValueError("bad json")))
     served, v, extra = contract.verify_answer("q", DRAFT, OBS, llm=llm, mode="strict")
     assert v.status == "refused" and v.attempts == 2
-    assert v.failures[0]["check"] == "no_contract" and "bad json" in v.failures[0]["detail"]
-    assert len(extra) == 1                       # only the second attempt returned a raw message
+    assert v.failures[0] == {"check": "no_contract", "claim": "", "detail": "the record could not be parsed"}
+    assert "bad json" in v.error                                        # server side
+    assert len(extra) == 1                                              # only the second attempt returned a raw message
     assert "no usable record" in served
+    # provider and parser text never reach a client: not in the served text, not in the public verdict
+    for leak in ("bad json", "503", "quotaId", "gemini"):
+        assert leak not in served
+    assert "error" not in v.public_dict() and v.as_dict()["error"] == v.error
+
+
+def test_an_empty_record_for_a_non_empty_draft_does_not_verify():
+    empty = AnswerContract(claims=[])
+    failures, stats = contract.check_contract(empty, "Net sales were $416,161 million.", contract.observations_by_id(OBS))
+    assert [f["check"] for f in failures] == ["empty_record", "dropped_figure"]
+    assert stats["n_claims"] == 0
+    assert contract.check_contract(empty, "   ", {})[0] == []
 
 
 def test_verify_mode_reads_the_environment(monkeypatch):
@@ -221,6 +235,7 @@ def test_query_carries_the_verdict_marks_cited_sources_and_meters_the_structurin
     assert body["verification"]["status"] == "verified" and body["verification"]["cited"] == ["AAPL_10K_chunk_42"]
     cited = {s["source_file"]: s["cited"] for s in body["sources"]}
     assert cited == {"AAPL_10K_chunk_42": True, "AMZN_10K_fact_7": False}
+    assert "error" not in body["verification"]
     # the meter counts the structuring call with the agent's own two
     assert body["meta"]["llm_calls"] == 3 and body["meta"]["input_tokens"] == 4900 and body["tokens_used"] == 5080
 
@@ -232,6 +247,14 @@ def test_query_serves_the_refusal_when_strict_verification_fails(api, monkeypatc
     body = resp.json()
     assert body["verification"]["status"] == "refused" and body["answer"].startswith("I could not verify")
     assert all(not s["cited"] for s in body["sources"])
+
+
+def test_warn_mode_serves_the_draft_but_marks_no_source_as_cited(api, monkeypatch):
+    monkeypatch.setenv("VERIFY_MODE", "warn")
+    monkeypatch.setattr(contract, "get_llm", lambda: _FakeLLM((BAD, _raw()), (BAD, _raw())))
+    body = api.post("/query", json={"question": "Apple net sales?"}).json()
+    assert body["answer"] == DRAFT and body["verification"]["status"] == "unverified"
+    assert all(not s["cited"] for s in body["sources"])   # an unverified record's citations are claims, not evidence
 
 
 def test_stream_emits_verification_between_sources_and_meta(api, monkeypatch):
@@ -254,6 +277,15 @@ def test_verification_off_skips_the_structuring_call(api, monkeypatch):
 
 
 # ── the harness ──────────────────────────────────────────────────────────────
+
+def test_a_quota_wall_inside_the_structuring_call_stops_the_run():
+    quota = Verification(status="refused", mode="strict", error="ResourceExhausted: 429 quota exceeded")
+    with pytest.raises(RuntimeError, match="429"):
+        run_eval._raise_if_quota_wall(quota)
+    run_eval._raise_if_quota_wall(Verification(status="refused", mode="strict", error="ValueError: bad json"))
+    run_eval._raise_if_quota_wall(Verification(status="verified", mode="strict"))
+    run_eval._raise_if_quota_wall(None)
+
 
 def test_cache_key_tags_the_contract_but_leaves_old_keys_alone():
     base = run_eval._cache_key("qa_1", "m", "p")

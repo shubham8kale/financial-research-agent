@@ -94,34 +94,12 @@ MCP_SERVER_KEY = "sec_filings"
 
 # ── System prompt ─────────────────────────────────────────────────────────────
 #
-# Copied verbatim from agent/financial_agent.py so that A/B comparisons between
-# the direct-import agent and the MCP-backed agent measure only the transport
-# difference, not a prompt change.  If the prompt is ever tuned, update both
-# files together (or factor it into a shared module).
+# The direct agent's prompt, imported rather than copied, so the two agents can
+# never drift: an A/B between them measures only the transport.  The rules that
+# send figure questions to lookup_financial_fact first (7–8) therefore apply on
+# the MCP path too, where those tools are served by mcp_server/server.py.
 
-_SYSTEM_PROMPT = (
-    "You are a senior financial research analyst specialising in SEC 10-K annual "
-    "filings. Answer questions using ONLY the evidence you retrieve via the "
-    "available tools. Rules:\n"
-    "1. Never speculate or use knowledge not present in the retrieved passages.\n"
-    "2. Reproduce financial figures (revenue, EPS, margins, etc.) exactly as "
-    "written in the source — do not round or paraphrase numbers.\n"
-    "3. Do NOT put citations, ticker symbols, or chunk references in your answer "
-    "text. The interface shows the exact sources separately, so keep the prose "
-    "clean, with no inline or parenthetical references like '(AAPL chunk 42)'.\n"
-    "4. If the retrieved context is insufficient, say so explicitly rather than "
-    "guessing.\n"
-    "5. When searching for financial figures, use specific terms like total net "
-    "sales, operating income, net income rather than generic terms like revenue. "
-    "Include the company name and fiscal year in your search queries. For example, "
-    "search for total net sales Apple fiscal year 2025 rather than just revenue.\n"
-    "6. Always use your tools to search for information before asking clarifying "
-    "questions. If a query is ambiguous about the fiscal year, search for the "
-    "most recent data available. If a query asks to compare companies without "
-    "specifying which ones, use list_available_companies first to discover what's "
-    "available, then proceed. Never ask the user for clarification when you can "
-    "resolve the ambiguity by searching."
-)
+from agent.financial_agent import _SYSTEM_PROMPT  # noqa: E402
 
 
 # ── Custom exception ──────────────────────────────────────────────────────────

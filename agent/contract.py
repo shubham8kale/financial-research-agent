@@ -13,6 +13,7 @@
 #   uncited_figure      a sentence states a figure and cites nothing
 #   unsupported_figure  a figure in a sentence is not in any observation it cites
 #   dropped_figure      a figure in the draft appears in no claim (the record lost it)
+#   empty_record        the record has no sentences although the draft is not empty
 #   no_contract         the structuring call returned nothing usable
 #
 # One repair attempt — the structuring model is shown the failures — then
@@ -121,6 +122,12 @@ class Verification:
     def as_dict(self) -> dict:
         return asdict(self)
 
+    def public_dict(self) -> dict:
+        """as_dict without `error`: a provider's or parser's message is for the log, never for a client."""
+        d = asdict(self)
+        d.pop("error", None)
+        return d
+
 
 # ── Observations ────────────────────────────────────────────────────────────
 
@@ -145,7 +152,8 @@ def describe(failure: dict) -> str:
         "uncited_figure": f"the figure {detail}{where} cites no source",
         "unknown_source": f"{detail} is cited{where} but is not an observation from this turn",
         "dropped_figure": f"the figure {detail} is in the draft but in no sentence of the record",
-        "no_contract": f"no usable record was produced ({detail})",
+        "empty_record": "the record has no sentences although the draft is not empty",
+        "no_contract": f"no usable record was produced: {detail}",
     }.get(check, f"{check}: {detail}")
 
 
@@ -181,6 +189,8 @@ def check_contract(contract: AnswerContract, draft: str, obs: dict[str, str]) ->
     """Every way the record fails to verify against *obs*, and the counts behind the verdict."""
     failures: list[dict] = []
     n_figures = n_supported = 0
+    if not contract.claims and draft.strip():
+        failures.append({"check": "empty_record", "claim": "", "detail": "no sentences"})
     for claim in contract.claims:
         figures = content_figures(claim.text)
         for s in claim.sources:
@@ -283,7 +293,11 @@ def verify_answer(question: str, draft: str, observations: list[str], llm=None, 
         if raw is not None:
             extra.append(raw)
         if candidate is None:
-            failures = [{"check": "no_contract", "claim": "", "detail": error or "empty response"}]
+            # The provider's or the parser's message stays in `error` (server side);
+            # the failure a client sees, and the repair prompt shows the model, is
+            # generic.  A 429 with a quota id in it must never be served as prose.
+            failures = [{"check": "no_contract", "claim": "",
+                         "detail": "the record could not be parsed" if raw is not None else "the structuring call failed"}]
             continue
         contract = candidate
         failures, stats = check_contract(contract, draft, obs)

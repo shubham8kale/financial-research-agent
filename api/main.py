@@ -311,9 +311,10 @@ async def _complete(question: str, result: dict, meter: QueryMeter, backend: str
     else:
         observations = [observation_text(m.content) for m in messages if isinstance(m, ToolMessage)]
         answer, verdict, extra = await averify_answer(question, draft, observations, callbacks=[meter])
-        verification = verdict.as_dict()
-        for src in sources:
-            src.cited = src.source_file in verdict.cited
+        verification = verdict.public_dict()
+        if verdict.status == "verified":   # an unverified record's citations are claims, not evidence
+            for src in sources:
+                src.cited = src.source_file in verdict.cited
     meter.mark_end()
     meta = public_meta(meter.summary(list(messages) + extra))
     meta["backend"] = backend

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "note": "Thresholds for eval/ci_gate.py. Each retrieval threshold sits two benchmark items (2/71 = 0.028) below the committed results file it names; the judged thresholds sit under what the named judged run scored on the same ten items (`python -m eval.ci_gate calibrate`). `python -m eval.ci_gate retrieval --dry-run` refuses a threshold above its own calibration value.",
+  "note": "Thresholds for eval/ci_gate.py. Each hit-rate threshold is at or below (hits - 2) / 71 for the committed results file it names, so a two-item loss passes and a three-item loss fails; MRR and nDCG thresholds sit 0.03 below the committed value; the judged thresholds sit under what the named judged run scored on the same ten items (`python -m eval.ci_gate calibrate`). `python -m eval.ci_gate retrieval --dry-run` refuses a threshold above its own calibration value.",
   "retrieval": {
     "k": 25,
     "index": "eval/ci_corpus.jsonl.gz",
@@ -9,24 +9,26 @@
         "label": "dense",
         "retrieval": {"mode": "dense", "k": 25},
         "committed": "eval/results/retrieval-dense-1e17cf5b5eab.json",
-        "thresholds": {"hit@5": 0.479, "mrr": 0.328, "hit@25": 0.676}
+        "thresholds": {"hit@5": 0.478, "mrr": 0.328, "hit@25": 0.676}
       },
       {
         "label": "shipped",
         "retrieval": {"mode": "dense", "k": 25, "fetch_k": 50, "rerank": true, "ticker_filter": "inferred"},
         "committed": "eval/results/retrieval-dense-rerank-f50-tf-inferred-8f6ef861d7e7.json",
-        "thresholds": {"hit@5": 0.606, "mrr": 0.468, "ndcg@5": 0.479, "hit@25": 0.761}
+        "thresholds": {"hit@5": 0.605, "mrr": 0.468, "ndcg@5": 0.479, "hit@25": 0.760}
       }
     ]
   },
   "judged": {
     "item_ids": ["qa_0002", "qa_0005", "qa_0019", "qa_0041", "qa_0047", "qa_0051", "qa_0057", "qa_0060", "qa_0066", "qa_0067"],
-    "subset_note": "One or more items from every stratum (single_hop 2, numerical 3, multi_hop 1, list 1, comparative 1, negative 1, temporal 1), each answered identically on the two committed runs of the shipped configuration a day apart; qa_0062 (recursion limit on one run of two) and qa_0064 (a correct 'not disclosed' answer the judge scores 0) are left out on purpose.",
+    "subset_note": "One or more items from every stratum (single_hop 2, numerical 3, multi_hop 1, list 1, comparative 1, negative 1, temporal 1), each answered identically on the two committed runs of the measured configuration 1.7 hours apart and again under the output contract; qa_0062 (recursion limit on every run of this configuration) and qa_0064 (a correct 'not disclosed' answer the judge scores 0) are left out on purpose.",
     "expect": {
       "agent_model": "gemini-3.1-flash-lite",
       "judge_model": "gemini-3.6-flash",
-      "retrieval": {"mode": "dense", "rerank": true, "fetch_k": 50, "ticker_filter": "inferred"}
+      "retrieval": {"mode": "dense", "rerank": true, "fetch_k": 50, "ticker_filter": "inferred"},
+      "verify_mode": "off"
     },
+    "verify_mode_note": "The calibration run predates the output contract, so the judged workflow sets VERIFY_MODE=off and scores exactly what was calibrated. Under the contract (contract-v3) all ten items verified on the first attempt with drafts identical to the calibration run, so the numbers would be the same today; recalibrate from a judged strict run before changing this to strict.",
     "calibrated_from": "eval/results/facts-v3-70db17ff5e31.json",
     "thresholds": {"faithfulness": 0.85, "answer_relevancy": 0.75, "context_recall": 0.6, "figure_primary_rate": 0.85},
     "max_terminal_failures": 1,

@@ -17,9 +17,11 @@
 #
 # THRESHOLDS ARE MEASURED, NOT ASPIRATIONAL
 # -----------------------------------------
-# Every retrieval threshold names the committed results file it was set from
-# and sits two benchmark items (2/71 = 0.028) below that file's value; the
-# gate prints the committed value next to the one it measures, so a slice
+# Every retrieval threshold names the committed results file it was set from.
+# A hit-rate threshold is at or below (hits − 2) / 71 for that file, so a
+# two-item loss passes and a three-item loss fails; MRR and nDCG thresholds
+# sit 0.03 below the committed value.  The gate prints the committed value
+# next to the one it measures, so a slice
 # that stopped reproducing the full index would show as a gap before it
 # showed as a failure.  The judged thresholds were calibrated from the
 # per-item scores of the committed judged run over the same ten items
@@ -48,7 +50,7 @@ from eval.chunk_labels import LABELS_FILE, load_labels, scorable_groups  # noqa:
 from eval.experiment import benchmark_version, config_hash  # noqa: E402
 from eval.run_eval import (  # noqa: E402
     BENCHMARK_FILE, RESULTS_DIR, _display_path, _git_commit, build_aggregates as build_generation_aggregates,
-    load_benchmark, save_results,
+    load_benchmark, metric_coverage, save_results,
 )
 from eval.run_retrieval_eval import RANKED_K, SCHEMA_VERSION, build_aggregates, evaluate_items  # noqa: E402
 
@@ -57,7 +59,7 @@ logger = logging.getLogger(__name__)
 GATE_FILE = Path(__file__).resolve().parent / "ci_gate.json"
 CI_OUT_DIR = RESULTS_DIR / "ci"
 JUDGED_METRICS = ("faithfulness", "answer_relevancy", "context_recall")
-LOWER_IS_BETTER = ("terminal_failures",)
+LOWER_IS_BETTER = ("terminal_failures", "unexplained_nan")   # counts; printed as integers, compared with <=
 
 EXIT_PASS, EXIT_FAIL, EXIT_CONFIG = 0, 1, 2
 
@@ -249,7 +251,10 @@ def validate_gate(gate: dict, rows=None, labels=None) -> list[str]:
     if not judged.get("calibrated_from") or not cal_path.exists():
         problems.append(f"judged: calibration file {judged.get('calibrated_from')!r} not found")
     else:
-        values = calibration_values(gate)
+        calibration = calibration_subset(gate)
+        for m in judged_mismatches(calibration, judged):
+            problems.append(f"judged: the calibration run does not match `expect`: {m}")
+        values = judged_values(calibration)
         for metric, minimum in judged.get("thresholds", {}).items():
             v = values.get(metric)
             if v is None:
@@ -275,6 +280,7 @@ def subset_payload(payload: dict, item_ids: list[str]) -> dict:
         "config": config,
         "run_status": {**(payload.get("run_status") or {}), "complete": len(rows) == len(wanted),
                        "n_requested": len(wanted), "n_generated": len(rows), "n_scored": len(rows)},
+        "metric_coverage": metric_coverage(rows) if rows else {},
         "aggregates": build_generation_aggregates(rows) if rows and len(rows) == len(wanted) else None,
         "results": rows,
     }
@@ -285,7 +291,15 @@ def judged_values(payload: dict) -> dict:
     overall = (payload.get("aggregates") or {}).get("overall") or {}
     values = {m: (overall.get(m) or {}).get("mean_failures_as_zero") for m in JUDGED_METRICS}
     values["figure_primary_rate"] = (overall.get("deterministic") or {}).get("figure_primary_rate")
-    values["terminal_failures"] = sum(1 for r in payload.get("results") or [] if r.get("terminal_failure"))
+    # An agent exception is recorded as "<agent error: ...>" with `error` set and is
+    # not a terminal-failure outcome; for the gate it is one.
+    values["terminal_failures"] = sum(1 for r in payload.get("results") or []
+                                      if r.get("terminal_failure") or r.get("error"))
+    # A judge NaN with no terminal failure behind it (executor timeout, malformed
+    # judge output) is dropped from the means; the gate refuses to read a mean
+    # that silently lost items.
+    cov = payload.get("metric_coverage") or {}
+    values["unexplained_nan"] = sum(int((cov.get(m) or {}).get("n_nan_unexplained") or 0) for m in JUDGED_METRICS)
     return values
 
 
@@ -298,6 +312,13 @@ def judged_mismatches(payload: dict, section: dict) -> list[str]:
         problems.append(f"items differ from the gate's subset: got {cfg.get('benchmark_n')} item(s)")
     if expect.get("agent_model") and cfg.get("agent_model") != expect["agent_model"]:
         problems.append(f"agent_model is {cfg.get('agent_model')!r}, calibrated on {expect['agent_model']!r}")
+    if "verify_mode" in expect:
+        # Runs from before the output contract carry no verify_mode; they ran without it.
+        mode = cfg.get("verify_mode") or "off"
+        if mode != expect["verify_mode"]:
+            problems.append(f"verify_mode is {mode!r}, calibrated on {expect['verify_mode']!r}")
+    if expect.get("contract_version") and cfg.get("contract_version") != expect["contract_version"]:
+        problems.append(f"contract_version is {cfg.get('contract_version')!r}, calibrated on {expect['contract_version']!r}")
     for key, val in (expect.get("retrieval") or {}).items():
         if (cfg.get("retrieval") or {}).get(key) != val:
             problems.append(f"retrieval.{key} is {(cfg.get('retrieval') or {}).get(key)!r}, calibrated on {val!r}")
@@ -329,16 +350,22 @@ def run_judged_gate(gate: dict, payload: dict):
     checks = compare("judged", values, section["thresholds"])
     checks.append(Check("judged", "terminal_failures", float(values["terminal_failures"]),
                         float(section.get("max_terminal_failures", 0)), higher_is_better=False))
+    checks.append(Check("judged", "unexplained_nan", float(values["unexplained_nan"]), 0.0, higher_is_better=False))
     passed = all(c.passed for c in checks) and not mismatches
     return passed, render("Judged smoke gate", checks, notes), checks
 
 
-def calibration_values(gate: dict) -> dict:
-    """What the committed judged run scored on the gate's subset — the numbers the thresholds sit under."""
+def calibration_subset(gate: dict) -> dict:
+    """The committed judged run the thresholds were set from, restricted to the gate's subset."""
     section = gate["judged"]
     with open(REPO_ROOT / section["calibrated_from"], encoding="utf-8") as f:
         payload = json.load(f)
-    return judged_values(subset_payload(payload, section["item_ids"]))
+    return subset_payload(payload, section["item_ids"])
+
+
+def calibration_values(gate: dict) -> dict:
+    """What the committed judged run scored on the gate's subset — the numbers the thresholds sit under."""
+    return judged_values(calibration_subset(gate))
 
 
 # ── CLI ─────────────────────────────────────────────────────────────────────

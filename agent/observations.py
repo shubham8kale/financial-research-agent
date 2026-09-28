@@ -10,10 +10,12 @@
 # agree on what had been retrieved.
 #
 # Both tool sources — the in-process @tool functions in agent/financial_agent.py
-# and the FastMCP tools in mcp_server/server.py — emit the same two layouts:
+# and the FastMCP tools in mcp_server/server.py — emit the same layouts:
 #
-#   search_filings:     "[1] ticker=AAPL  chunk_idx=395\n    <snippet>"
-#   compare_companies:  "=== AAPL ===\n  [1] chunk_idx=395\n      <snippet>"
+#   search_filings:         "[1] ticker=AAPL  chunk_idx=395\n    <snippet>"
+#   compare_companies:      "=== AAPL ===\n  [1] chunk_idx=395\n      <snippet>"
+#   lookup_financial_fact:  "[1] ticker=AAPL  fact_id=123\n    <formatted fact>"
+#   compute_metric:         "[1] calc=pct_change\n    <formula> = <result>"
 #
 # A chunk is identified everywhere by "<TICKER>_10K_chunk_<idx>" — the string
 # the API already returns as `source_file` — so a citation in the UI, a context

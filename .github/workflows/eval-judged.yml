@@ -42,10 +42,15 @@ jobs:
       RAGAS_JUDGE_MODEL: openai/gpt-oss-120b
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       RAGAS_JUDGE_API_KEY: ${{ secrets.RAGAS_JUDGE_API_KEY }}
-      # The shipped retrieval configuration (eval/EVALUATION.md, "The configuration that ships").
+      # The measured retrieval configuration (eval/EVALUATION.md, "The measured configuration").
       RETRIEVAL_RERANK: "true"
       RETRIEVAL_FETCH_K: "50"
       RETRIEVAL_TICKER_FILTER: inferred
+      # The judged thresholds were calibrated on a run made before the output
+      # contract existed (eval/ci_gate.json, expect.verify_mode), so this run
+      # scores exactly that: the agent's own answers.  The contract is covered
+      # by its unit tests and by verified_rate on every generation run.
+      VERIFY_MODE: "off"
       LANGSMITH_TRACING: "false"
       PYTHONUNBUFFERED: "1"
 
@@ -87,9 +92,14 @@ jobs:
         run: python -m ingestion.xbrl
 
       - name: Run the agent and the judge on the smoke subset
+        # The id list is assigned first so a failure there stops the job; a
+        # failing command substitution inside an argument would not, and an
+        # empty --ids means "every item" (seven times the spend).
         run: |
+          IDS="$(python -m eval.ci_gate judged-ids)"
+          test -n "$IDS"
           python -m eval.run_eval \
-            --ids "$(python -m eval.ci_gate judged-ids)" \
+            --ids "$IDS" \
             --judge-provider "${{ inputs.judge_provider }}" \
             --max-judge-calls "${{ inputs.max_judge_calls }}" \
             --label ci-judged \

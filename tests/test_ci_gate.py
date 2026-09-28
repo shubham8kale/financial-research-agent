@@ -104,7 +104,7 @@ def test_judged_gate_passes_the_run_it_was_calibrated_from():
     passed, summary, checks = ci_gate.run_judged_gate(gate, _judged_payload(gate))
     assert passed, summary
     assert {c.metric for c in checks} == {"faithfulness", "answer_relevancy", "context_recall",
-                                          "figure_primary_rate", "terminal_failures"}
+                                          "figure_primary_rate", "terminal_failures", "unexplained_nan"}
 
 
 def test_judged_gate_fails_when_faithfulness_collapses():
@@ -137,6 +137,30 @@ def test_judged_gate_refuses_a_run_of_a_different_configuration():
     assert "retrieval.rerank is False" in summary and "agent_model is 'gemini-2.5-flash-lite'" in summary
 
 
+def test_judged_gate_refuses_a_run_under_another_verify_mode():
+    gate = ci_gate.load_gate()
+    sub = _judged_payload(gate)
+    sub["config"]["verify_mode"] = "strict"
+    sub["config"]["contract_version"] = "abc"
+    passed, summary, _ = ci_gate.run_judged_gate(gate, sub)
+    assert not passed and "verify_mode is 'strict', calibrated on 'off'" in summary
+
+
+def test_judged_values_count_agent_errors_and_unexplained_nans():
+    gate = ci_gate.load_gate()
+    sub = _judged_payload(gate)
+    assert ci_gate.judged_values(sub)["unexplained_nan"] == 0
+    # one item errored inside the agent (recorded, not a terminal-failure outcome) and one judge NaN with no cause
+    sub["results"][0]["error"] = "boom"
+    sub["results"][1]["scores"]["faithfulness"] = None
+    sub = ci_gate.subset_payload(sub, gate["judged"]["item_ids"])
+    values = ci_gate.judged_values(sub)
+    assert values["terminal_failures"] == 1 and values["unexplained_nan"] == 1
+    passed, summary, checks = ci_gate.run_judged_gate(gate, sub)
+    assert not passed
+    assert "| judged | unexplained_nan | — | 1 | ≤ 0 | FAIL |" in summary
+
+
 def test_judged_gate_warns_but_does_not_fail_on_another_judge():
     gate = ci_gate.load_gate()
     sub = _judged_payload(gate)
@@ -161,9 +185,11 @@ def test_validate_gate_reports_a_threshold_above_its_calibration():
     gate = ci_gate.load_gate()
     gate["retrieval"]["configs"][0]["thresholds"]["hit@5"] = 0.99
     gate["judged"]["thresholds"]["faithfulness"] = 1.01
+    gate["judged"]["expect"]["verify_mode"] = "strict"    # the calibration run predates the contract
     problems = ci_gate.validate_gate(gate)
     assert any("dense: threshold hit@5 0.99 is above" in p for p in problems)
     assert any("judged: threshold faithfulness 1.01 is above" in p for p in problems)
+    assert any("calibration run does not match `expect`: verify_mode is 'off'" in p for p in problems)
 
 
 # ── the slice ────────────────────────────────────────────────────────────────

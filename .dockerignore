@@ -21,6 +21,14 @@ web
 # build can re-index from them.
 data/chroma_db
 
-# Logs & eval run artifacts
+# Derived data the image rebuilds itself (ingestion/pipeline.py builds the
+# fact table; the BM25 pickle is built lazily on first use of that mode).
+data/facts.sqlite
+data/bm25_index.pkl
+
+# Logs & eval run artifacts (the committed evidence under eval/results/ is
+# not needed at runtime either, but is small and harmless)
 *.log
 eval/results.json
+eval/results/ci
+eval/cache

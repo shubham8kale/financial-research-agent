@@ -2,8 +2,9 @@
 #
 # PURPOSE
 # -------
-# Expose the three SEC filing research tools (search_filings,
-# list_available_companies, compare_companies) as an MCP server so that any
+# Expose the SEC filing research tools (search_filings,
+# list_available_companies, compare_companies, lookup_financial_fact,
+# compute_metric) as an MCP server so that any
 # MCP-compatible client — including LangChain, Claude Desktop, or a custom
 # agent — can call them over a network transport rather than importing Python
 # functions directly.
