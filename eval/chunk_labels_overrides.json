@@ -1,0 +1,17 @@
+{
+  "qa_0057": {
+    "groups": [
+      ["MSFT_10K_chunk_295", "MSFT_10K_chunk_857", "MSFT_10K_chunk_2650", "MSFT_10K_chunk_19479"]
+    ],
+    "note": "The reference sentence straddles three chunks (295 ends 'in October 2023 we completed our acquisition of', 296 is the two-word chunk 'Activision Blizzard', 297 starts ', Inc.'). Only 295 carries the date, so it is the relevant chunk on that boundary. Chunks 857, 2650 and 19479 each repeat the fuller note 'On October 13, 2023, we completed our acquisition of Activision Blizzard' and answer the question equally, so they join the same any-of group."
+  },
+  "qa_0062": {
+    "groups": [
+      ["AAPL_10K_chunk_1"],
+      ["AMZN_10K_chunk_1"],
+      ["GOOGL_10K_chunk_1"],
+      ["MSFT_10K_chunk_72", "MSFT_10K_chunk_73"]
+    ],
+    "note": "Three of the four references locate exactly (Apple, Amazon, Alphabet cover pages, chunk 1 of each). Microsoft's 'MICROSOFT CORPORATION Washington 91-1144442 (STATE OF INCORPORATION)' straddles chunks 72 and 73: 72 ends with the state and IRS id, 73 begins with the '(STATE OF INCORPORATION)' label, and either one identifies Washington. Chunks 0-71 of the MSFT filing are XBRL context tags the cleaner left in, which is why its cover page starts so late."
+  }
+}

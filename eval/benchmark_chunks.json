@@ -1,0 +1,824 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-09-28T00:49:42+00:00",
+ "benchmark_file": "eval/benchmark.csv",
+ "benchmark_sha256": "d97fdf604a2fac9d3fb99a17958281ab0c1ced4f14c5d41b420ad34e8a9c3261",
+ "index_collection": "sec_filings",
+ "index_chunk_count": 67521,
+ "prefix_chars": 60,
+ "summary": {
+  "n_items": 71,
+  "by_method": {
+   "exact": 66,
+   "manual": 2,
+   "prefix": 3
+  },
+  "n_scorable": 71,
+  "n_multi_chunk_groups": 20
+ },
+ "items": {
+  "qa_0001": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_0"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0002": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_1"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0003": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_1"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0004": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_67"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0005": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_307",
+     "AAPL_10K_chunk_310"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0006": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_310"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0007": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_310"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0008": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_309"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0009": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_1327",
+     "AAPL_10K_chunk_1460",
+     "AAPL_10K_chunk_1916",
+     "AAPL_10K_chunk_2262",
+     "AAPL_10K_chunk_2397",
+     "AAPL_10K_chunk_358",
+     "AAPL_10K_chunk_359",
+     "AAPL_10K_chunk_398"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0010": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_358",
+     "AAPL_10K_chunk_359"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0011": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_1779",
+     "AAPL_10K_chunk_371"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0012": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_313"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0013": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_348"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0014": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_304"
+    ]
+   ],
+   "method": "prefix",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0015": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1"
+    ]
+   ],
+   "method": "prefix",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0016": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0017": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_37"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0018": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1977",
+     "AMZN_10K_chunk_1982",
+     "AMZN_10K_chunk_2477",
+     "AMZN_10K_chunk_2481",
+     "AMZN_10K_chunk_715",
+     "AMZN_10K_chunk_720"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0019": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1977",
+     "AMZN_10K_chunk_2476",
+     "AMZN_10K_chunk_715"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0020": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1975",
+     "AMZN_10K_chunk_2474",
+     "AMZN_10K_chunk_713"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0021": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_317"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0022": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_317"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0023": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_317"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0024": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_316"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0025": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_21"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0026": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_1"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0027": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_29"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0028": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_30",
+     "GOOGL_10K_chunk_358"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0029": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_81"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0030": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_552"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0031": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_407"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0032": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_407"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0033": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_407"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0034": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_417"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0035": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_42"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0036": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_341"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0037": {
+   "groups": [
+    [
+     "META_10K_chunk_1"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0038": {
+   "groups": [
+    [
+     "META_10K_chunk_99"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0039": {
+   "groups": [
+    [
+     "META_10K_chunk_22"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0040": {
+   "groups": [
+    [
+     "META_10K_chunk_51"
+    ],
+    [
+     "META_10K_chunk_61"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 2,
+   "note": ""
+  },
+  "qa_0041": {
+   "groups": [
+    [
+     "META_10K_chunk_789"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0042": {
+   "groups": [
+    [
+     "META_10K_chunk_790"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0043": {
+   "groups": [
+    [
+     "META_10K_chunk_793"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0044": {
+   "groups": [
+    [
+     "META_10K_chunk_793"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0045": {
+   "groups": [
+    [
+     "META_10K_chunk_789"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0046": {
+   "groups": [
+    [
+     "META_10K_chunk_58"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0047": {
+   "groups": [
+    [
+     "META_10K_chunk_431"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0048": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_72"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0049": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_499"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0050": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_499"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0051": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_118"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0052": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_551"
+    ]
+   ],
+   "method": "prefix",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0053": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_553"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0054": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_551",
+     "MSFT_10K_chunk_552"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0055": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_1899",
+     "MSFT_10K_chunk_2006",
+     "MSFT_10K_chunk_2230",
+     "MSFT_10K_chunk_679",
+     "MSFT_10K_chunk_680",
+     "MSFT_10K_chunk_687"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0056": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_2572",
+     "MSFT_10K_chunk_3056",
+     "MSFT_10K_chunk_3280",
+     "MSFT_10K_chunk_799"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0057": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_295",
+     "MSFT_10K_chunk_857",
+     "MSFT_10K_chunk_2650",
+     "MSFT_10K_chunk_19479"
+    ]
+   ],
+   "method": "manual",
+   "n_references": 1,
+   "note": "The reference sentence straddles three chunks (295 ends 'in October 2023 we completed our acquisition of', 296 is the two-word chunk 'Activision Blizzard', 297 starts ', Inc.'). Only 295 carries the date, so it is the relevant chunk on that boundary. Chunks 857, 2650 and 19479 each repeat the fuller note 'On October 13, 2023, we completed our acquisition of Activision Blizzard' and answer the question equally, so they join the same any-of group."
+  },
+  "qa_0058": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_297"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0059": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_146"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0060": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_407"
+    ],
+    [
+     "AAPL_10K_chunk_1327",
+     "AAPL_10K_chunk_1460",
+     "AAPL_10K_chunk_1916",
+     "AAPL_10K_chunk_2262",
+     "AAPL_10K_chunk_2397",
+     "AAPL_10K_chunk_358",
+     "AAPL_10K_chunk_359",
+     "AAPL_10K_chunk_398"
+    ],
+    [
+     "META_10K_chunk_793"
+    ],
+    [
+     "MSFT_10K_chunk_1899",
+     "MSFT_10K_chunk_2006",
+     "MSFT_10K_chunk_2230",
+     "MSFT_10K_chunk_679",
+     "MSFT_10K_chunk_680",
+     "MSFT_10K_chunk_687"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 4,
+   "note": ""
+  },
+  "qa_0061": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_37"
+    ],
+    [
+     "AAPL_10K_chunk_67"
+    ],
+    [
+     "GOOGL_10K_chunk_81"
+    ],
+    [
+     "META_10K_chunk_99"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 4,
+   "note": ""
+  },
+  "qa_0062": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_1"
+    ],
+    [
+     "AMZN_10K_chunk_1"
+    ],
+    [
+     "GOOGL_10K_chunk_1"
+    ],
+    [
+     "MSFT_10K_chunk_72",
+     "MSFT_10K_chunk_73"
+    ]
+   ],
+   "method": "manual",
+   "n_references": 4,
+   "note": "Three of the four references locate exactly (Apple, Amazon, Alphabet cover pages, chunk 1 of each). Microsoft's 'MICROSOFT CORPORATION Washington 91-1144442 (STATE OF INCORPORATION)' straddles chunks 72 and 73: 72 ends with the state and IRS id, 73 begins with the '(STATE OF INCORPORATION)' label, and either one identifies Washington. Chunks 0-71 of the MSFT filing are XBRL context tags the cleaner left in, which is why its cover page starts so late."
+  },
+  "qa_0063": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_552"
+    ],
+    [
+     "MSFT_10K_chunk_551",
+     "MSFT_10K_chunk_560"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 2,
+   "note": ""
+  },
+  "qa_0064": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_310"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0065": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_2745",
+     "GOOGL_10K_chunk_2983",
+     "GOOGL_10K_chunk_393",
+     "GOOGL_10K_chunk_868"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0066": {
+   "groups": [
+    [
+     "META_10K_chunk_61"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0067": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_2845",
+     "MSFT_10K_chunk_3241"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0068": {
+   "groups": [
+    [
+     "GOOGL_10K_chunk_661"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0069": {
+   "groups": [
+    [
+     "MSFT_10K_chunk_2845",
+     "MSFT_10K_chunk_3241",
+     "MSFT_10K_chunk_980"
+    ],
+    [
+     "GOOGL_10K_chunk_2422",
+     "GOOGL_10K_chunk_3084",
+     "GOOGL_10K_chunk_661"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 2,
+   "note": ""
+  },
+  "qa_0070": {
+   "groups": [
+    [
+     "AAPL_10K_chunk_307",
+     "AAPL_10K_chunk_310"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  },
+  "qa_0071": {
+   "groups": [
+    [
+     "AMZN_10K_chunk_1977",
+     "AMZN_10K_chunk_2476",
+     "AMZN_10K_chunk_715"
+    ]
+   ],
+   "method": "exact",
+   "n_references": 1,
+   "note": ""
+  }
+ }
+}
