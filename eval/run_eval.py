@@ -666,11 +666,12 @@ def print_report(payload: dict) -> None:
     def _det_row(label: str, block: dict) -> None:
         d = block.get("deterministic") or {}
         nf, nl = d.get("n_figure_applicable", 0), d.get("n_labelled", 0)
-        print(f"  {label:<12} {_fmt(d.get('figure_recall'))}   {_fmt(d.get('figure_exact_rate'))}   [n={nf:>2}]"
+        print(f"  {label:<12} {_fmt(d.get('figure_recall'))}   {_fmt(d.get('figure_exact_rate'))}   "
+              f"{_fmt(d.get('figure_primary_rate'))}   [n={nf:>2}]"
               f"     {_fmt(d.get('agent_hit_rate'))}   {_fmt(d.get('agent_recall'))}   {_fmt(d.get('agent_mrr'))}   [n={nl:>2}]")
 
     print("\n--- Deterministic metrics (no judge) ---")
-    print(f"  {'':<12} figure_recall figure_exact          agent_hit  agent_recall  agent_mrr")
+    print(f"  {'':<12} figure_recall figure_exact figure_primary       agent_hit  agent_recall  agent_mrr")
     _det_row("all", agg["overall"])
     for qtype, block in agg["by_question_type"].items():
         _det_row(qtype, block)
@@ -1044,7 +1045,7 @@ def _upgrade_record(record: dict) -> dict:
 
 # ── Deterministic metrics (no judge) ─────────────────────────────────────────
 
-DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "agent_hit_rate", "agent_recall")
+DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "figure_primary_rate", "agent_hit_rate", "agent_recall")
 
 
 def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> None:
@@ -1096,6 +1097,7 @@ def _deterministic_block(rows: list[dict]) -> dict:
         "n_figure_applicable": len(fig),
         "figure_recall": _mean([f["figure_recall"] for f in fig]),
         "figure_exact_rate": _mean([1.0 if f["figure_exact"] else 0.0 for f in fig]),
+        "figure_primary_rate": _mean([1.0 if f.get("figure_primary") else 0.0 for f in fig]),
         "n_labelled": len(lab),
         "agent_hit_rate": _mean([1.0 if a["hit"] else 0.0 for a in lab]),
         "agent_recall": _mean([a["recall"] for a in lab]),

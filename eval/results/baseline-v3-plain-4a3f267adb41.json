@@ -121,7 +121,7 @@
     ],
     "config_hash": "4a3f267adb41",
     "context_format": "chunk",
-    "figure_match_version": "2"
+    "figure_match_version": "3"
   },
   "run_status": {
     "complete": true,
@@ -187,8 +187,9 @@
       },
       "deterministic": {
         "n_figure_applicable": 50,
-        "figure_recall": 0.712,
-        "figure_exact_rate": 0.62,
+        "figure_recall": 0.732,
+        "figure_exact_rate": 0.64,
+        "figure_primary_rate": 0.76,
         "n_labelled": 71,
         "agent_hit_rate": 0.4366,
         "agent_recall": 0.4296,
@@ -223,6 +224,7 @@
           "n_figure_applicable": 8,
           "figure_recall": 1.0,
           "figure_exact_rate": 1.0,
+          "figure_primary_rate": 1.0,
           "n_labelled": 17,
           "agent_hit_rate": 0.6471,
           "agent_recall": 0.6471,
@@ -254,8 +256,9 @@
         },
         "deterministic": {
           "n_figure_applicable": 33,
-          "figure_recall": 0.647,
-          "figure_exact_rate": 0.5758,
+          "figure_recall": 0.6773,
+          "figure_exact_rate": 0.6061,
+          "figure_primary_rate": 0.697,
           "n_labelled": 33,
           "agent_hit_rate": 0.4242,
           "agent_recall": 0.4242,
@@ -289,6 +292,7 @@
           "n_figure_applicable": 0,
           "figure_recall": null,
           "figure_exact_rate": null,
+          "figure_primary_rate": null,
           "n_labelled": 1,
           "agent_hit_rate": 1.0,
           "agent_recall": 1.0,
@@ -322,6 +326,7 @@
           "n_figure_applicable": 3,
           "figure_recall": 0.5556,
           "figure_exact_rate": 0.3333,
+          "figure_primary_rate": 0.6667,
           "n_labelled": 4,
           "agent_hit_rate": 0.25,
           "agent_recall": 0.25,
@@ -355,6 +360,7 @@
           "n_figure_applicable": 1,
           "figure_recall": 1.0,
           "figure_exact_rate": 1.0,
+          "figure_primary_rate": 1.0,
           "n_labelled": 3,
           "agent_hit_rate": 0.3333,
           "agent_recall": 0.3333,
@@ -388,6 +394,7 @@
           "n_figure_applicable": 0,
           "figure_recall": null,
           "figure_exact_rate": null,
+          "figure_primary_rate": null,
           "n_labelled": 8,
           "agent_hit_rate": 0.125,
           "agent_recall": 0.125,
@@ -421,6 +428,7 @@
           "n_figure_applicable": 5,
           "figure_recall": 0.7167,
           "figure_exact_rate": 0.4,
+          "figure_primary_rate": 0.8,
           "n_labelled": 5,
           "agent_hit_rate": 0.4,
           "agent_recall": 0.3,
@@ -478,6 +486,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "2025",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -544,6 +554,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "95014",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -668,6 +680,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -734,6 +748,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "166,000",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -800,6 +816,8 @@
         "n_found": 4,
         "figure_recall": 0.8,
         "figure_exact": false,
+        "primary": "$416,161 million",
+        "figure_primary": true,
         "missing": [
           "$391,035 million"
         ]
@@ -868,6 +886,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$209,586 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -933,6 +953,8 @@
         "n_found": 4,
         "figure_recall": 0.8,
         "figure_exact": false,
+        "primary": "$109,158 million",
+        "figure_primary": true,
         "missing": [
           "14%"
         ]
@@ -1001,6 +1023,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -1067,6 +1091,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$112,010 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1133,6 +1159,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$7.46",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1255,6 +1283,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$111,482 million",
+        "figure_primary": false,
         "missing": [
           "$111,482 million"
         ]
@@ -1323,6 +1353,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "46.9%",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1415,6 +1447,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$2,416 million",
+        "figure_primary": false,
         "missing": [
           "$2,416 million"
         ]
@@ -1483,6 +1517,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -1549,6 +1585,8 @@
         "n_found": 3,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "410",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1615,6 +1653,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -1689,6 +1729,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "1,576,000",
+        "figure_primary": false,
         "missing": [
           "1,576,000"
         ]
@@ -1757,6 +1799,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$716,924 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1824,6 +1868,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$128,725 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1890,6 +1936,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$45,606 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -1956,6 +2004,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "20%",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2022,6 +2072,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$426,305 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2088,6 +2140,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -2154,6 +2208,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -2220,6 +2276,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -2286,6 +2344,8 @@
         "n_found": 2,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "1600",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2352,6 +2412,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -2440,6 +2502,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -2506,6 +2570,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "190,820",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2579,6 +2645,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$402,836 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2712,6 +2780,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$129,039 million",
+        "figure_primary": false,
         "missing": [
           "$129,039 million"
         ]
@@ -2779,6 +2849,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$132,170 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2888,6 +2960,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$10.81",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -2951,12 +3025,12 @@
       "figure": {
         "applicable": true,
         "n_expected": 1,
-        "n_found": 0,
-        "figure_recall": 0.0,
-        "figure_exact": false,
-        "missing": [
-          "$26.4 billion"
-        ]
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$26.4 billion",
+        "figure_primary": true,
+        "missing": []
       },
       "agent_retrieval": {
         "labelled": true,
@@ -3021,6 +3095,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3087,6 +3163,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3153,6 +3231,8 @@
         "n_found": 2,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "1",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -3219,6 +3299,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "78,865",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -3285,6 +3367,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3362,6 +3446,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3439,6 +3525,8 @@
         "n_found": 3,
         "figure_recall": 0.75,
         "figure_exact": false,
+        "primary": "$200.97 billion",
+        "figure_primary": true,
         "missing": [
           "22%"
         ]
@@ -3507,6 +3595,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$83.28 billion",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -3638,6 +3728,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$60.46 billion",
+        "figure_primary": false,
         "missing": [
           "$60.46 billion",
           "$23.49"
@@ -3708,6 +3800,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$72.22 billion",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -3774,6 +3868,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "12%",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -3839,6 +3935,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3916,6 +4014,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -3982,6 +4082,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "2025",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -4048,6 +4150,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -4125,6 +4229,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "15 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -4191,6 +4297,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -4257,6 +4365,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$281,724 million",
+        "figure_primary": false,
         "missing": [
           "$281,724 million"
         ]
@@ -4325,6 +4435,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "15%",
+        "figure_primary": false,
         "missing": [
           "15%",
           "$36.6 billion"
@@ -4453,6 +4565,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$128,528 million",
+        "figure_primary": false,
         "missing": [
           "$128,528 million"
         ]
@@ -4585,6 +4699,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$101,832 million",
+        "figure_primary": false,
         "missing": [
           "$101,832 million"
         ]
@@ -4653,6 +4769,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$13.64",
+        "figure_primary": false,
         "missing": [
           "$13.64"
         ]
@@ -4721,6 +4839,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "2023",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -4787,6 +4907,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "2023",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -4852,6 +4974,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5032,6 +5156,8 @@
         "n_found": 0,
         "figure_recall": 0.0,
         "figure_exact": false,
+        "primary": "$132,170 million",
+        "figure_primary": false,
         "missing": [
           "$132,170 million",
           "2025"
@@ -5142,6 +5268,8 @@
         "n_found": 2,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "1,576,000",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -5248,6 +5376,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5336,6 +5466,8 @@
         "n_found": 2,
         "figure_recall": 0.6667,
         "figure_exact": false,
+        "primary": "$402,836 million",
+        "figure_primary": true,
         "missing": [
           "$281,724 million"
         ]
@@ -5404,6 +5536,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5470,6 +5604,8 @@
         "n_found": 0,
         "figure_recall": null,
         "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5555,6 +5691,8 @@
         "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "2025",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -5653,6 +5791,8 @@
         "n_found": 3,
         "figure_recall": 0.75,
         "figure_exact": false,
+        "primary": "$106,265 million",
+        "figure_primary": true,
         "missing": [
           "2025"
         ]
@@ -5721,6 +5861,8 @@
         "n_found": 4,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$58,705 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -5799,6 +5941,8 @@
         "n_found": 1,
         "figure_recall": 0.3333,
         "figure_exact": false,
+        "primary": "$106,265 million",
+        "figure_primary": true,
         "missing": [
           "2025",
           "$58,705 million"
@@ -5868,6 +6012,8 @@
         "n_found": 2,
         "figure_recall": 0.5,
         "figure_exact": false,
+        "primary": "$416,161 million",
+        "figure_primary": false,
         "missing": [
           "$416,161 million",
           "2025"
@@ -5937,6 +6083,8 @@
         "n_found": 4,
         "figure_recall": 1.0,
         "figure_exact": true,
+        "primary": "$128,725 million",
+        "figure_primary": true,
         "missing": []
       },
       "agent_retrieval": {
@@ -5963,6 +6111,12 @@
       "what": "deterministic metrics (figure_*, agent_*) and aggregates",
       "at": "2026-09-28T02:30:30+00:00",
       "figure_match_version": "2",
+      "labels_file": "eval/benchmark_chunks.json"
+    },
+    {
+      "what": "deterministic metrics (figure_*, agent_*) and aggregates",
+      "at": "2026-09-28T04:02:30+00:00",
+      "figure_match_version": "3",
       "labels_file": "eval/benchmark_chunks.json"
     }
   ]

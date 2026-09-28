@@ -32,6 +32,7 @@
 # belongs to the output verifier (upgrade 6), which compares against the cited
 # chunk rather than the ground truth.
 
+import math
 import re
 from dataclasses import dataclass
 
@@ -59,7 +60,7 @@ RELATIVE_TOLERANCE = 5e-4
 
 # Bumped whenever extraction or matching changes; recorded in results files so a
 # figure score can always be traced to the rule that produced it.
-FIGURE_MATCH_VERSION = "2"
+FIGURE_MATCH_VERSION = "3"
 
 # A number that names a form or a section is not a figure: "10-K", "8-K",
 # "Item 7A", "Form 10-Q", "Section 13".  Without this rule a ground truth that
@@ -81,10 +82,16 @@ class Figure:
     unscaled: float   # 128725.0
     scaled: float     # 1.28725e11
     percent: bool     # True for "22%"
+    precision: float = 1.0  # the unit the figure was written in: 1e8 for "$26.4 billion", 1.0 for "14%"
 
     @property
     def kind(self) -> str:
         return "percent" if self.percent else "number"
+
+    @property
+    def is_year(self) -> bool:
+        return (not self.percent and self.scaled == self.unscaled
+                and float(self.unscaled).is_integer() and 1900 <= self.unscaled <= 2100)
 
 
 def extract_figures(text: str) -> list[Figure]:
@@ -104,11 +111,13 @@ def extract_figures(text: str) -> list[Figure]:
         ):
             continue
         scaled = unscaled * _SCALE.get(scale, 1.0)
+        decimals = len(m.group("num").split(".")[1]) if "." in m.group("num") else 0
         figures.append(Figure(
             raw=m.group(0).strip(),
             unscaled=unscaled,
             scaled=scaled,
             percent=bool(m.group("pct")),
+            precision=_SCALE.get(scale, 1.0) / (10 ** decimals),
         ))
     return figures
 
@@ -128,12 +137,25 @@ def _exact_only(f: Figure) -> bool:
     return f.scaled == f.unscaled and float(f.unscaled).is_integer()
 
 
+def _rounds_to(expected: Figure, candidate: Figure) -> bool:
+    """The candidate, rounded to the precision the expected figure was written in, equals it.
+
+    A ground truth says "14%" or "$26.4 billion" because the filing's prose
+    rounds; an answer that computes 13.51% from the tagged figures, or reads
+    $26,448 million off the table, is more precise, not wrong.  Years never
+    get here (they are exact-only), so 2024 cannot round to 2025.
+    """
+    p = expected.precision
+    return math.isclose(round(candidate.scaled / p) * p, expected.scaled, rel_tol=1e-9, abs_tol=p * 1e-9)
+
+
 def _matches(expected: Figure, candidate: Figure) -> bool:
     if expected.kind != candidate.kind:
         return False
     if _exact_only(expected) and _exact_only(candidate):
         return expected.unscaled == candidate.unscaled
-    return _close(expected.scaled, candidate.scaled) or _close(expected.unscaled, candidate.unscaled)
+    return (_close(expected.scaled, candidate.scaled) or _close(expected.unscaled, candidate.unscaled)
+            or _rounds_to(expected, candidate))
 
 
 def _dedupe(figures: list[Figure]) -> list[Figure]:
@@ -144,33 +166,54 @@ def _dedupe(figures: list[Figure]) -> list[Figure]:
     return out
 
 
+def primary_figure(figures: list[Figure]) -> Figure | None:
+    """The figure the question is about: the first non-year figure, else the first figure.
+
+    Ground truths in this benchmark lead with the answer and add context
+    after it — "$106,265 million for fiscal year 2025 (fiscal 2024: $87,464
+    million)".  The strict check demands every figure, including the context;
+    this picks out the one that answers the question.
+    """
+    for f in figures:
+        if not f.is_year:
+            return f
+    return figures[0] if figures else None
+
+
 def figure_match(ground_truth: str, answer: str) -> dict:
     """Score how many ground-truth figures the answer reproduces.
 
     Returns a dict with:
-      applicable     False when the ground truth contains no figure — the
-                     metric then says nothing about the item and both scores
-                     are None, never 1.0.
-      n_expected     distinct figures in the ground truth
-      n_found        of those, how many the answer contains
-      figure_recall  n_found / n_expected
-      figure_exact   True only if every expected figure was found
-      missing        the expected figures the answer lacks, as written
+      applicable      False when the ground truth contains no figure — the
+                      metric then says nothing about the item and every score
+                      is None, never 1.0.
+      n_expected      distinct figures in the ground truth
+      n_found         of those, how many the answer contains
+      figure_recall   n_found / n_expected
+      figure_exact    True only if every expected figure was found (strict:
+                      context figures in the ground truth count too)
+      primary         the figure the question is about, as written
+      figure_primary  True if the answer contains that figure
+      missing         the expected figures the answer lacks, as written
     """
     expected = _dedupe(extract_figures(ground_truth))
     if not expected:
         return {
             "applicable": False, "n_expected": 0, "n_found": 0,
-            "figure_recall": None, "figure_exact": None, "missing": [],
+            "figure_recall": None, "figure_exact": None,
+            "primary": None, "figure_primary": None, "missing": [],
         }
     found = extract_figures(answer)
     missing = [e for e in expected if not any(_matches(e, f) for f in found)]
     n_found = len(expected) - len(missing)
+    primary = primary_figure(expected)
     return {
         "applicable": True,
         "n_expected": len(expected),
         "n_found": n_found,
         "figure_recall": round(n_found / len(expected), 4),
         "figure_exact": not missing,
+        "primary": primary.raw if primary else None,
+        "figure_primary": bool(primary) and any(_matches(primary, f) for f in found),
         "missing": [m.raw for m in missing],
     }

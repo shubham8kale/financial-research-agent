@@ -164,6 +164,29 @@ def test_figure_match_catches_prior_year_figure():
     assert right["figure_exact"] is True and right["figure_recall"] == 1.0
 
 
+def test_primary_figure_is_the_answer_not_the_context():
+    gt = "Intelligent Cloud revenue was $106,265 million for fiscal year 2025 (fiscal 2024: $87,464 million)."
+    right = figure_match(gt, "Intelligent Cloud revenue for fiscal year 2025 was $106,265 million.")
+    assert right["primary"] == "$106,265 million" and right["figure_primary"] is True
+    assert right["figure_exact"] is False and set(right["missing"]) == {"2024", "$87,464 million"}
+    wrong = figure_match(gt, "Intelligent Cloud revenue for fiscal year 2024 was $87,464 million.")
+    assert wrong["figure_primary"] is False
+    # a ground truth whose only figure is a year uses that year
+    assert figure_match("fiscal year ended September 27, 2025", "It ended September 27, 2025.")["primary"] == "2025"
+    assert figure_match("no numbers here", "none")["figure_primary"] is None
+
+
+def test_more_precise_answers_match_a_rounded_ground_truth():
+    assert figure_match("up 14% from $96,169 million", "an increase of 13.51% from $96,169 million")["figure_exact"] is True
+    assert figure_match("20%", "grew 19.68%")["figure_exact"] is True
+    assert figure_match("$26.4 billion", "increased by $26,448 million")["figure_exact"] is True
+    assert figure_match("$416,161 million", "$416.2 billion")["figure_exact"] is True     # within tolerance
+    # the rounding rule never rescues a wrong year or a different figure
+    assert figure_match("fiscal 2025", "fiscal 2024")["figure_exact"] is False
+    assert figure_match("$58,705 million", "$43,229 million")["figure_exact"] is False
+    assert figure_match("14%", "12%")["figure_exact"] is False
+
+
 def test_figure_match_percent_kind_is_not_confused_with_plain_number():
     assert figure_match("22%", "growth of 22 units")["figure_exact"] is False
     assert figure_match("22%", "growth of 22 percent")["figure_exact"] is True

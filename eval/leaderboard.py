@@ -79,7 +79,7 @@ def _gen_row(path: Path, p: dict) -> str:
         f"{cfg.get('judge_provider', '')}/{cfg.get('judge_model', '')}", cfg.get("context_format", "chunk"),
         str(ov.get("n_items", "—")),
         m("faithfulness"), m("answer_relevancy"), m("context_recall"),
-        _fmt(det.get("figure_exact_rate")), _fmt(det.get("agent_hit_rate")),
+        _fmt(det.get("figure_exact_rate")), _fmt(det.get("figure_primary_rate")), _fmt(det.get("agent_hit_rate")),
         f"`{cfg.get('config_hash', '—')}`", f"[{path.name}]({path.name})",
     ]) + " |"
 
@@ -129,14 +129,16 @@ def render(results: list[tuple[Path, dict]]) -> str:
         "",
         "## Generation runs (schema 3: per-chunk contexts)",
         "",
-        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | agent_hit | config | file |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | config | file |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
-    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | |"]
+    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | | |"]
     lines += [
         "",
-        "`figure_exact`: share of items whose answer contains every ground-truth figure (deterministic, no judge). "
-        "`agent_hit`: share of labelled items where any relevant chunk appeared in the agent's tool observations.",
+        "`figure_exact`: share of items whose answer contains every ground-truth figure, context figures included "
+        "(deterministic, no judge). `figure_primary`: share whose answer contains the figure the question asked for "
+        "(the first non-year figure in the ground truth). `agent_hit`: share of labelled items where any relevant "
+        "index chunk appeared in the agent's tool observations.",
         "",
         "## Retrieval runs (retriever alone, no LLM)",
         "",

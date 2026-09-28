@@ -99,7 +99,7 @@ def test_attach_deterministic_metrics_scores_figures_and_agent_hits():
     assert nolabel["agent_retrieval"]["labelled"] is False and nolabel["agent_retrieval"]["hit"] is None
 
     block = run_eval._deterministic_block(records)
-    assert block["n_figure_applicable"] == 2 and block["figure_exact_rate"] == 0.5
+    assert block["n_figure_applicable"] == 2 and block["figure_exact_rate"] == 0.5 and block["figure_primary_rate"] == 0.5
     assert block["n_labelled"] == 2 and block["agent_hit_rate"] == 0.5 and block["agent_mrr"] == 0.25
 
 
