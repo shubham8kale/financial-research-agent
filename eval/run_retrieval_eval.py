@@ -44,7 +44,7 @@ from eval.experiment import benchmark_version, config_hash, find_existing_result
 from eval.retrieval_metrics import DEFAULT_KS, METRIC_KEYS, aggregate, item_metrics  # noqa: E402
 from eval.run_eval import (  # noqa: E402
     BENCHMARK_FILE, QUESTION_TYPES, RESULTS_DIR, SMOKE_BENCHMARK_FILE, THIN_STRATUM_N,
-    _git_commit, load_benchmark, save_results,
+    _display_path, _git_commit, load_benchmark, save_results,
 )
 
 logger = logging.getLogger(__name__)
@@ -244,7 +244,7 @@ def main() -> int:
     out_path = args.out or (RESULTS_DIR / f"retrieval-{args.label}-{cfg_hash}.json")
     save_results(payload, out_path)
     print_report(payload)
-    print(f"\nPer-item evidence: {out_path.relative_to(REPO_ROOT)}")
+    print(f"\nPer-item evidence: {_display_path(out_path)}")
 
     from eval.leaderboard import write_leaderboard
     print(f"Leaderboard: {write_leaderboard(RESULTS_DIR).relative_to(REPO_ROOT)}")

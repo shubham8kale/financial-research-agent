@@ -450,6 +450,14 @@ def save_cache(cache: dict, path: Path = CACHE_FILE) -> None:
 
 # ── Persistence ──────────────────────────────────────────────────────────────
 
+def _display_path(path: Path) -> str:
+    """Repo-relative when possible; absolute when --out points elsewhere."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def save_results(payload: dict, path: Path) -> None:
     """Write a results JSON, creating parent dirs if needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1466,7 +1474,7 @@ def main() -> int:
     out_path = args.out or (RESULTS_DIR / f"{label}-{config['config_hash']}.json")
     save_results(payload, out_path)
     print_report(payload)
-    print(f"\nPer-item evidence: {out_path.relative_to(REPO_ROOT)}")
+    print(f"\nPer-item evidence: {_display_path(out_path)}")
 
     from eval.leaderboard import write_leaderboard
     print(f"Leaderboard: {write_leaderboard(RESULTS_DIR).relative_to(REPO_ROOT)}")
