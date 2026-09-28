@@ -85,11 +85,14 @@
 #   malformed, produces NaN.  This is what happened to the earlier
 #   gemini-3.1-flash-lite-preview baseline.  JUDGE_BYPASS_N below forces N
 #   separate single-candidate calls instead, which works on every provider.
-# * _extract_contexts() captures each tool observation as ONE context string
-#   (the observation already concatenates k passages).  RAGAS therefore scores
-#   against observation-sized blobs, not individual chunks, which makes
-#   context_recall coarser than a per-chunk measurement would be.  Changing this
-#   would change what every score means, so it is documented, not altered.
+# * Contexts are scored PER CHUNK (results schema_version 3).  Each tool
+#   observation is split on its "[n] ticker=... chunk_idx=..." headers into the
+#   individual passages the agent saw, and an observation that carries no
+#   passage (the list_available_companies ticker list) is not a context at all.
+#   Results files with schema_version 2 scored each observation as ONE blob of
+#   k passages, so their context_recall is NOT comparable with schema 3: a blob
+#   holding one relevant passage among five scored as fully recalled.  The raw
+#   observations are stored on every record, so either view can be recomputed.
 
 import argparse
 import csv
@@ -192,6 +195,17 @@ RAGAS_TIMEOUT_SECONDS = int(os.getenv("EVAL_RAGAS_TIMEOUT", "900"))
 RAGAS_SEED = 42
 
 METRIC_NAMES = ("faithfulness", "answer_relevancy", "context_recall")
+
+# Results-file schema.  3 = per-chunk contexts + deterministic metrics + config
+# hash.  2 = observation-blob contexts (eval/results/*-<commit>.json).
+SCHEMA_VERSION = 3
+
+# Config keys that do not change what a run produces, so they are recorded but
+# left out of the config hash (a throttle change must not look like a new experiment).
+_UNHASHED_CONFIG_KEYS = frozenset({
+    "judge_temperature_note", "judge_requests_per_second", "agent_sleep_seconds",
+    "ragas_max_workers", "benchmark_file", "benchmark_n", "config_hash",
+})
 
 # Question-type strata present in the benchmark, in reporting order.
 # "temporal" asks a question with the fiscal year deliberately unstated: the
@@ -313,47 +327,45 @@ def load_benchmark(path: Path) -> list[dict]:
 
 # ── Agent invocation + context extraction ────────────────────────────────────
 
-def _extract_contexts(messages) -> list[str]:
-    """Pull the retrieved passages out of the agent's ToolMessage observations.
+def _extract_observations(messages) -> list[str]:
+    """Pull every tool observation out of the agent's message history, as text.
 
-    ToolMessage.content can arrive in two shapes depending on how the tool
-    was produced:
-
-      1. Plain ``str`` — what our in-process @tool functions (search_filings,
-         compare_companies, list_available_companies) return.
-      2. ``list[dict]`` with ``{"type": "text", "text": "..."}`` items —
-         the shape MCP tool results take when wrapped by langchain-mcp-adapters.
-         We handle it here defensively so the eval harness works identically
-         whether someone swaps the agent to an MCP-backed version later.
-
-    NOTE: each observation is kept as ONE context string.  See "KNOWN
-    MEASUREMENT ARTEFACTS" at the top of this file.
+    One string per ToolMessage.  Both content shapes are accepted — the plain
+    ``str`` our in-process tools return and the ``list[dict]`` text blocks that
+    MCP tool results arrive in — so the harness works identically whether the
+    agent is direct or MCP-backed.  The raw observations are stored on every
+    record; contexts and retrieved chunk ids are DERIVED from them by
+    split_contexts() and can be recomputed from an old record at any time.
     """
-    # Imported lazily so `--dry-run` works without requiring langchain to be
-    # importable (useful for quick pipeline sanity checks).
+    # Imported lazily so `--dry-run` works without requiring langchain.
     from langchain_core.messages import ToolMessage
+    from agent.observations import observation_text
 
-    contexts: list[str] = []
+    observations: list[str] = []
     for msg in messages:
         if not isinstance(msg, ToolMessage):
             continue
-        content = msg.content
-        if isinstance(content, str):
-            if content.strip():
-                contexts.append(content)
-        elif isinstance(content, list):
-            for item in content:
-                if isinstance(item, dict):
-                    text = item.get("text")
-                    if text and isinstance(text, str) and text.strip():
-                        contexts.append(text)
-                elif isinstance(item, str) and item.strip():
-                    contexts.append(item)
-    return contexts
+        text = observation_text(msg.content)
+        if text.strip():
+            observations.append(text)
+    return observations
+
+
+def split_contexts(observations: list[str]) -> list[str]:
+    """One context per retrieved PASSAGE, in the order the agent saw them.
+
+    Each observation is split on its "[n] ticker=... chunk_idx=..." headers.
+    An observation with no passage in it (list_available_companies returns a
+    ticker list) contributes nothing: it is not evidence, and scoring it as a
+    context would let faithfulness credit a claim to a list of tickers.
+    """
+    from agent.observations import parse_observation
+
+    return [chunk.text for obs in observations for chunk in parse_observation(obs)]
 
 
 def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
-    """Invoke the direct agent; return (final_answer, contexts, n_messages, diag).
+    """Invoke the direct agent; return (final_answer, observations, n_messages, diag).
 
     We call ``build_agent_executor`` + ``.invoke`` directly (rather than the
     higher-level ``run_agent`` helper) because we need access to the full
@@ -373,7 +385,7 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
     # Shared with the API and both CLI entry points so all four score and
     # display the identical string.
     final_answer = content_text(messages[-1].content)
-    contexts = _extract_contexts(messages)
+    observations = _extract_observations(messages)
 
     # Provenance for the empty-answer case.  An empty final answer is
     # indistinguishable, in the stored record, between "the model deliberately
@@ -390,7 +402,7 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
         # Keep a bounded repr so a degenerate response can be inspected later
         # without re-running the item (and re-paying for it).
         diag["empty_content_repr"] = repr(last.content)[:300]
-    return final_answer, contexts, len(messages), diag
+    return final_answer, observations, len(messages), diag
 
 
 # ── Agent-output cache ───────────────────────────────────────────────────────
@@ -510,6 +522,7 @@ def _mean_block(rows: list[dict]) -> dict:
             "n_nan": len(vals) - len(scored),
             "n_terminal_failure": n_terminal,
         }
+    block["deterministic"] = _deterministic_block(rows)
     return block
 
 
@@ -625,6 +638,21 @@ def print_report(payload: dict) -> None:
         for q, n in thin:
             note = "single item; not a finding" if n == 1 else "too few items to generalise"
             print(f"    {q:<12} n={n}  ({note})")
+
+    def _det_row(label: str, block: dict) -> None:
+        d = block.get("deterministic") or {}
+        nf, nl = d.get("n_figure_applicable", 0), d.get("n_labelled", 0)
+        print(f"  {label:<12} {_fmt(d.get('figure_recall'))}   {_fmt(d.get('figure_exact_rate'))}   [n={nf:>2}]"
+              f"     {_fmt(d.get('agent_hit_rate'))}   {_fmt(d.get('agent_recall'))}   {_fmt(d.get('agent_mrr'))}   [n={nl:>2}]")
+
+    print("\n--- Deterministic metrics (no judge) ---")
+    print(f"  {'':<12} figure_recall figure_exact          agent_hit  agent_recall  agent_mrr")
+    _det_row("all", agg["overall"])
+    for qtype, block in agg["by_question_type"].items():
+        _det_row(qtype, block)
+    print("\n  figure_*: ground-truth figures reproduced in the answer (n = items whose")
+    print("  ground truth contains a figure).  agent_*: labelled relevant chunks that")
+    print("  appeared in the agent's tool observations (n = labelled items).")
 
     diag = payload.get("judge_diagnostics") or {}
     failures = diag.get("executor_failures") or {}
@@ -870,7 +898,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         key = _cache_key(item_id, agent_model, prompt_version)
 
         if use_cache and key in cache:
-            records.append(cache[key])
+            records.append(_upgrade_record(cache[key]))
             n_from_cache += 1
             logger.info("[%d/%d] %s — cached, skipping generation",
                         i, len(benchmark), item_id)
@@ -879,7 +907,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         logger.info("[%d/%d] %s — running agent: %s",
                     i, len(benchmark), item_id, row["question"][:70])
         try:
-            answer, contexts, n_messages, diag = run_agent_capture(row["question"])
+            answer, observations, n_messages, diag = run_agent_capture(row["question"])
         except Exception as exc:  # noqa: BLE001 — any agent failure must be classified
             if _is_quota_error(exc):
                 # Do NOT record a stub: a quota refusal says nothing about the
@@ -893,7 +921,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
                 break
             logger.exception("Agent failed on %s — recording error and continuing.", item_id)
             record = _record(row, agent_model, prompt_version,
-                             answer=f"<agent error: {exc}>", contexts=[],
+                             answer=f"<agent error: {exc}>", observations=[],
                              n_messages=0, error=str(exc))
             records.append(record)
             cache[key] = record
@@ -901,7 +929,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
             continue
 
         record = _record(row, agent_model, prompt_version,
-                         answer=answer, contexts=contexts, n_messages=n_messages,
+                         answer=answer, observations=observations, n_messages=n_messages,
                          diag=diag)
         records.append(record)
 
@@ -910,7 +938,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         cache[key] = record
         save_cache(cache)
 
-        logger.info("  -> %d chars, %d contexts%s", len(answer), len(contexts),
+        logger.info("  -> %d chars, %d contexts%s", len(answer), len(record["contexts"]),
                     "  [RECURSION LIMIT HIT]" if record["recursion_limit_hit"] else "")
 
         if i < len(benchmark):
@@ -922,7 +950,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
     return records, stop_reason
 
 
-def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, error=None, diag=None):
+def _record(row, agent_model, prompt_version, *, answer, observations, n_messages, error=None, diag=None):
     """Build one per-item result record.
 
     Every row carries its own full provenance — item id, stratum, model ids, k
@@ -931,8 +959,10 @@ def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, e
     different run.
     """
     from agent.financial_agent import TOP_K, OUTCOME_RECURSION_LIMIT, classify_terminal_state
+    from agent.observations import retrieved_chunk_ids
 
     terminal_failure = classify_terminal_state(answer)
+    contexts = split_contexts(observations)
     return {
         "id": row["id"],
         "question_type": row.get("question_type", ""),
@@ -943,8 +973,11 @@ def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, e
         "question": row["question"],
         "ground_truth": row["ground_truth"],
         "answer": answer,
+        "observations": observations,
+        "n_observations": len(observations),
         "contexts": contexts,
         "n_contexts": len(contexts),
+        "retrieved_chunk_ids": retrieved_chunk_ids(observations),
         "n_agent_messages": n_messages,
         "terminal_failure": terminal_failure,
         "recursion_limit_hit": terminal_failure == OUTCOME_RECURSION_LIMIT,
@@ -955,6 +988,88 @@ def _record(row, agent_model, prompt_version, *, answer, contexts, n_messages, e
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "error": error,
         **(diag or {}),
+    }
+
+
+def _upgrade_record(record: dict) -> dict:
+    """Bring a cached record up to the current shape without regenerating it.
+
+    Records cached before schema 3 stored the raw observations under
+    ``contexts`` and nothing else.  Those observations are exactly what a fresh
+    run would capture, so the per-chunk contexts and retrieved chunk ids are
+    derived from them here — which is what lets the schema-3 baseline be
+    re-scored from cache at zero generation cost.  Returns a copy.
+    """
+    from agent.observations import retrieved_chunk_ids
+
+    rec = dict(record)
+    if "observations" not in rec:
+        rec["observations"] = list(rec.get("contexts") or [])
+    rec["n_observations"] = len(rec["observations"])
+    rec["contexts"] = split_contexts(rec["observations"])
+    rec["n_contexts"] = len(rec["contexts"])
+    rec["retrieved_chunk_ids"] = retrieved_chunk_ids(rec["observations"])
+    return rec
+
+
+# ── Deterministic metrics (no judge) ─────────────────────────────────────────
+
+DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "agent_hit_rate", "agent_recall")
+
+
+def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> None:
+    """Compute the judge-free metrics for every record, in place.
+
+    figure_*   eval/figure_match.py against the ground truth — the check that
+               scores a right-figure-wrong-year answer as 0 where faithfulness
+               scored it 1.0 (eval/EVALUATION.md finding 2).
+    agent_*    whether the labelled relevant chunks (eval/benchmark_chunks.json)
+               appeared anywhere in the agent's tool observations.  This is the
+               retriever PLUS the agent's query wording; run_retrieval_eval.py
+               measures the retriever alone.  Items without a label get None,
+               never 0, so an unlabelled item cannot drag the mean.
+    """
+    from eval.chunk_labels import scorable_groups
+    from eval.figure_match import figure_match
+    from eval.retrieval_metrics import group_hit_ranks, recall_at_k, reciprocal_rank
+
+    for r in records:
+        r["figure"] = figure_match(r.get("ground_truth", ""), r.get("answer", ""))
+        groups = scorable_groups(labels, r["id"]) if labels else []
+        ranked = r.get("retrieved_chunk_ids") or []
+        if groups:
+            ranks = group_hit_ranks(ranked, groups)
+            r["agent_retrieval"] = {
+                "labelled": True,
+                "n_groups": len(groups),
+                "hit": any(x is not None for x in ranks),
+                "recall": round(recall_at_k(ranks, max(len(ranked), 1)), 4),
+                "mrr": round(reciprocal_rank(ranks), 4),
+                "first_rank": min((x for x in ranks if x is not None), default=None),
+            }
+        else:
+            r["agent_retrieval"] = {
+                "labelled": False, "n_groups": 0, "hit": None,
+                "recall": None, "mrr": None, "first_rank": None,
+            }
+
+
+def _deterministic_block(rows: list[dict]) -> dict:
+    """Means of the judge-free metrics over *rows*, each with its own n."""
+    fig = [r["figure"] for r in rows if (r.get("figure") or {}).get("applicable")]
+    lab = [r["agent_retrieval"] for r in rows if (r.get("agent_retrieval") or {}).get("labelled")]
+
+    def _mean(vals):
+        return round(sum(vals) / len(vals), 4) if vals else None
+
+    return {
+        "n_figure_applicable": len(fig),
+        "figure_recall": _mean([f["figure_recall"] for f in fig]),
+        "figure_exact_rate": _mean([1.0 if f["figure_exact"] else 0.0 for f in fig]),
+        "n_labelled": len(lab),
+        "agent_hit_rate": _mean([1.0 if a["hit"] else 0.0 for a in lab]),
+        "agent_recall": _mean([a["recall"] for a in lab]),
+        "agent_mrr": _mean([a["mrr"] for a in lab]),
     }
 
 
@@ -1131,6 +1246,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "(default: 'baseline'). Written to eval/results/<label>-<commit>.json.")
     p.add_argument("--out", type=Path, default=None,
                    help="Explicit results file path (overrides --label).")
+    p.add_argument("--force", action="store_true",
+                   help="Run even if a complete results file with this exact config hash "
+                        "already exists (the default is to report that file instead).")
     return p
 
 
@@ -1183,6 +1301,61 @@ def main() -> int:
                 benchmark_path.name, len(benchmark), AGENT_MODEL,
                 judge_provider, judge_model, prompt_version)
 
+    # ── Configuration record + hash ──────────────────────────────────────────
+    from eval.chunk_labels import LABELS_FILE, load_labels
+    from eval.experiment import benchmark_version, config_hash, find_existing_result
+    from retrieval.retriever import RetrievalConfig
+
+    labels = load_labels(LABELS_FILE) if LABELS_FILE.exists() else None
+    if labels is None:
+        logger.warning("No chunk labels at %s — agent_* metrics will be None. "
+                       "Run `python -m eval.chunk_labels` to create them.", LABELS_FILE)
+    bench_version = benchmark_version(benchmark_path, *([LABELS_FILE] if labels else []))
+    config = {
+        "result_kind": "generation",
+        "schema_version": SCHEMA_VERSION,
+        "context_granularity": "chunk",
+        "agent_model": AGENT_MODEL,
+        "agent_provider": "google",
+        "judge_model": judge_model,
+        "judge_provider": judge_provider,
+        "judge_temperature_configured": 0.0,
+        "judge_temperature_note": (
+            "RAGAS overrides temperature to 0.3 for metrics that request n>1 "
+            "generations (answer_relevancy, strictness=3); see "
+            "ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is "
+            "therefore NOT deterministic even with temperature=0 configured."
+        ),
+        "judge_bypass_n": JUDGE_BYPASS_N,
+        "judge_requests_per_second": judge_rps(judge_provider),
+        "answer_relevancy_strictness": 3,
+        "embedding_model": EMBEDDING_MODEL,
+        "k": TOP_K,
+        "retrieval": RetrievalConfig(k=TOP_K).as_dict(),
+        "prompt_version": prompt_version,
+        "ragas_version": ragas.__version__,
+        "ragas_seed": RAGAS_SEED,
+        "ragas_max_workers": RAGAS_MAX_WORKERS,
+        "agent_sleep_seconds": AGENT_SLEEP_SECONDS,
+        "agent_recursion_limit": 20,
+        "benchmark_file": str(benchmark_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+        "benchmark_version": bench_version,
+        "benchmark_n": len(benchmark),
+        "benchmark_item_ids": sorted(r["id"] for r in benchmark),
+        "metrics": list(METRIC_NAMES),
+        "deterministic_metrics": list(DETERMINISTIC_METRICS),
+    }
+    config["config_hash"] = config_hash({k: v for k, v in config.items() if k not in _UNHASHED_CONFIG_KEYS})
+
+    existing = find_existing_result(RESULTS_DIR, config["config_hash"])
+    if existing and not args.force and not args.out:
+        with open(existing, encoding="utf-8") as f:
+            prior = json.load(f)
+        print(f"This configuration ({config['config_hash']}) already has a complete run: "
+              f"{existing.relative_to(REPO_ROOT)}.  Pass --force to run it again.")
+        print_report(prior)
+        return 0
+
     # ── Generation ───────────────────────────────────────────────────────────
     cache = load_cache()
     if args.score_only:
@@ -1191,7 +1364,7 @@ def main() -> int:
         for row in benchmark:
             key = _cache_key(row["id"], AGENT_MODEL, prompt_version)
             if key in cache:
-                records.append(dict(cache[key]))
+                records.append(_upgrade_record(cache[key]))
             else:
                 missing.append(row["id"])
         if missing:
@@ -1212,6 +1385,10 @@ def main() -> int:
             benchmark, AGENT_MODEL, prompt_version, cache,
             use_cache=not args.no_cache,
         )
+
+    # Judge-free metrics are computed for EVERY record, including on
+    # --generate-only and quota-stopped runs: they cost nothing and never fail.
+    attach_deterministic_metrics(records, labels)
 
     # ── Scoring ──────────────────────────────────────────────────────────────
     scores_error = None
@@ -1263,39 +1440,13 @@ def main() -> int:
         withheld_reason = "; ".join(parts)
 
     payload = {
-        "schema_version": 2,
+        "schema_version": SCHEMA_VERSION,
         "run_id": f"{label}-{commit}",
         "label": label,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": commit,
         "git_dirty": dirty,
-        "config": {
-            "agent_model": AGENT_MODEL,
-            "agent_provider": "google",
-            "judge_model": judge_model,
-            "judge_provider": judge_provider,
-            "judge_temperature_configured": 0.0,
-            "judge_temperature_note": (
-                "RAGAS overrides temperature to 0.3 for metrics that request n>1 "
-                "generations (answer_relevancy, strictness=3); see "
-                "ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is "
-                "therefore NOT deterministic even with temperature=0 configured."
-            ),
-            "judge_bypass_n": JUDGE_BYPASS_N,
-            "judge_requests_per_second": judge_rps(judge_provider),
-            "answer_relevancy_strictness": 3,
-            "embedding_model": EMBEDDING_MODEL,
-            "k": TOP_K,
-            "prompt_version": prompt_version,
-            "ragas_version": ragas.__version__,
-            "ragas_seed": RAGAS_SEED,
-            "ragas_max_workers": RAGAS_MAX_WORKERS,
-            "agent_sleep_seconds": AGENT_SLEEP_SECONDS,
-            "agent_recursion_limit": 20,
-            "benchmark_file": str(benchmark_path.relative_to(REPO_ROOT)).replace("\\", "/"),
-            "benchmark_n": len(benchmark),
-            "metrics": list(METRIC_NAMES),
-        },
+        "config": config,
         "run_status": {
             "complete": complete,
             "n_requested": len(benchmark),
@@ -1312,10 +1463,13 @@ def main() -> int:
         "results": records,
     }
 
-    out_path = args.out or (RESULTS_DIR / f"{label}-{commit}.json")
+    out_path = args.out or (RESULTS_DIR / f"{label}-{config['config_hash']}.json")
     save_results(payload, out_path)
     print_report(payload)
     print(f"\nPer-item evidence: {out_path.relative_to(REPO_ROOT)}")
+
+    from eval.leaderboard import write_leaderboard
+    print(f"Leaderboard: {write_leaderboard(RESULTS_DIR).relative_to(REPO_ROOT)}")
 
     if stop_reason:
         return EXIT_QUOTA_EXHAUSTED
