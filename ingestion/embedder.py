@@ -6,77 +6,19 @@
 # ChromaDB vector store so they can be retrieved by semantic similarity at
 # query time.
 #
-# WHAT IS AN EMBEDDING?
-# ---------------------
-# An embedding is a fixed-length list of floating-point numbers (a vector)
-# that encodes the *meaning* of a piece of text in a high-dimensional space.
-# Two chunks that discuss the same concept (e.g. "cloud revenue growth" and
-# "Azure segment expansion") will have vectors that are geometrically close,
-# even if they share no keywords.  This is what enables semantic search — the
-# agent can find relevant passages even when the query words don't appear
-# verbatim in the document.
-#
-# LOCAL INFERENCE vs. API EMBEDDINGS
-# ------------------------------------
-# There are two broad approaches to generating embeddings:
-#
-#   Approach          | Model               | Dims | Cost        | Privacy
-#   ------------------|---------------------|------|-------------|--------
-#   OpenAI API        | text-embedding-3-small | 1536 | $0.02/1M tok | data leaves machine
-#   Local (this file) | all-MiniLM-L6-v2   |  384 | free        | data stays local
-#
-# We use a LOCAL model for the following reasons:
-#
-#   1. Cost — embedding five 10-K filings (~2–3 M tokens each time the index
-#      is rebuilt) costs nothing locally vs. ~$0.05–$0.10 per run with OpenAI.
-#      For a research prototype that may be rebuilt many times this adds up.
-#
-#   2. Privacy — SEC filings are public documents, but in a real deployment
-#      a financial agent often processes proprietary research notes or internal
-#      communications.  Running embeddings locally ensures that sensitive text
-#      never leaves the machine or network perimeter.
-#
-#   3. Latency and offline use — local inference needs no network round-trip.
-#      The pipeline can run fully offline after the model is downloaded once.
-#
-#   4. Reproducibility — API models can be updated or deprecated by the
-#      provider.  A pinned local model produces identical vectors forever,
-#      which is important for deterministic retrieval benchmarks.
-#
-# WHY all-MiniLM-L6-v2?
-# ----------------------
-# all-MiniLM-L6-v2 is the most widely used sentence-transformer model for
-# RAG prototypes because it sits at the right point on the speed/quality curve:
-#
-#   Model               | Dims | MTEB avg | Params  | CPU speed
-#   --------------------|------|----------|---------|----------
-#   all-MiniLM-L6-v2   |  384 |  56.3    |  22 M   |  fast
-#   all-MiniLM-L12-v2  |  384 |  59.8    |  33 M   |  medium
-#   all-mpnet-base-v2  |  768 |  63.3    |  109 M  |  slow
-#   OpenAI 3-small      | 1536 |  62.3    |   -     |  API only
-#
-#   - 22 M parameters fits comfortably in CPU RAM; no GPU required.
-#   - 384 dimensions is a third the size of OpenAI's vectors, so ChromaDB
-#     uses less disk space and similarity queries run faster.
-#   - MTEB score of 56.3 is competitive with models 5× its size on the
-#     kinds of factual Q&A tasks a financial agent performs.
-#
-# TRADEOFF TO BE AWARE OF:
-#   all-MiniLM-L6-v2 was trained on general web text, not financial prose.
-#   If retrieval quality on domain-specific terminology (GAAP line items,
-#   bond covenants, segment accounting) proves insufficient, consider:
-#     - BAAI/bge-small-en-v1.5  (similar size, higher MTEB, Apache-2 licence)
-#     - thenlper/gte-small       (strong financial domain performance)
-#     - Swapping back to OpenAI text-embedding-3-small for production
-#   The model name is a single constant (EMBEDDING_MODEL below), so swapping
-#   requires changing exactly one line plus a re-index.
-#
-# FIRST-RUN NOTE:
-#   On first use, sentence-transformers downloads the model weights (~80 MB)
-#   from the Hugging Face Hub and caches them at:
-#     Windows : C:\Users\<user>\.cache\huggingface\hub\
-#     Linux   : ~/.cache/huggingface/hub/
-#   Subsequent runs load directly from the cache with no network access.
+# MODEL CHOICE
+# ------------
+# all-MiniLM-L6-v2, run locally: 22 M parameters, 384 dimensions, a few
+# seconds per filing on a laptop CPU, no key, and pinned so the same text
+# always embeds to the same vector — which is what makes the retrieval
+# benchmarks reproducible.  It is a general-web model, so financial
+# terminology (GAAP line items, segment names) is its known weakness; the
+# measured answer to that in this repository was a cross-encoder reranker
+# over its candidates (eval/EVALUATION.md, "Retrieval ablation"), not a
+# bigger encoder.  bge-small-en-v1.5 and gte-small are the candidates if the
+# encoder itself is ever revisited; EMBEDDING_MODEL is the one constant to
+# change, followed by a re-index.  First use downloads ~80 MB from the
+# Hugging Face Hub into the local cache (HF_HOME in the Dockerfile).
 #
 # WHY ChromaDB?
 # -------------

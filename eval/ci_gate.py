@@ -7,9 +7,11 @@
 # Two modes, one per workflow:
 #
 #   retrieval   every pull request (.github/workflows/ci.yml).  Scores the
-#               gated retrieval configurations over the CI slice
-#               (eval/ci_corpus.py) with the retriever-only runner — no LLM
-#               call, no secret — and fails the build below the thresholds.
+#               gated retrieval configurations over the index rebuilt from
+#               the committed filings (about a minute of embedding since the
+#               cleaner reads only the 10-K document) with the retriever-only
+#               runner — no LLM call, no secret — and fails the build below
+#               the thresholds.
 #   judged      manual trigger (.github/workflows/eval-judged.yml).  Applies
 #               the judged thresholds to a results file eval/run_eval.py
 #               wrote for the fixed ten-item smoke subset.  About $0.20 of
@@ -154,24 +156,34 @@ def _default_retriever_factory(rc_dict: dict, k: int):
     return retrieve_fn
 
 
-def index_problem(labels: dict) -> str | None:
-    """Why the live index cannot be scored against these labels, or None when it can."""
-    from eval.ci_corpus import CORPUS_FILE, index_chunk_count, read_header
+def index_chunk_count() -> int:
+    """Chunks in the live collection, 0 when there is none."""
+    import chromadb
     from ingestion.embedder import CHROMA_PERSIST_DIR, COLLECTION_NAME
 
-    live = index_chunk_count(CHROMA_PERSIST_DIR, COLLECTION_NAME)
+    try:
+        return chromadb.PersistentClient(path=str(CHROMA_PERSIST_DIR)).get_collection(COLLECTION_NAME).count()
+    except Exception:  # noqa: BLE001 — no collection, or no directory
+        return 0
+
+
+def index_problem(labels: dict) -> str | None:
+    """Why the live index cannot be scored against these labels, or None when it can.
+
+    The labels name chunk ids, and a chunk id is a position in one index; an
+    index of a different size is a different index, and scoring it against
+    these labels would be meaningless.
+    """
+    from ingestion.embedder import CHROMA_PERSIST_DIR
+
+    live = index_chunk_count()
     if not live:
-        return f"no index at {CHROMA_PERSIST_DIR}: run `python -m eval.ci_corpus index` (CI) or the ingestion pipeline"
-    accepted = {labels.get("index_chunk_count"): "the labelled full index"}
-    if CORPUS_FILE.exists():
-        header = read_header(CORPUS_FILE)
-        if header.get("index_chunk_count") != labels.get("index_chunk_count"):
-            return (f"the CI slice was cut from a {header.get('index_chunk_count')}-chunk index but the labels were "
-                    f"made on {labels.get('index_chunk_count')}: run `python -m eval.ci_corpus build`")
-        accepted[header.get("n_chunks")] = "the CI slice"
-    if live not in accepted:
-        return (f"the index at {CHROMA_PERSIST_DIR} has {live} chunks, which is neither "
-                + " nor ".join(f"{name} ({n})" for n, name in accepted.items()))
+        return f"no index at {CHROMA_PERSIST_DIR}: run `python -m ingestion.pipeline` (the committed filings rebuild it)"
+    if live != labels.get("index_chunk_count"):
+        return (f"the index at {CHROMA_PERSIST_DIR} has {live} chunks but the labels were made on "
+                f"{labels.get('index_chunk_count')}: rebuild the index from the committed filings "
+                "(`python -m ingestion.pipeline`) or, after an ingestion change, regenerate the labels "
+                "(`python -m eval.chunk_labels`)")
     return None
 
 

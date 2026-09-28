@@ -48,6 +48,7 @@ from lxml import etree
 
 from ingestion.downloader import DATA_DIR as FILINGS_ROOT
 from ingestion.embedder import CHROMA_PERSIST_DIR
+from ingestion.submission import primary_document  # noqa: F401 — re-exported
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +59,8 @@ DATA_DIR = CHROMA_PERSIST_DIR.parent
 FILINGS_DIR = FILINGS_ROOT / "sec-edgar-filings"
 FACTS_DB = DATA_DIR / "facts.sqlite"
 
-_DOC_RE = re.compile(r"<DOCUMENT>\s*<TYPE>([^\n<]+)\n(.*?)</DOCUMENT>", re.S)
-_TEXT_RE = re.compile(r"<TEXT>(.*?)</TEXT>", re.S)
+# The submission envelope is parsed by ingestion/submission.py, shared with the
+# text cleaner so both read the same 10-K document.
 
 
 @dataclass
@@ -101,15 +102,6 @@ class Filing:
 
 
 # ── Raw submission handling ──────────────────────────────────────────────────
-
-def primary_document(submission_text: str) -> str:
-    """The <TEXT> of the first <DOCUMENT> whose <TYPE> is 10-K (the inline XBRL document)."""
-    for doc_type, body in _DOC_RE.findall(submission_text):
-        if doc_type.strip().upper().startswith("10-K"):
-            m = _TEXT_RE.search(body)
-            return m.group(1) if m else body
-    raise ValueError("no 10-K document found in submission")
-
 
 def _attr(el, name: str) -> str | None:
     """Attribute lookup tolerant of the HTML parser lower-casing names."""

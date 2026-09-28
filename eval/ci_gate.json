@@ -3,7 +3,6 @@
   "note": "Thresholds for eval/ci_gate.py. Each hit-rate threshold is at or below (hits - 2) / 71 for the committed results file it names, so a two-item loss passes and a three-item loss fails; MRR and nDCG thresholds sit 0.03 below the committed value; the judged thresholds sit under what the named judged run scored on the same ten items (`python -m eval.ci_gate calibrate`). `python -m eval.ci_gate retrieval --dry-run` refuses a threshold above its own calibration value.",
   "retrieval": {
     "k": 25,
-    "index": "eval/ci_corpus.jsonl.gz",
     "configs": [
       {
         "label": "dense",

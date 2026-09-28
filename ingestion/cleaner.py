@@ -5,50 +5,19 @@
 # Convert a raw SEC full-submission.txt file into clean plain text that is
 # ready to be chunked and embedded for retrieval-augmented generation (RAG).
 #
-# WHY DO WE NEED A CLEANING STEP?
-# --------------------------------
-# SEC EDGAR full-submission files are composite SGML/HTML documents assembled
-# by the EDGAR filing system.  They contain several categories of noise that
-# actively harm RAG quality:
-#
-#   1. SEC-HEADER block – machine-readable metadata (filer CIK, accession
-#      number, SIC code, mailing address, …).  This data is structured for
-#      programmatic consumption, not semantic search.  Leaving it in causes the
-#      embedder to waste vector dimensions on boilerplate that appears verbatim
-#      in every filing, diluting the signal from the actual business narrative.
-#
-#   2. Inline XBRL / HTML markup – 10-K filings are submitted as iXBRL
-#      (inline eXtensible Business Reporting Language) documents.  Every piece
-#      of financial data is wrapped in tags like:
-#        <ix:nonFraction unitRef="USD" decimals="-6" ...>94930</ix:nonFraction>
-#      The tags carry zero semantic value for a language model; keeping them
-#      inflates token counts, confuses sentence boundaries, and introduces
-#      gibberish tokens into embeddings.
-#
-#   2.5 XBRL context / SGML preamble – even after BeautifulSoup removes every
-#      tag, the *text content* of the iXBRL document's reference section bleeds
-#      through as hundreds of bare lines before the cover page.  Empirically,
-#      Apple's 10-K contains ~760 such lines:
-#        • SGML envelope tokens:  "10-K", "1", "aapl-20250927.htm"
-#        • CIK numbers:           "0000320193"
-#        • ISO 8601 dates:        "2024-09-29", "2025-09-27"
-#        • ISO currency codes:    "iso4217:USD", "xbrli:shares"
-#        • FASB namespace URLs:   "http://fasb.org/us-gaap/2025#LongTermDebt…"
-#        • XBRL QNames:           "aapl:A1.625NotesDue2026Member"
-#        • Duration codes:        "P1Y"
-#      None of these are natural language.  Leaving them in means the first
-#      chunk of every filing is filled with identifiers rather than business
-#      content, which badly skews the retrieval ranking for queries about the
-#      cover page (company name, fiscal year, auditor).
-#
-#   3. CSS / JavaScript – HTML <style> and <script> blocks appear inline and
-#      contribute no financial content whatsoever.  They can easily exceed the
-#      size of the text they style.
-#
-#   4. Excessive whitespace – after stripping markup, BeautifulSoup leaves
-#      runs of blank lines and leading/trailing spaces that waste context-window
-#      tokens and fragment what should be contiguous paragraphs when the chunker
-#      splits on line boundaries.
+# WHAT IS REMOVED, AND WHY
+# ------------------------
+# A full-submission.txt is an SGML envelope of every document in the filing.
+# Only the 10-K document is kept (ingestion/submission.py): the exhibits, the
+# XBRL taxonomy files and the XBRL instance — whose text blocks are
+# HTML-escaped copies of the notes — made up 82% of the index before this
+# step (eval/EVALUATION.md, finding 22).  From that document: the SEC-HEADER
+# block (filer metadata, identical in every filing); the inline XBRL header
+# (<ix:header>: hidden facts, contexts, units — a list of CIKs, dates, member
+# names and namespace URLs, not prose); <style> and <script> bodies; and
+# whitespace artefacts of tag removal (indentation, runs of blank lines,
+# no-break-space table cells).  The tagged figures themselves are read from
+# the same document by ingestion/xbrl.py.
 #
 # PARSER CHOICE: lxml
 # -------------------
@@ -63,6 +32,8 @@
 import re
 import logging
 from pathlib import Path
+
+from ingestion.submission import primary_document_or_all
 
 from bs4 import BeautifulSoup
 
@@ -89,6 +60,7 @@ _EXCESS_BLANK_LINES_RE = re.compile(r"\n{3,}")
 # readability; after tag removal this indentation becomes meaningless leading
 # spaces that misalign text when it is later displayed or split by the chunker.
 _LEADING_WHITESPACE_RE = re.compile(r"^[ \t]+", re.MULTILINE)
+_TRAILING_WHITESPACE_RE = re.compile(r"[ \t]+$", re.MULTILINE)
 
 
 def _is_prose_line(line: str) -> bool:
@@ -177,6 +149,19 @@ def clean_filing(file_path: str | Path) -> str:
     # and financial content that users actually query.
     cleaned = _SEC_HEADER_RE.sub("", raw_text)
 
+    # ── Step 2.1: Keep only the 10-K document ────────────────────────────────
+    # A full submission is an SGML envelope of <DOCUMENT> blocks: the 10-K,
+    # the exhibits, the XBRL taxonomy files, the XBRL instance (whose text
+    # blocks are HTML-escaped copies of the notes — after entity decoding they
+    # read as literal "<td style=...>" prose) and images.  Before this step the
+    # cleaner read all of them, and 82% of the index was not 10-K text: 39%
+    # escaped markup, 31% identifiers, 9% MetaLinks JSON (eval/EVALUATION.md,
+    # finding 22).  A file without an envelope (a saved .htm, the tests) is
+    # cleaned whole.
+    cleaned, n_dropped = primary_document_or_all(cleaned)
+    if n_dropped:
+        logger.info("Kept the 10-K document; dropped %d other document(s) from the submission", n_dropped)
+
     # ── Step 3: Strip all HTML/XML/XBRL tags with BeautifulSoup ──────────────
     # `get_text(separator="\n")` tells BeautifulSoup to insert a newline
     # wherever a block-level tag boundary existed in the source.  This preserves
@@ -196,6 +181,16 @@ def clean_filing(file_path: str | Path) -> str:
     # first ensures that class names, selectors, and JS variable names never
     # appear in the output that the chunker will process.
     for element in soup(["style", "script"]):
+        element.decompose()
+
+    # The inline XBRL header — <ix:header> inside a display:none div — holds
+    # the hidden facts, every context (entity, period, dimension member) and
+    # every unit the tagged figures refer to.  As text it is a list of CIKs,
+    # dates, member names and namespace URLs; MSFT's version begins "2004 2005
+    # 2006 ..." and passed the prose test below, which is how chunk 0 of that
+    # filing came to be a list of years and context ids.  The tagged facts
+    # themselves are read by ingestion/xbrl.py from the same document.
+    for element in soup(["ix:header", "ix:hidden", "ix:resources", "ix:references"]):
         element.decompose()
 
     plain_text = soup.get_text(separator="\n")
@@ -259,7 +254,13 @@ def clean_filing(file_path: str | Path) -> str:
     #      empty line; a table with 50 rows can therefore leave 50 blank lines
     #      in a row.  Collapsing these keeps the document compact so that fixed-
     #      size chunks contain more actual content and fewer empty tokens.
+    # HTML tables come out one cell per line, and empty cells as lines holding
+    # only a non-breaking space (MSFT's segment tables were 40 such lines
+    # between two figures).  A no-break space is a space here, so those lines
+    # become empty and collapse with the rest.
+    plain_text = plain_text.replace("\xa0", " ")
     plain_text = _LEADING_WHITESPACE_RE.sub("", plain_text)
+    plain_text = _TRAILING_WHITESPACE_RE.sub("", plain_text)
     plain_text = _EXCESS_BLANK_LINES_RE.sub("\n\n", plain_text)
 
     # Final strip removes any leading/trailing whitespace from the full document

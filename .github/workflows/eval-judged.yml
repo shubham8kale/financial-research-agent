@@ -1,7 +1,8 @@
 name: Judged evaluation (manual)
 
 # The paid half of the quality gate: the agent answers the ten-item smoke
-# subset over the CI index slice and a judge model scores the answers, then
+# subset over the index rebuilt from the committed filings and a judge model
+# scores the answers, then
 # eval/ci_gate.py applies the judged thresholds (eval/ci_gate.json).  About
 # 60 judge calls, roughly $0.20 with gemini-3.6-flash, so it runs only when
 # someone clicks "Run workflow" — never on a push, never on a schedule.
@@ -76,20 +77,18 @@ jobs:
           path: ~/.cache/huggingface
           key: hf-models-${{ hashFiles('ingestion/embedder.py', 'retrieval/rerank.py') }}
 
-      - name: Restore the CI index
+      - name: Restore the index
         id: index-cache
         uses: actions/cache@v4
         with:
-          path: data/chroma_db
-          key: ci-index-${{ hashFiles('eval/ci_corpus.jsonl.gz', 'ingestion/embedder.py', 'requirements.txt') }}
+          path: |
+            data/chroma_db
+            data/facts.sqlite
+          key: index-${{ hashFiles('data/sec_filings/**', 'ingestion/**', 'requirements.txt') }}
 
-      - name: Build the CI index from the committed slice
+      - name: Build the index and the fact table from the committed filings
         if: steps.index-cache.outputs.cache-hit != 'true'
-        run: python -m eval.ci_corpus index
-
-      - name: Build the XBRL fact table from the committed filings
-        # The agent's lookup_financial_fact tool reads data/facts.sqlite; a few seconds.
-        run: python -m ingestion.xbrl
+        run: python -m ingestion.pipeline
 
       - name: Run the agent and the judge on the smoke subset
         # The id list is assigned first so a failure there stops the job; a

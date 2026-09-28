@@ -1,20 +1,20 @@
 {
  "schema_version": 1,
- "generated_at": "2026-09-28T00:49:42+00:00",
+ "generated_at": "2026-09-28T22:10:15+00:00",
  "benchmark_file": "eval/benchmark.csv",
- "benchmark_sha256": "d97fdf604a2fac9d3fb99a17958281ab0c1ced4f14c5d41b420ad34e8a9c3261",
+ "benchmark_sha256": "fdeda88624cef010e6a8cdfcb216696fa6b67baf5f006f11cc5a65042560bda6",
  "index_collection": "sec_filings",
- "index_chunk_count": 67521,
+ "index_chunk_count": 4783,
  "prefix_chars": 60,
  "summary": {
   "n_items": 71,
   "by_method": {
-   "exact": 66,
-   "manual": 2,
+   "exact": 65,
+   "manual": 3,
    "prefix": 3
   },
   "n_scorable": 71,
-  "n_multi_chunk_groups": 20
+  "n_multi_chunk_groups": 12
  },
  "items": {
   "qa_0001": {
@@ -50,7 +50,7 @@
   "qa_0004": {
    "groups": [
     [
-     "AAPL_10K_chunk_67"
+     "AAPL_10K_chunk_65"
     ]
    ],
    "method": "exact",
@@ -60,8 +60,8 @@
   "qa_0005": {
    "groups": [
     [
-     "AAPL_10K_chunk_307",
-     "AAPL_10K_chunk_310"
+     "AAPL_10K_chunk_305",
+     "AAPL_10K_chunk_308"
     ]
    ],
    "method": "exact",
@@ -71,7 +71,7 @@
   "qa_0006": {
    "groups": [
     [
-     "AAPL_10K_chunk_310"
+     "AAPL_10K_chunk_308"
     ]
    ],
    "method": "exact",
@@ -81,7 +81,7 @@
   "qa_0007": {
    "groups": [
     [
-     "AAPL_10K_chunk_310"
+     "AAPL_10K_chunk_308"
     ]
    ],
    "method": "exact",
@@ -91,7 +91,7 @@
   "qa_0008": {
    "groups": [
     [
-     "AAPL_10K_chunk_309"
+     "AAPL_10K_chunk_307"
     ]
    ],
    "method": "exact",
@@ -101,14 +101,8 @@
   "qa_0009": {
    "groups": [
     [
-     "AAPL_10K_chunk_1327",
-     "AAPL_10K_chunk_1460",
-     "AAPL_10K_chunk_1916",
-     "AAPL_10K_chunk_2262",
-     "AAPL_10K_chunk_2397",
-     "AAPL_10K_chunk_358",
-     "AAPL_10K_chunk_359",
-     "AAPL_10K_chunk_398"
+     "AAPL_10K_chunk_357",
+     "AAPL_10K_chunk_358"
     ]
    ],
    "method": "exact",
@@ -118,8 +112,7 @@
   "qa_0010": {
    "groups": [
     [
-     "AAPL_10K_chunk_358",
-     "AAPL_10K_chunk_359"
+     "AAPL_10K_chunk_357"
     ]
    ],
    "method": "exact",
@@ -129,7 +122,6 @@
   "qa_0011": {
    "groups": [
     [
-     "AAPL_10K_chunk_1779",
      "AAPL_10K_chunk_371"
     ]
    ],
@@ -140,7 +132,7 @@
   "qa_0012": {
    "groups": [
     [
-     "AAPL_10K_chunk_313"
+     "AAPL_10K_chunk_311"
     ]
    ],
    "method": "exact",
@@ -150,7 +142,7 @@
   "qa_0013": {
    "groups": [
     [
-     "AAPL_10K_chunk_348"
+     "AAPL_10K_chunk_346"
     ]
    ],
    "method": "exact",
@@ -160,7 +152,7 @@
   "qa_0014": {
    "groups": [
     [
-     "AAPL_10K_chunk_304"
+     "AAPL_10K_chunk_302"
     ]
    ],
    "method": "prefix",
@@ -190,7 +182,7 @@
   "qa_0017": {
    "groups": [
     [
-     "AMZN_10K_chunk_37"
+     "AMZN_10K_chunk_38"
     ]
    ],
    "method": "exact",
@@ -200,12 +192,8 @@
   "qa_0018": {
    "groups": [
     [
-     "AMZN_10K_chunk_1977",
-     "AMZN_10K_chunk_1982",
-     "AMZN_10K_chunk_2477",
-     "AMZN_10K_chunk_2481",
-     "AMZN_10K_chunk_715",
-     "AMZN_10K_chunk_720"
+     "AMZN_10K_chunk_739",
+     "AMZN_10K_chunk_745"
     ]
    ],
    "method": "exact",
@@ -215,9 +203,8 @@
   "qa_0019": {
    "groups": [
     [
-     "AMZN_10K_chunk_1977",
-     "AMZN_10K_chunk_2476",
-     "AMZN_10K_chunk_715"
+     "AMZN_10K_chunk_738",
+     "AMZN_10K_chunk_739"
     ]
    ],
    "method": "exact",
@@ -227,9 +214,7 @@
   "qa_0020": {
    "groups": [
     [
-     "AMZN_10K_chunk_1975",
-     "AMZN_10K_chunk_2474",
-     "AMZN_10K_chunk_713"
+     "AMZN_10K_chunk_736"
     ]
    ],
    "method": "exact",
@@ -239,7 +224,7 @@
   "qa_0021": {
    "groups": [
     [
-     "AMZN_10K_chunk_317"
+     "AMZN_10K_chunk_321"
     ]
    ],
    "method": "exact",
@@ -249,27 +234,27 @@
   "qa_0022": {
    "groups": [
     [
-     "AMZN_10K_chunk_317"
+     "AMZN_10K_chunk_321"
     ]
    ],
-   "method": "exact",
+   "method": "manual",
    "n_references": 1,
-   "note": ""
+   "note": "The reference is the segment net sales table. Its column header ('Year Ended December 31, 2024 2025') sits in the chunk before the rows, so the passage is not a substring of one chunk; chunk 321 holds every row of the table (North America $387,497 $426,305 ... Consolidated) and answers the question."
   },
   "qa_0023": {
    "groups": [
     [
-     "AMZN_10K_chunk_317"
+     "AMZN_10K_chunk_321"
     ]
    ],
-   "method": "exact",
+   "method": "manual",
    "n_references": 1,
-   "note": ""
+   "note": "Same table as qa_0022 (the three reportable segments are its row labels), same chunk-boundary reason."
   },
   "qa_0024": {
    "groups": [
     [
-     "AMZN_10K_chunk_316"
+     "AMZN_10K_chunk_319"
     ]
    ],
    "method": "exact",
@@ -279,7 +264,7 @@
   "qa_0025": {
    "groups": [
     [
-     "AMZN_10K_chunk_21"
+     "AMZN_10K_chunk_22"
     ]
    ],
    "method": "exact",
@@ -299,7 +284,7 @@
   "qa_0027": {
    "groups": [
     [
-     "GOOGL_10K_chunk_29"
+     "GOOGL_10K_chunk_28"
     ]
    ],
    "method": "exact",
@@ -309,8 +294,8 @@
   "qa_0028": {
    "groups": [
     [
-     "GOOGL_10K_chunk_30",
-     "GOOGL_10K_chunk_358"
+     "GOOGL_10K_chunk_29",
+     "GOOGL_10K_chunk_357"
     ]
    ],
    "method": "exact",
@@ -320,7 +305,7 @@
   "qa_0029": {
    "groups": [
     [
-     "GOOGL_10K_chunk_81"
+     "GOOGL_10K_chunk_80"
     ]
    ],
    "method": "exact",
@@ -330,7 +315,7 @@
   "qa_0030": {
    "groups": [
     [
-     "GOOGL_10K_chunk_552"
+     "GOOGL_10K_chunk_562"
     ]
    ],
    "method": "exact",
@@ -340,7 +325,7 @@
   "qa_0031": {
    "groups": [
     [
-     "GOOGL_10K_chunk_407"
+     "GOOGL_10K_chunk_406"
     ]
    ],
    "method": "exact",
@@ -350,7 +335,7 @@
   "qa_0032": {
    "groups": [
     [
-     "GOOGL_10K_chunk_407"
+     "GOOGL_10K_chunk_406"
     ]
    ],
    "method": "exact",
@@ -360,7 +345,7 @@
   "qa_0033": {
    "groups": [
     [
-     "GOOGL_10K_chunk_407"
+     "GOOGL_10K_chunk_406"
     ]
    ],
    "method": "exact",
@@ -370,7 +355,7 @@
   "qa_0034": {
    "groups": [
     [
-     "GOOGL_10K_chunk_417"
+     "GOOGL_10K_chunk_416"
     ]
    ],
    "method": "exact",
@@ -380,7 +365,7 @@
   "qa_0035": {
    "groups": [
     [
-     "GOOGL_10K_chunk_42"
+     "GOOGL_10K_chunk_41"
     ]
    ],
    "method": "exact",
@@ -390,7 +375,7 @@
   "qa_0036": {
    "groups": [
     [
-     "GOOGL_10K_chunk_341"
+     "GOOGL_10K_chunk_340"
     ]
    ],
    "method": "exact",
@@ -513,7 +498,7 @@
   "qa_0048": {
    "groups": [
     [
-     "MSFT_10K_chunk_72"
+     "MSFT_10K_chunk_0"
     ]
    ],
    "method": "exact",
@@ -523,7 +508,7 @@
   "qa_0049": {
    "groups": [
     [
-     "MSFT_10K_chunk_499"
+     "MSFT_10K_chunk_425"
     ]
    ],
    "method": "exact",
@@ -533,7 +518,7 @@
   "qa_0050": {
    "groups": [
     [
-     "MSFT_10K_chunk_499"
+     "MSFT_10K_chunk_425"
     ]
    ],
    "method": "exact",
@@ -543,7 +528,7 @@
   "qa_0051": {
    "groups": [
     [
-     "MSFT_10K_chunk_118"
+     "MSFT_10K_chunk_44"
     ]
    ],
    "method": "exact",
@@ -553,17 +538,17 @@
   "qa_0052": {
    "groups": [
     [
-     "MSFT_10K_chunk_551"
+     "MSFT_10K_chunk_477"
     ]
    ],
-   "method": "prefix",
+   "method": "exact",
    "n_references": 1,
    "note": ""
   },
   "qa_0053": {
    "groups": [
     [
-     "MSFT_10K_chunk_553"
+     "MSFT_10K_chunk_478"
     ]
    ],
    "method": "exact",
@@ -573,8 +558,7 @@
   "qa_0054": {
    "groups": [
     [
-     "MSFT_10K_chunk_551",
-     "MSFT_10K_chunk_552"
+     "MSFT_10K_chunk_477"
     ]
    ],
    "method": "exact",
@@ -584,12 +568,9 @@
   "qa_0055": {
    "groups": [
     [
-     "MSFT_10K_chunk_1899",
-     "MSFT_10K_chunk_2006",
-     "MSFT_10K_chunk_2230",
-     "MSFT_10K_chunk_679",
-     "MSFT_10K_chunk_680",
-     "MSFT_10K_chunk_687"
+     "MSFT_10K_chunk_598",
+     "MSFT_10K_chunk_599",
+     "MSFT_10K_chunk_604"
     ]
    ],
    "method": "exact",
@@ -599,10 +580,7 @@
   "qa_0056": {
    "groups": [
     [
-     "MSFT_10K_chunk_2572",
-     "MSFT_10K_chunk_3056",
-     "MSFT_10K_chunk_3280",
-     "MSFT_10K_chunk_799"
+     "MSFT_10K_chunk_714"
     ]
    ],
    "method": "exact",
@@ -612,20 +590,18 @@
   "qa_0057": {
    "groups": [
     [
-     "MSFT_10K_chunk_295",
-     "MSFT_10K_chunk_857",
-     "MSFT_10K_chunk_2650",
-     "MSFT_10K_chunk_19479"
+     "MSFT_10K_chunk_221",
+     "MSFT_10K_chunk_752"
     ]
    ],
    "method": "manual",
    "n_references": 1,
-   "note": "The reference sentence straddles three chunks (295 ends 'in October 2023 we completed our acquisition of', 296 is the two-word chunk 'Activision Blizzard', 297 starts ', Inc.'). Only 295 carries the date, so it is the relevant chunk on that boundary. Chunks 857, 2650 and 19479 each repeat the fuller note 'On October 13, 2023, we completed our acquisition of Activision Blizzard' and answer the question equally, so they join the same any-of group."
+   "note": "The reference sentence 'in October 2023 we completed our acquisition of Activision Blizzard, Inc.' has a space before its comma in the cleaned text, which defeats the exact match. Chunk 221 (Item 1) states it; chunk 752 (Note 8) states the fuller 'On October 13, 2023, we completed our acquisition of Activision Blizzard'. Either answers the question, so they form one any-of group."
   },
   "qa_0058": {
    "groups": [
     [
-     "MSFT_10K_chunk_297"
+     "MSFT_10K_chunk_223"
     ]
    ],
    "method": "exact",
@@ -635,7 +611,7 @@
   "qa_0059": {
    "groups": [
     [
-     "MSFT_10K_chunk_146"
+     "MSFT_10K_chunk_72"
     ]
    ],
    "method": "exact",
@@ -645,28 +621,19 @@
   "qa_0060": {
    "groups": [
     [
-     "GOOGL_10K_chunk_407"
+     "GOOGL_10K_chunk_406"
     ],
     [
-     "AAPL_10K_chunk_1327",
-     "AAPL_10K_chunk_1460",
-     "AAPL_10K_chunk_1916",
-     "AAPL_10K_chunk_2262",
-     "AAPL_10K_chunk_2397",
-     "AAPL_10K_chunk_358",
-     "AAPL_10K_chunk_359",
-     "AAPL_10K_chunk_398"
+     "AAPL_10K_chunk_357",
+     "AAPL_10K_chunk_358"
     ],
     [
      "META_10K_chunk_793"
     ],
     [
-     "MSFT_10K_chunk_1899",
-     "MSFT_10K_chunk_2006",
-     "MSFT_10K_chunk_2230",
-     "MSFT_10K_chunk_679",
-     "MSFT_10K_chunk_680",
-     "MSFT_10K_chunk_687"
+     "MSFT_10K_chunk_598",
+     "MSFT_10K_chunk_599",
+     "MSFT_10K_chunk_604"
     ]
    ],
    "method": "exact",
@@ -676,13 +643,13 @@
   "qa_0061": {
    "groups": [
     [
-     "AMZN_10K_chunk_37"
+     "AMZN_10K_chunk_38"
     ],
     [
-     "AAPL_10K_chunk_67"
+     "AAPL_10K_chunk_65"
     ],
     [
-     "GOOGL_10K_chunk_81"
+     "GOOGL_10K_chunk_80"
     ],
     [
      "META_10K_chunk_99"
@@ -704,22 +671,21 @@
      "GOOGL_10K_chunk_1"
     ],
     [
-     "MSFT_10K_chunk_72",
-     "MSFT_10K_chunk_73"
+     "MSFT_10K_chunk_0"
     ]
    ],
-   "method": "manual",
+   "method": "exact",
    "n_references": 4,
-   "note": "Three of the four references locate exactly (Apple, Amazon, Alphabet cover pages, chunk 1 of each). Microsoft's 'MICROSOFT CORPORATION Washington 91-1144442 (STATE OF INCORPORATION)' straddles chunks 72 and 73: 72 ends with the state and IRS id, 73 begins with the '(STATE OF INCORPORATION)' label, and either one identifies Washington. Chunks 0-71 of the MSFT filing are XBRL context tags the cleaner left in, which is why its cover page starts so late."
+   "note": ""
   },
   "qa_0063": {
    "groups": [
     [
-     "GOOGL_10K_chunk_552"
+     "GOOGL_10K_chunk_562"
     ],
     [
-     "MSFT_10K_chunk_551",
-     "MSFT_10K_chunk_560"
+     "MSFT_10K_chunk_477",
+     "MSFT_10K_chunk_483"
     ]
    ],
    "method": "exact",
@@ -729,7 +695,7 @@
   "qa_0064": {
    "groups": [
     [
-     "AAPL_10K_chunk_310"
+     "AAPL_10K_chunk_308"
     ]
    ],
    "method": "exact",
@@ -739,10 +705,8 @@
   "qa_0065": {
    "groups": [
     [
-     "GOOGL_10K_chunk_2745",
-     "GOOGL_10K_chunk_2983",
-     "GOOGL_10K_chunk_393",
-     "GOOGL_10K_chunk_868"
+     "GOOGL_10K_chunk_392",
+     "GOOGL_10K_chunk_890"
     ]
    ],
    "method": "exact",
@@ -752,7 +716,7 @@
   "qa_0066": {
    "groups": [
     [
-     "META_10K_chunk_61"
+     "META_10K_chunk_1160"
     ]
    ],
    "method": "exact",
@@ -762,18 +726,17 @@
   "qa_0067": {
    "groups": [
     [
-     "MSFT_10K_chunk_2845",
-     "MSFT_10K_chunk_3241"
+     "MSFT_10K_chunk_856"
     ]
    ],
-   "method": "exact",
+   "method": "prefix",
    "n_references": 1,
    "note": ""
   },
   "qa_0068": {
    "groups": [
     [
-     "GOOGL_10K_chunk_661"
+     "GOOGL_10K_chunk_671"
     ]
    ],
    "method": "exact",
@@ -783,14 +746,10 @@
   "qa_0069": {
    "groups": [
     [
-     "MSFT_10K_chunk_2845",
-     "MSFT_10K_chunk_3241",
-     "MSFT_10K_chunk_980"
+     "MSFT_10K_chunk_856"
     ],
     [
-     "GOOGL_10K_chunk_2422",
-     "GOOGL_10K_chunk_3084",
-     "GOOGL_10K_chunk_661"
+     "GOOGL_10K_chunk_671"
     ]
    ],
    "method": "exact",
@@ -800,8 +759,8 @@
   "qa_0070": {
    "groups": [
     [
-     "AAPL_10K_chunk_307",
-     "AAPL_10K_chunk_310"
+     "AAPL_10K_chunk_305",
+     "AAPL_10K_chunk_308"
     ]
    ],
    "method": "exact",
@@ -811,9 +770,8 @@
   "qa_0071": {
    "groups": [
     [
-     "AMZN_10K_chunk_1977",
-     "AMZN_10K_chunk_2476",
-     "AMZN_10K_chunk_715"
+     "AMZN_10K_chunk_738",
+     "AMZN_10K_chunk_739"
     ]
    ],
    "method": "exact",

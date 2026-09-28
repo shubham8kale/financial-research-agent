@@ -5,21 +5,11 @@
 # Split the raw text of SEC filings into smaller, overlapping chunks that can
 # be independently embedded and stored in the vector database.
 #
-# WHY CHUNK AT ALL?
-# -----------------
-# Large Language Models have a fixed context window (current Gemini flash models
-# accept ~1 M tokens, but a single 10-K filing here cleans to ~3.6 M characters,
-# and retrieval still has to select what is actually relevant).
-# Even when a model *could* fit the whole document, passing the entire filing
-# to the LLM on every query is:
-#   1. Expensive  – you pay per token, and most of the document is irrelevant
-#                   to a given question.
-#   2. Slow       – more tokens = more latency.
-#   3. Less accurate – research shows retrieval quality degrades when the
-#                   context window is packed ("lost in the middle" problem).
-#
-# Chunking lets us retrieve only the ~3–5 most relevant passages for each
-# query, keeping cost and latency low while improving answer quality.
+# A 10-K is a few hundred thousand characters of prose and tables; retrieval
+# hands the model the handful of passages that matter, and the passage size
+# is what this module decides.  The chunk size and overlap below are the
+# ones every number in eval/EVALUATION.md was measured with; table-aware
+# chunking is ROADMAP item 1.
 #
 # WHY RecursiveCharacterTextSplitter?
 # ------------------------------------

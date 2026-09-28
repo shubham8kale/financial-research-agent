@@ -11,7 +11,7 @@
 import json
 from pathlib import Path
 
-from eval import ci_corpus, ci_gate
+from eval import ci_gate
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -190,62 +190,3 @@ def test_validate_gate_reports_a_threshold_above_its_calibration():
     assert any("dense: threshold hit@5 0.99 is above" in p for p in problems)
     assert any("judged: threshold faithfulness 1.01 is above" in p for p in problems)
     assert any("calibration run does not match `expect`: verify_mode is 'off'" in p for p in problems)
-
-
-# ── the slice ────────────────────────────────────────────────────────────────
-
-def test_select_chunks_unions_every_source_and_is_deterministic():
-    rows = _rows(4)
-    labels = _labels(4)
-    all_ids = {f"AAPL_10K_chunk_{i}" for i in range(100)}
-
-    def retrieve_fn(question, depth, ticker):
-        i = int(question[1:])
-        return [f"AAPL_10K_chunk_{i + 10}", f"AAPL_10K_chunk_{i + 20}"] if ticker is None else [f"AAPL_10K_chunk_{i + 30}"]
-
-    agent_ids = {"AAPL_10K_chunk_50", "MSFT_10K_chunk_1"}   # the second is not in this index
-    chosen, counts = ci_corpus.select_chunks(rows, labels, retrieve_fn, all_ids, agent_ids, depth=2, n_distractors=5, seed=1)
-    again, _ = ci_corpus.select_chunks(rows, labels, retrieve_fn, all_ids, agent_ids, depth=2, n_distractors=5, seed=1)
-    assert chosen == again
-    assert counts["nearest_to_benchmark_questions"] == 8       # 4 questions x (2 unfiltered, 0 filtered: "q1" names no company)
-    assert counts["labelled"] == 4 and counts["labelled_added"] == 4
-    assert counts["agent_retrieved"] == 1 and counts["distractors"] == 5
-    assert counts["total"] == 8 + 4 + 1 + 5 == len(chosen)
-    assert {f"AAPL_10K_chunk_{i}" for i in range(1, 5)} <= chosen and "AAPL_10K_chunk_50" in chosen
-
-
-def test_corpus_roundtrip_is_byte_stable(tmp_path):
-    header = {"schema_version": 1, "n_chunks": 2, "index_chunk_count": 100}
-    chunks = [{"id": "AAPL_10K_chunk_1", "ticker": "AAPL", "chunk_idx": 1, "source": "data/x", "text": "Total net sales — $416,161 million"},
-              {"id": "MSFT_10K_chunk_2", "ticker": "MSFT", "chunk_idx": 2, "source": "data/y", "text": "Azure"}]
-    a, b = tmp_path / "a.jsonl.gz", tmp_path / "b.jsonl.gz"
-    ci_corpus.write_corpus(a, header, chunks)
-    ci_corpus.write_corpus(b, header, chunks)
-    assert a.read_bytes() == b.read_bytes()
-    assert ci_corpus.read_header(a) == header
-    assert ci_corpus.read_corpus(a) == (header, chunks)
-
-
-def test_verify_against_labels_names_every_problem():
-    header = {"index_chunk_count": 99, "n_chunks": 3}
-    chunks = [{"id": "AAPL_10K_chunk_1"}, {"id": "AAPL_10K_chunk_1"}]
-    problems = ci_corpus.verify_against_labels(header, chunks, _labels(3))
-    assert any("cut from a 99-chunk index" in p for p in problems)
-    assert any("header says 3 chunks, file holds 2 (1 distinct)" in p for p in problems)
-    assert any("2 labelled chunk(s) are not in the slice" in p for p in problems)
-    assert ci_corpus.verify_against_labels({"index_chunk_count": 100, "n_chunks": 3},
-                                           [{"id": f"AAPL_10K_chunk_{i}"} for i in range(1, 4)], _labels(3)) == []
-
-
-def test_relative_source_strips_the_machine_prefix():
-    assert ci_corpus.relative_source(r"C:\Users\me\repo\data\sec_filings\sec-edgar-filings\AAPL\10-K\x\full-submission.txt") \
-        == "data/sec_filings/sec-edgar-filings/AAPL/10-K/x/full-submission.txt"
-    assert ci_corpus.relative_source("/srv/app/data/sec_filings/sec-edgar-filings/MSFT/f.txt") == "data/sec_filings/sec-edgar-filings/MSFT/f.txt"
-    assert ci_corpus.relative_source("") == ""
-
-
-def test_committed_slice_covers_the_labels():
-    header, chunks = ci_corpus.read_corpus()
-    labels = json.loads((REPO / "eval" / "benchmark_chunks.json").read_text(encoding="utf-8"))
-    assert ci_corpus.verify_against_labels(header, chunks, labels) == []
-    assert header["depth"] >= 50   # the shipped configuration's fetch_k; never cut the slice shallower
