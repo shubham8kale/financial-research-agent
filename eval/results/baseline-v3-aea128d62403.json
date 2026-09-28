@@ -120,7 +120,8 @@
       "agent_hit_rate",
       "agent_recall"
     ],
-    "config_hash": "aea128d62403"
+    "config_hash": "aea128d62403",
+    "figure_match_version": "2"
   },
   "run_status": {
     "complete": true,
@@ -185,9 +186,9 @@
         "n_terminal_failure": 0
       },
       "deterministic": {
-        "n_figure_applicable": 52,
-        "figure_recall": 0.7231,
-        "figure_exact_rate": 0.6346,
+        "n_figure_applicable": 50,
+        "figure_recall": 0.712,
+        "figure_exact_rate": 0.62,
         "n_labelled": 71,
         "agent_hit_rate": 0.4366,
         "agent_recall": 0.4296,
@@ -351,7 +352,7 @@
           "n_terminal_failure": 0
         },
         "deterministic": {
-          "n_figure_applicable": 3,
+          "n_figure_applicable": 1,
           "figure_recall": 1.0,
           "figure_exact_rate": 1.0,
           "n_labelled": 3,
@@ -5406,11 +5407,11 @@
         "AAPL_10K_chunk_310"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5472,11 +5473,11 @@
         "AAPL_10K_chunk_298"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5558,8 +5559,8 @@
       ],
       "figure": {
         "applicable": true,
-        "n_expected": 2,
-        "n_found": 2,
+        "n_expected": 1,
+        "n_found": 1,
         "figure_recall": 1.0,
         "figure_exact": true,
         "missing": []
@@ -5962,6 +5963,14 @@
       "judge_model": "gemini-3.6-flash",
       "judge_provider": "google",
       "scored_at": "2026-09-28T02:22:07+00:00"
+    }
+  ],
+  "recomputed": [
+    {
+      "what": "deterministic metrics (figure_*, agent_*) and aggregates",
+      "at": "2026-09-28T02:30:30+00:00",
+      "figure_match_version": "2",
+      "labels_file": "eval/benchmark_chunks.json"
     }
   ]
 }

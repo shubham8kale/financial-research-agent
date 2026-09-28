@@ -174,6 +174,17 @@ def test_figure_match_not_applicable_without_figures():
     assert out["applicable"] is False and out["figure_exact"] is None and out["figure_recall"] is None
 
 
+def test_form_and_item_numbers_are_not_figures():
+    assert extract_figures("The 10-K does not disclose it; see Item 7A and Form 8-K, Note 4.") == []
+    # a real figure next to a form name still counts
+    assert [f.raw for f in extract_figures("Per the 10-K, revenue was $416,161 million in 2025.")] == [
+        "$416,161 million", "2025",
+    ]
+    gt = "I cannot find a specific 2025 Reality Labs revenue figure in the provided 10-K."
+    out = figure_match(gt, "Reality Labs revenue was $2,207 million in 2025.")
+    assert out["n_expected"] == 1 and out["figure_exact"] is True   # only 2025 is a figure here
+
+
 # ── experiment bookkeeping ───────────────────────────────────────────────────
 
 def test_config_hash_is_order_independent_and_sensitive_to_retriever():

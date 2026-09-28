@@ -1334,6 +1334,7 @@ def main() -> int:
     # ── Configuration record + hash ──────────────────────────────────────────
     from eval.chunk_labels import LABELS_FILE, load_labels
     from eval.experiment import benchmark_version, config_hash, find_existing_result
+    from eval.figure_match import FIGURE_MATCH_VERSION
     from retrieval.retriever import RetrievalConfig
 
     # The agent's tools retrieve through retrieval/retriever.py, configured by
@@ -1382,6 +1383,7 @@ def main() -> int:
         "benchmark_item_ids": sorted(r["id"] for r in benchmark),
         "metrics": list(METRIC_NAMES),
         "deterministic_metrics": list(DETERMINISTIC_METRICS),
+        "figure_match_version": FIGURE_MATCH_VERSION,
     }
     config["config_hash"] = config_hash({k: v for k, v in config.items() if k not in _UNHASHED_CONFIG_KEYS})
 

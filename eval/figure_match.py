@@ -57,6 +57,16 @@ _FIGURE_RE = re.compile(
 
 RELATIVE_TOLERANCE = 5e-4
 
+# Bumped whenever extraction or matching changes; recorded in results files so a
+# figure score can always be traced to the rule that produced it.
+FIGURE_MATCH_VERSION = "2"
+
+# A number that names a form or a section is not a figure: "10-K", "8-K",
+# "Item 7A", "Form 10-Q", "Section 13".  Without this rule a ground truth that
+# says "the 10-K does not disclose ..." demands the figure 10 of the answer.
+_FORM_AFTER_RE = re.compile(r"^(?:-[A-Za-z]|[A-Z]\b)")
+_FORM_BEFORE_RE = re.compile(r"(?:\bitem|\bform|\bsection|\bnote)\s*$", re.IGNORECASE)
+
 # A number directly after a month name is a day of the month ("September 27,
 # 2025" -> 27), not a figure.  Skipped when it is small enough to be a day and
 # carries no scale or percent marker; the year that follows is kept.
@@ -86,6 +96,11 @@ def extract_figures(text: str) -> list[Figure]:
         if (
             not scale and not m.group("pct") and unscaled <= 31
             and _MONTH_BEFORE_RE.search(text[max(0, m.start() - 12):m.start()])
+        ):
+            continue
+        if not scale and not m.group("pct") and (
+            _FORM_AFTER_RE.match(text[m.end():m.end() + 2])
+            or _FORM_BEFORE_RE.search(text[max(0, m.start() - 10):m.start()])
         ):
             continue
         scaled = unscaled * _SCALE.get(scale, 1.0)

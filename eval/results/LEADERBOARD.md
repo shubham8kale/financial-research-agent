@@ -1,6 +1,6 @@
 # Leaderboard
 
-Regenerated 2026-09-28T02:22:07+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-09-28T02:30:30+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
@@ -8,8 +8,8 @@ Rows are comparable only within a table and only at the same benchmark version. 
 
 | run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | agent_hit | config | file |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| baseline-v3-87b6dd0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.8263 | 0.7639 | 0.7183 | 0.6346 | 0.4366 | `aea128d62403` | [baseline-v3-aea128d62403.json](baseline-v3-aea128d62403.json) |
-| baseline-v3-plain-7b245f5 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk | 71 | 0.7042 | 0.7676 | 0.6901 | 0.6346 | 0.4366 | `4a3f267adb41` | [baseline-v3-plain-4a3f267adb41.json](baseline-v3-plain-4a3f267adb41.json) |
+| baseline-v3-87b6dd0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.8263 | 0.7639 | 0.7183 | 0.6200 | 0.4366 | `aea128d62403` | [baseline-v3-aea128d62403.json](baseline-v3-aea128d62403.json) |
+| baseline-v3-plain-7b245f5 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk | 71 | 0.7042 | 0.7676 | 0.6901 | 0.6200 | 0.4366 | `4a3f267adb41` | [baseline-v3-plain-4a3f267adb41.json](baseline-v3-plain-4a3f267adb41.json) |
 
 `figure_exact`: share of items whose answer contains every ground-truth figure (deterministic, no judge). `agent_hit`: share of labelled items where any relevant chunk appeared in the agent's tool observations.
 
@@ -57,3 +57,4 @@ Kept for the record. `context_recall` here scored each tool observation as one b
 
 - `empty-probe-gemini-3.1-flash-lite-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run
 - `empty-probe-gemini-3.6-flash-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run
+- `rerank-v3-gen-764b3da65d36.json` — --generate-only: generation checkpointed, judge pass not run
