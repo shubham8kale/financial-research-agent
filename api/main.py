@@ -28,6 +28,7 @@ from langchain_core.messages import ToolMessage
 from pydantic import BaseModel
 
 from agent import financial_agent, mcp_agent
+from agent.observations import FALLBACK_RE, parse_observation
 from agent.financial_agent import (
     OUTCOME_EMPTY_ANSWER,
     OUTCOME_RECURSION_LIMIT,
@@ -125,52 +126,14 @@ class QueryResponse(BaseModel):
 # This catches format drift (tool output tweaks, MCP-layer reformatting) at
 # the cost of losing the snippet text.
 
-_SECTION_RE = re.compile(r"^===\s*(\S+)\s*===")
-_CHUNK_HEADER_RE = re.compile(
-    r"^\s*\[\d+\]\s*(?:ticker=(\S+)\s+)?chunk_idx=(\S+)"
-)
-_FALLBACK_RE = re.compile(r"ticker=(\S+)\s+chunk_idx=(\S+)")
-
-
+# The regexes and the line walker live in agent/observations.py, shared with the
+# eval harness so a citation here and a scored context there name the same
+# chunk.  _parse_tool_content is kept as the API-shaped wrapper.
 def _parse_tool_content(content: str) -> List[SourceChunk]:
-    sources: List[SourceChunk] = []
-    current_ticker: Optional[str] = None
-    lines = content.split("\n")
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        section = _SECTION_RE.match(line)
-        if section:
-            current_ticker = section.group(1).upper()
-            i += 1
-            continue
-
-        header = _CHUNK_HEADER_RE.match(line)
-        if header:
-            ticker = (header.group(1) or current_ticker or "UNKNOWN").upper()
-            chunk_idx = header.group(2).strip()
-            i += 1
-            snippet_lines: List[str] = []
-            while i < len(lines):
-                nxt = lines[i]
-                if not nxt.strip():
-                    break
-                if _SECTION_RE.match(nxt) or _CHUNK_HEADER_RE.match(nxt):
-                    break
-                snippet_lines.append(nxt.strip())
-                i += 1
-            text = " ".join(snippet_lines).strip()
-            if text:
-                sources.append(
-                    SourceChunk(
-                        text=text,
-                        ticker=ticker,
-                        source_file=f"{ticker}_10K_chunk_{chunk_idx}",
-                    )
-                )
-            continue
-        i += 1
-    return sources
+    return [
+        SourceChunk(text=c.text, ticker=c.ticker, source_file=c.chunk_id)
+        for c in parse_observation(content)
+    ]
 
 
 def _extract_sources(messages) -> List[SourceChunk]:
@@ -211,7 +174,7 @@ def _extract_sources(messages) -> List[SourceChunk]:
                 )
             return m.content if isinstance(m.content, str) else str(m.content)
         combined = "\n".join(_get_text(m) for m in tool_messages)
-        for raw_ticker, raw_idx in _FALLBACK_RE.findall(combined):
+        for raw_ticker, raw_idx in FALLBACK_RE.findall(combined):
             ticker = raw_ticker.upper()
             chunk_idx = raw_idx.rstrip(",").strip()
             key = (ticker, chunk_idx)
