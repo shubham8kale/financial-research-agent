@@ -476,7 +476,9 @@ def save_results(payload: dict, path: Path) -> None:
     """Write a results JSON, creating parent dirs if needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    # newline="\n" so a results file written on Windows is byte-identical to
+    # one written elsewhere; git otherwise rewrites CRLF on every commit.
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False, default=str)
     os.replace(tmp, path)
     logger.info("Saved results -> %s", path)
