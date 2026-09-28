@@ -1,4 +1,4 @@
-import type { Citation } from "@/lib/api";
+import type { AnswerMeta, Citation } from "@/lib/api";
 
 /** UI model for one turn in the conversation (session-only, never persisted). */
 export interface ChatMessage {
@@ -10,6 +10,35 @@ export interface ChatMessage {
   streaming: boolean;
   /** Set when the stream failed; replaces the content in the UI. */
   error?: string;
+  /** Latency, tokens, cost, tools and trace id; arrives after the sources. */
+  meta?: AnswerMeta;
+}
+
+function formatTools(tools: Record<string, number>): string {
+  return Object.entries(tools)
+    .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
+    .join(", ");
+}
+
+/** One line under the answer: what it cost. Every number comes from the backend's own meter. */
+function Meta({ meta }: { meta: AnswerMeta }) {
+  const parts: string[] = [];
+  if (meta.latency_ms != null) parts.push(`${(meta.latency_ms / 1000).toFixed(1)} s`);
+  if (meta.input_tokens != null && meta.output_tokens != null)
+    parts.push(`${(meta.input_tokens + meta.output_tokens).toLocaleString()} tokens`);
+  if (meta.cost_usd != null) parts.push(`$${meta.cost_usd.toFixed(4)}`);
+  const tools = formatTools(meta.tools ?? {});
+  if (tools) parts.push(`tools: ${tools}`);
+  return (
+    <p
+      className="mt-2 text-[11px] leading-4 text-muted"
+      aria-label="Answer cost"
+      title={meta.trace_id ? `trace ${meta.trace_id}` : undefined}
+    >
+      {parts.join(" · ")}
+      {meta.trace_id ? ` · trace ${meta.trace_id.slice(0, 8)}` : ""}
+    </p>
+  );
 }
 
 function Sources({ items }: { items: Citation[] }) {
@@ -76,6 +105,7 @@ export default function Message({ message }: { message: ChatMessage }) {
         {!isUser && message.citations.length > 0 && (
           <Sources items={message.citations} />
         )}
+        {!isUser && !message.streaming && message.meta && <Meta meta={message.meta} />}
       </div>
     </div>
   );

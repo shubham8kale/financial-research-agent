@@ -1,19 +1,19 @@
 # Leaderboard
 
-Regenerated 2026-09-28T04:38:43+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-09-28T05:29:33+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
 ## Generation runs (schema 3: per-chunk contexts)
 
-| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | config | file |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| baseline-v3-87b6dd0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.8263 | 0.7639 | 0.7183 | 0.6400 | 0.7600 | 0.4366 | `aea128d62403` | [baseline-v3-aea128d62403.json](baseline-v3-aea128d62403.json) |
-| baseline-v3-plain-7b245f5 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk | 71 | 0.7042 | 0.7676 | 0.6901 | 0.6400 | 0.7600 | 0.4366 | `4a3f267adb41` | [baseline-v3-plain-4a3f267adb41.json](baseline-v3-plain-4a3f267adb41.json) |
-| facts-v3-85f6dc0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9573 | 0.8935 | 0.8521 | 0.9000 | 1.0000 | 0.4225 | `70db17ff5e31` | [facts-v3-70db17ff5e31.json](facts-v3-70db17ff5e31.json) |
-| rerank-v3-d7470bc | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9315 | 0.8688 | 0.8873 | 0.8600 | 0.9200 | 0.6620 | `764b3da65d36` | [rerank-v3-764b3da65d36.json](rerank-v3-764b3da65d36.json) |
+| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | cost/query | p50 latency | config | file |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| baseline-v3-87b6dd0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.8263 | 0.7639 | 0.7183 | 0.6400 | 0.7600 | 0.4366 | — | — | `aea128d62403` | [baseline-v3-aea128d62403.json](baseline-v3-aea128d62403.json) |
+| baseline-v3-plain-7b245f5 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk | 71 | 0.7042 | 0.7676 | 0.6901 | 0.6400 | 0.7600 | 0.4366 | — | — | `4a3f267adb41` | [baseline-v3-plain-4a3f267adb41.json](baseline-v3-plain-4a3f267adb41.json) |
+| facts-v3-85f6dc0 | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9573 | 0.8935 | 0.8521 | 0.9000 | 1.0000 | 0.4225 | — | — | `70db17ff5e31` | [facts-v3-70db17ff5e31.json](facts-v3-70db17ff5e31.json) |
+| rerank-v3-d7470bc | 2026-09-28 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9315 | 0.8688 | 0.8873 | 0.8600 | 0.9200 | 0.6620 | — | — | `764b3da65d36` | [rerank-v3-764b3da65d36.json](rerank-v3-764b3da65d36.json) |
 
-`figure_exact`: share of items whose answer contains every ground-truth figure, context figures included (deterministic, no judge). `figure_primary`: share whose answer contains the figure the question asked for (the first non-year figure in the ground truth). `agent_hit`: share of labelled items where any relevant index chunk appeared in the agent's tool observations.
+`figure_exact`: share of items whose answer contains every ground-truth figure, context figures included (deterministic, no judge). `figure_primary`: share whose answer contains the figure the question asked for (the first non-year figure in the ground truth). `agent_hit`: share of labelled items where any relevant index chunk appeared in the agent's tool observations. `cost/query` and `p50 latency` are measured by the harness's own meter on runs generated after it existed (agent calls only; the judge is separate).
 
 ## Retrieval runs (retriever alone, no LLM)
 

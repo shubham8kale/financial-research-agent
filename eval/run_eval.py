@@ -109,6 +109,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from agent.pricing import PRICE_TABLE_DATE, cost_usd
+
 # Make the repo root importable whether the script is run as
 # `python -m eval.run_eval` or `python eval/run_eval.py`.  dotenv is a
 # site-packages import and doesn't depend on this path manipulation, so it
@@ -381,12 +383,17 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
     higher-level ``run_agent`` helper) because we need access to the full
     message history — ``run_agent`` returns only the last message's content.
     """
-    from agent.financial_agent import build_agent_executor, content_text
+    from agent.financial_agent import LLM_MODEL, build_agent_executor, content_text
+    from agent.meter import QueryMeter
 
     agent = build_agent_executor()
+    # One meter per run: wall time, model calls, tokens (from the returned
+    # messages), cost at our price table, every tool call with its duration,
+    # and the root run id LangSmith shows as the trace when tracing is on.
+    meter = QueryMeter(model=LLM_MODEL)
     result = agent.invoke(
         {"messages": [("human", question)]},
-        config={"recursion_limit": 20},
+        config={"recursion_limit": 20, "callbacks": [meter]},
     )
     messages = result["messages"]
     # .content is a list of content blocks on most items with the shipped model
@@ -412,6 +419,7 @@ def run_agent_capture(question: str) -> tuple[str, list[str], int, dict]:
         # Keep a bounded repr so a degenerate response can be inspected later
         # without re-running the item (and re-paying for it).
         diag["empty_content_repr"] = repr(last.content)[:300]
+    diag["meter"] = meter.summary(messages)
     return final_answer, observations, len(messages), diag
 
 
@@ -547,6 +555,7 @@ def _mean_block(rows: list[dict]) -> dict:
             "n_terminal_failure": n_terminal,
         }
     block["deterministic"] = _deterministic_block(rows)
+    block["cost"] = _cost_block(rows)
     return block
 
 
@@ -678,6 +687,15 @@ def print_report(payload: dict) -> None:
     print("\n  figure_*: ground-truth figures reproduced in the answer (n = items whose")
     print("  ground truth contains a figure).  agent_*: labelled relevant chunks that")
     print("  appeared in the agent's tool observations (n = labelled items).")
+
+    cost = agg["overall"].get("cost") or {}
+    if cost.get("n_metered"):
+        print(f"\n--- Cost and latency per query (n={cost['n_metered']} metered; price table {PRICE_TABLE_DATE}) ---")
+        print(f"  latency  p50 {cost['latency_ms_p50']} ms   p95 {cost['latency_ms_p95']} ms   mean {cost['latency_ms_mean']} ms")
+        print(f"  tokens   in {cost['input_tokens_mean']}   out {cost['output_tokens_mean']}   per query (mean)")
+        print(f"  cost     ${cost['cost_usd_mean']} per query (mean)   ${cost['cost_usd_total']} for the run")
+        print(f"  calls    {cost['llm_calls_mean']} model calls, {cost['tool_calls_mean']} tool calls per query;"
+              f" tools: {cost['tools_used_total']}")
 
     diag = payload.get("judge_diagnostics") or {}
     failures = diag.get("executor_failures") or {}
@@ -906,7 +924,8 @@ def resolve_judge(args) -> tuple[str, str, str]:
 
 # ── Generation phase ─────────────────────────────────────────────────────────
 
-def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True, retrieval_tag=""):
+def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True, retrieval_tag="",
+                     cache_path: Path = CACHE_FILE):
     """Run the agent over *benchmark*, checkpointing to the cache each item.
 
     Returns (records, stop_reason).  ``stop_reason`` is None on a clean pass and
@@ -950,7 +969,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
                              n_messages=0, error=str(exc))
             records.append(record)
             cache[key] = record
-            save_cache(cache)
+            save_cache(cache, cache_path)
             continue
 
         record = _record(row, agent_model, prompt_version,
@@ -961,7 +980,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
         # Checkpoint after EVERY item — this is what makes a quota wall cost
         # only the item in flight rather than the whole run.
         cache[key] = record
-        save_cache(cache)
+        save_cache(cache, cache_path)
 
         logger.info("  -> %d chars, %d contexts%s", len(answer), len(record["contexts"]),
                     "  [RECURSION LIMIT HIT]" if record["recursion_limit_hit"] else "")
@@ -1012,7 +1031,23 @@ def _record(row, agent_model, prompt_version, *, answer, observations, n_message
         "prompt_version": prompt_version,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "error": error,
+        **_meter_fields((diag or {}).get("meter")),
         **(diag or {}),
+    }
+
+
+def _meter_fields(meter: dict | None) -> dict:
+    """The per-run cost fields every record carries at top level (None when unmetered)."""
+    m = meter or {}
+    return {
+        "latency_ms": m.get("latency_ms"),
+        "llm_calls": m.get("llm_calls"),
+        "input_tokens": m.get("input_tokens"),
+        "output_tokens": m.get("output_tokens"),
+        "cost_usd": m.get("cost_usd"),
+        "tools_used": m.get("tools") or {},
+        "tool_ms_total": m.get("tool_ms_total"),
+        "trace_id": m.get("trace_id"),
     }
 
 
@@ -1083,6 +1118,44 @@ def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> No
                 "labelled": False, "n_groups": 0, "hit": None,
                 "recall": None, "mrr": None, "first_rank": None,
             }
+
+
+def _percentile(values: list[float], pct: float) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    idx = min(len(ordered) - 1, max(0, round(pct / 100 * (len(ordered) - 1))))
+    return round(ordered[idx], 1)
+
+
+def _cost_block(rows: list[dict]) -> dict:
+    """Latency, tokens and cost over the metered rows, each with its own n.
+
+    Rows generated before the meter existed carry no latency and are left out
+    of these means rather than counted as zero.
+    """
+    metered = [r for r in rows if r.get("latency_ms") is not None]
+    lat = [float(r["latency_ms"]) for r in metered]
+    tin = [int(r.get("input_tokens") or 0) for r in metered]
+    tout = [int(r.get("output_tokens") or 0) for r in metered]
+    costs = [float(r["cost_usd"]) for r in metered if r.get("cost_usd") is not None]
+    tools: dict[str, int] = {}
+    for r in metered:
+        for name, n in (r.get("tools_used") or {}).items():
+            tools[name] = tools.get(name, 0) + int(n)
+    return {
+        "n_metered": len(metered),
+        "latency_ms_p50": _percentile(lat, 50),
+        "latency_ms_p95": _percentile(lat, 95),
+        "latency_ms_mean": round(sum(lat) / len(lat), 1) if lat else None,
+        "input_tokens_mean": round(sum(tin) / len(tin)) if tin else None,
+        "output_tokens_mean": round(sum(tout) / len(tout)) if tout else None,
+        "llm_calls_mean": round(sum(int(r.get("llm_calls") or 0) for r in metered) / len(metered), 2) if metered else None,
+        "cost_usd_mean": round(sum(costs) / len(costs), 6) if costs else None,
+        "cost_usd_total": round(sum(costs), 4) if costs else None,
+        "tool_calls_mean": round(sum(sum((r.get("tools_used") or {}).values()) for r in metered) / len(metered), 2) if metered else None,
+        "tools_used_total": dict(sorted(tools.items())),
+    }
 
 
 def _deterministic_block(rows: list[dict]) -> dict:
@@ -1205,6 +1278,7 @@ def score_records(records, judge_provider, judge_model, judge_key, max_judge_cal
         "judge_calls": usage.calls,
         "judge_input_tokens": usage.input_tokens,
         "judge_output_tokens": usage.output_tokens,
+        "judge_cost_usd": cost_usd(judge_model, usage.input_tokens, usage.output_tokens),
     }
 
     score_rows = result.to_pandas().to_dict(orient="records")
@@ -1278,6 +1352,10 @@ def build_parser() -> argparse.ArgumentParser:
                         "(default: 'baseline'). Written to eval/results/<label>-<commit>.json.")
     p.add_argument("--out", type=Path, default=None,
                    help="Explicit results file path (overrides --label).")
+    p.add_argument("--cache-file", type=Path, default=None,
+                   help="Agent-output cache to read and write (default eval/cache/agent_outputs.json). "
+                        "Point it elsewhere to regenerate a configuration without touching the "
+                        "entries a judged results file was scored from.")
     p.add_argument("--force", action="store_true",
                    help="Run even if a complete results file with this exact config hash "
                         "already exists (the default is to report that file instead).")
@@ -1337,6 +1415,7 @@ def main() -> int:
     from eval.chunk_labels import LABELS_FILE, load_labels
     from eval.experiment import benchmark_version, config_hash, find_existing_result
     from eval.figure_match import FIGURE_MATCH_VERSION
+    from agent.pricing import PRICE_TABLE_DATE
     from retrieval.retriever import RetrievalConfig
 
     # The agent's tools retrieve through retrieval/retriever.py, configured by
@@ -1386,6 +1465,7 @@ def main() -> int:
         "metrics": list(METRIC_NAMES),
         "deterministic_metrics": list(DETERMINISTIC_METRICS),
         "figure_match_version": FIGURE_MATCH_VERSION,
+        "price_table_date": PRICE_TABLE_DATE,
     }
     config["config_hash"] = config_hash({k: v for k, v in config.items() if k not in _UNHASHED_CONFIG_KEYS})
 
@@ -1399,7 +1479,8 @@ def main() -> int:
         return 0
 
     # ── Generation ───────────────────────────────────────────────────────────
-    cache = load_cache()
+    cache_path = args.cache_file or CACHE_FILE
+    cache = load_cache(cache_path)
     if args.score_only:
         records = []
         missing = []
@@ -1425,7 +1506,7 @@ def main() -> int:
     else:
         records, stop_reason = generate_outputs(
             benchmark, AGENT_MODEL, prompt_version, cache,
-            use_cache=not args.no_cache, retrieval_tag=retrieval_tag,
+            use_cache=not args.no_cache, retrieval_tag=retrieval_tag, cache_path=cache_path,
         )
 
     # Judge-free metrics are computed for EVERY record, including on

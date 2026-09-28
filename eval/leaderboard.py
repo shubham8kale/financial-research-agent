@@ -70,6 +70,7 @@ def _gen_row(path: Path, p: dict) -> str:
     cfg = p["config"]
     ov = p["aggregates"]["overall"]
     det = ov.get("deterministic") or {}
+    cost = ov.get("cost") or {}
 
     def m(name):
         return _fmt((ov.get(name) or {}).get("mean_failures_as_zero"))
@@ -80,6 +81,8 @@ def _gen_row(path: Path, p: dict) -> str:
         str(ov.get("n_items", "—")),
         m("faithfulness"), m("answer_relevancy"), m("context_recall"),
         _fmt(det.get("figure_exact_rate")), _fmt(det.get("figure_primary_rate")), _fmt(det.get("agent_hit_rate")),
+        ("—" if cost.get("cost_usd_mean") is None else f"${cost['cost_usd_mean']:.4f}"),
+        ("—" if cost.get("latency_ms_p50") is None else f"{cost['latency_ms_p50'] / 1000:.1f} s"),
         f"`{cfg.get('config_hash', '—')}`", f"[{path.name}]({path.name})",
     ]) + " |"
 
@@ -129,16 +132,17 @@ def render(results: list[tuple[Path, dict]]) -> str:
         "",
         "## Generation runs (schema 3: per-chunk contexts)",
         "",
-        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | config | file |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | cost/query | p50 latency | config | file |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
-    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | | |"]
+    lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | | | | |"]
     lines += [
         "",
         "`figure_exact`: share of items whose answer contains every ground-truth figure, context figures included "
         "(deterministic, no judge). `figure_primary`: share whose answer contains the figure the question asked for "
         "(the first non-year figure in the ground truth). `agent_hit`: share of labelled items where any relevant "
-        "index chunk appeared in the agent's tool observations.",
+        "index chunk appeared in the agent's tool observations. `cost/query` and `p50 latency` are measured by the "
+        "harness's own meter on runs generated after it existed (agent calls only; the judge is separate).",
         "",
         "## Retrieval runs (retriever alone, no LLM)",
         "",

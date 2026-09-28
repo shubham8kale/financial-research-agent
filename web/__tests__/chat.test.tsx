@@ -56,10 +56,29 @@ describe("chat streaming UI", () => {
         { ticker: "AAPL", chunk_idx: "42", source: "AAPL_10K_chunk_42" },
       ]),
     );
+    // The meter arrives after the sources; it renders once the stream ends.
+    act(() =>
+      opts.onMeta?.({
+        latency_ms: 2345,
+        llm_calls: 3,
+        input_tokens: 4000,
+        output_tokens: 120,
+        cost_usd: 0.00118,
+        tools: { lookup_financial_fact: 2, compute_metric: 1 },
+        tool_ms_total: 900,
+        trace_id: "0123456789abcdef",
+        backend: "direct",
+      }),
+    );
+    expect(screen.queryByLabelText("Answer cost")).not.toBeInTheDocument();
     act(() => opts.onDone());
 
     expect(screen.getByText("Sources")).toBeInTheDocument();
     expect(screen.getByText(/AAPL · chunk 42/)).toBeInTheDocument();
+    const cost = screen.getByLabelText("Answer cost");
+    expect(cost).toHaveTextContent("2.3 s · 4,120 tokens · $0.0012");
+    expect(cost).toHaveTextContent("lookup_financial_fact ×2, compute_metric");
+    expect(cost).toHaveTextContent("trace 01234567");
   });
 
   it("shows error copy when the stream fails", () => {

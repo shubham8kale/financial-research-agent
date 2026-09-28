@@ -25,6 +25,23 @@ export interface SourcesEvent {
   items: Citation[];
 }
 
+/** What the answer cost, emitted once after the sources (see api/main.py). */
+export interface AnswerMeta {
+  latency_ms: number | null;
+  llm_calls: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cost_usd: number | null;
+  tools: Record<string, number>;
+  tool_ms_total: number | null;
+  trace_id: string | null;
+  backend?: string;
+}
+
+export interface MetaEvent extends AnswerMeta {
+  type: "meta";
+}
+
 export interface DoneEvent {
   type: "done";
 }
@@ -34,7 +51,12 @@ export interface ErrorEvent {
   message: string;
 }
 
-export type StreamEvent = TokenEvent | SourcesEvent | DoneEvent | ErrorEvent;
+export type StreamEvent =
+  | TokenEvent
+  | SourcesEvent
+  | MetaEvent
+  | DoneEvent
+  | ErrorEvent;
 
 // ── streamQuery ─────────────────────────────────────────────────────────────────
 
@@ -43,6 +65,8 @@ export interface StreamQueryOptions {
   ticker: string | null;
   onToken: (text: string) => void;
   onSources: (items: Citation[]) => void;
+  /** Optional: latency, tokens, cost, tools and trace id for the answer. */
+  onMeta?: (meta: AnswerMeta) => void;
   onDone: () => void;
   onError: (message: string) => void;
   /** Optional abort signal to cancel an in-flight stream. */
@@ -55,7 +79,8 @@ export interface StreamQueryOptions {
  * Never throws — transport and parse failures are surfaced via onError.
  */
 export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
-  const { question, ticker, onToken, onSources, onDone, onError, signal } = opts;
+  const { question, ticker, onToken, onSources, onMeta, onDone, onError, signal } =
+    opts;
 
   let res: Response;
   try {
@@ -94,6 +119,12 @@ export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
       case "sources":
         onSources(evt.items);
         break;
+      case "meta": {
+        const { type: _type, ...meta } = evt;
+        void _type;
+        onMeta?.(meta);
+        break;
+      }
       case "done":
         doneEmitted = true;
         onDone();

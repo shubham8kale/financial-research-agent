@@ -18,7 +18,7 @@ import logging
 import os
 import re
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
@@ -28,6 +28,7 @@ from langchain_core.messages import ToolMessage
 from pydantic import BaseModel
 
 from agent import financial_agent, mcp_agent
+from agent.meter import QueryMeter, public_meta
 from agent.observations import FALLBACK_RE, parse_observation
 from agent.financial_agent import (
     OUTCOME_EMPTY_ANSWER,
@@ -113,6 +114,11 @@ class QueryResponse(BaseModel):
     answer: str
     sources: List[SourceChunk]
     tokens_used: Optional[int] = None
+    # Per-request meter: latency_ms, llm_calls, input/output tokens, cost_usd at
+    # the repo's price table, tools called, tool_ms_total, trace_id (the
+    # LangSmith trace when tracing is on) and which backend answered.  Additive
+    # to the contract; older clients ignore it.
+    meta: Optional[Dict[str, Any]] = None
 
 
 # ── Source extraction ─────────────────────────────────────────────────────────
@@ -273,6 +279,17 @@ def _chunk_idx_of(source_file: str) -> str:
     return ""
 
 
+def _new_config(meter: QueryMeter) -> dict:
+    return {"recursion_limit": 20, "callbacks": [meter]}
+
+
+def _meta(meter: QueryMeter, result: dict, backend: str) -> Dict[str, Any]:
+    """Public meter summary for one answered request."""
+    meta = public_meta(meter.summary(result.get("messages")))
+    meta["backend"] = backend
+    return meta
+
+
 async def _run_with_fallback(request: Request, question: str):
     """Run the agent (MCP first, then direct) and return (answer, sources).
 
@@ -283,19 +300,19 @@ async def _run_with_fallback(request: Request, question: str):
     exception if it fails, so the caller can emit an SSE error event.
     """
     payload = {"messages": [("human", question)]}
-    config = {"recursion_limit": 20}
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
     if mcp_exec is not None:
+        meter = QueryMeter(model=financial_agent.LLM_MODEL)
         try:
             result = await asyncio.wait_for(
-                mcp_exec.ainvoke(payload, config=config),
+                mcp_exec.ainvoke(payload, config=_new_config(meter)),
                 timeout=AGENT_TIMEOUT_SECONDS,
             )
             answer = _final_answer(result)
             if not classify_terminal_state(answer):
                 logger.info("Stream answered via MCP agent")
-                return answer, _extract_sources(result["messages"])
+                return answer, _extract_sources(result["messages"]), _meta(meter, result, "mcp")
             logger.warning("MCP agent produced no usable answer; falling back")
         except asyncio.TimeoutError:
             logger.warning("MCP agent timed out; falling back to direct agent")
@@ -309,12 +326,13 @@ async def _run_with_fallback(request: Request, question: str):
         logger.info("No MCP agent available; using direct agent")
 
     direct_exec = request.app.state.direct_agent
+    meter = QueryMeter(model=financial_agent.LLM_MODEL)
     result = await asyncio.wait_for(
-        direct_exec.ainvoke(payload, config=config),
+        direct_exec.ainvoke(payload, config=_new_config(meter)),
         timeout=AGENT_TIMEOUT_SECONDS,
     )
     logger.info("Stream answered via direct agent")
-    return _final_answer(result), _extract_sources(result["messages"])
+    return _final_answer(result), _extract_sources(result["messages"]), _meta(meter, result, "direct")
 
 
 async def _sse_event_stream(request: Request, question: str):
@@ -331,7 +349,7 @@ async def _sse_event_stream(request: Request, question: str):
         yield ": keepalive\n\n"
 
     try:
-        answer, sources = run.result()
+        answer, sources, meta = run.result()
     except asyncio.TimeoutError:
         yield _sse({
             "type": "error",
@@ -386,6 +404,11 @@ async def _sse_event_stream(request: Request, question: str):
             for s in sources
         ],
     })
+    # What the answer cost, after the sources and before the terminal marker:
+    # latency, model calls, tokens, dollars, tools and the trace id.  Additive
+    # to the token/sources/done/error contract; a client that does not know
+    # "meta" ignores it.
+    yield _sse({"type": "meta", **meta})
     yield _sse({"type": "done"})
 
 
@@ -395,13 +418,13 @@ async def _sse_event_stream(request: Request, question: str):
 async def query(req: QueryRequest, request: Request) -> QueryResponse:
     question = _build_question(req)
     payload = {"messages": [("human", question)]}
-    config = {"recursion_limit": 20}
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
     if mcp_exec is not None:
         try:
+            meter = QueryMeter(model=financial_agent.LLM_MODEL)
             result = await asyncio.wait_for(
-                mcp_exec.ainvoke(payload, config=config),
+                mcp_exec.ainvoke(payload, config=_new_config(meter)),
                 timeout=AGENT_TIMEOUT_SECONDS,
             )
             answer = _final_answer(result)
@@ -411,9 +434,12 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
                 # path is exactly the case the fallback exists for.
                 raise RuntimeError(f"MCP agent terminal failure: {mcp_outcome}")
             logger.info("Query answered via MCP agent")
+            meta = _meta(meter, result, "mcp")
             return QueryResponse(
                 answer=answer,
                 sources=_extract_sources(result["messages"]),
+                tokens_used=(meta["input_tokens"] or 0) + (meta["output_tokens"] or 0) or None,
+                meta=meta,
             )
         except asyncio.TimeoutError:
             logger.warning(
@@ -431,8 +457,9 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
 
     direct_exec = request.app.state.direct_agent
     try:
+        meter = QueryMeter(model=financial_agent.LLM_MODEL)
         result = await asyncio.wait_for(
-            direct_exec.ainvoke(payload, config=config),
+            direct_exec.ainvoke(payload, config=_new_config(meter)),
             timeout=AGENT_TIMEOUT_SECONDS,
         )
         answer = _final_answer(result)
@@ -441,9 +468,12 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             logger.warning("Direct agent terminal failure: %s", outcome)
             raise _terminal_http_error(outcome)
         logger.info("Query answered via direct agent")
+        meta = _meta(meter, result, "direct")
         return QueryResponse(
             answer=answer,
             sources=_extract_sources(result["messages"]),
+            tokens_used=(meta["input_tokens"] or 0) + (meta["output_tokens"] or 0) or None,
+            meta=meta,
         )
     except HTTPException:
         # Already a deliberate, classified failure — do not re-wrap it as a 500.

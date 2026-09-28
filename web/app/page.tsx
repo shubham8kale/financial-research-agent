@@ -102,6 +102,7 @@ export default function Home() {
         onToken: (t) => patch((m) => ({ ...m, content: m.content + t })),
         onSources: (items: Citation[]) =>
           patch((m) => ({ ...m, citations: items })),
+        onMeta: (meta) => patch((m) => ({ ...m, meta })),
         onDone: () => {
           patch((m) => ({ ...m, streaming: false }));
           setIsStreaming(false);
