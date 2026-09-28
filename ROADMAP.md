@@ -78,6 +78,37 @@ other revenues") falls back to search, which still answered correctly.
 
 ---
 
+## Done: a meter on every run
+
+**Was.** Nothing measured what a query cost. `tokens_used` in the API was
+always null, no results file carried latency, and the only trace was a
+Python log line.
+
+**Now.** [agent/meter.py](agent/meter.py) rides every agent run as a
+callback: latency, model calls, tokens, cost at a dated price table the
+repo owns, each tool call with its duration, and the root run id LangSmith
+shows as the trace. The API returns it as `meta` on `/query` and as a
+`meta` SSE event; the chat UI shows seconds, tokens, dollars, tools and the
+trace id under each answer; every results record carries the same fields
+and the leaderboard has cost-per-query and p50 columns
+([eval/EVALUATION.md](eval/EVALUATION.md), "Cost and latency").
+
+**Measured on the shipped configuration**, all 71 items, tracing on: p50
+1.9 s, p95 5.9 s, 6,199 tokens in and 94 out per query, **$0.0017 per
+query**, $0.12 for the whole benchmark. 37% of wall time is inside tools,
+almost all of it the reranked search at 0.8 s per call. The same run is a
+second sample of the fact-tool configuration one day apart: 68 of 71
+answers byte-identical, every judge-free metric within noise — the noise
+floor the next comparisons are read against.
+
+**Left open.** 7 of 58 fact lookups were rejected because the model left
+out the required `concept` argument, and retried; each is a wasted model
+round trip and an argument for a default or a louder description on that
+parameter. The reranker is the latency; on the free-tier Space its share
+will be larger than here.
+
+---
+
 ## 1. Table-aware chunking, then re-label
 
 **Now.** 26 of 71 items depend on a table and they are the stratum nothing

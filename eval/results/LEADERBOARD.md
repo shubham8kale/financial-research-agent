@@ -1,6 +1,6 @@
 # Leaderboard
 
-Regenerated 2026-09-28T05:29:33+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-09-28T05:42:11+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
@@ -57,5 +57,6 @@ Kept for the record. `context_recall` here scored each tool observation as one b
 
 ## Incomplete runs (no aggregates)
 
+- `cost-v3-f5faee254363.json` — --generate-only: generation checkpointed, judge pass not run
 - `empty-probe-gemini-3.1-flash-lite-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run
 - `empty-probe-gemini-3.6-flash-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run

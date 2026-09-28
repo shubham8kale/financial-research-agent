@@ -563,6 +563,64 @@ refusal-scoring quirk finding 11 also recorded.
 
 ---
 
+## Cost and latency
+
+Every run made after upgrade 4 carries its own meter
+([`agent/meter.py`](../agent/meter.py)): wall-clock latency, model calls,
+tokens in and out from the returned messages, cost at the repository's dated
+price table ([`agent/pricing.py`](../agent/pricing.py), read 2026-09-27),
+each tool call with its duration, and the root run id that LangSmith shows as
+the trace. The figures below are the shipped configuration — reranked
+retrieval, fact tools, `gemini-3.1-flash-lite` — regenerated once more over
+all 71 items with the meter on and tracing on (LangSmith project
+`fra-eval-cost-v3`, so every record's `trace_id` opens). Agent calls only; no
+judge pass was bought for this run. Evidence:
+[`cost-v3-f5faee254363.json`](results/cost-v3-f5faee254363.json).
+
+| per query (n = 71) | value |
+|---|---|
+| latency p50 | 1.9 s |
+| latency p95 | 5.9 s |
+| latency mean | 2.4 s |
+| model calls, mean | 2.68 |
+| tokens in, mean | 6,199 |
+| tokens out, mean | 94 |
+| cost, mean | $0.0017 |
+| cost, whole benchmark | $0.12 |
+| tool calls, mean | 1.85 |
+| share of wall time inside tools | 37% |
+
+| tool | calls | p50 | p95 |
+|---|---|---|---|
+| `search_filings` | 59 | 812 ms | 1,210 ms |
+| `lookup_financial_fact` | 58 | 2 ms | 14 ms |
+| `compute_metric` | 8 | 0 ms | 1 ms |
+| `list_available_companies` | 6 | 0 ms | 0 ms |
+
+7 of 131 tool calls returned an error to the agent (`lookup_financial_fact` 7 of 58).
+Every one was the same mistake: the model called the fact lookup with a
+ticker and a fiscal year and left out the required `concept`, was told
+"concept: Field required", and corrected itself on the next call. Each is
+a wasted model round trip, recorded per call in the results file, and an
+argument for giving that parameter a default or a louder description.
+
+The judge is the expensive part of evaluation, not the agent: a full
+benchmark of agent runs costs about $0.12, while one judge pass over the
+same 71 answers costs about $1.10 (`gemini-3.6-flash`, roughly 470k tokens
+in and 200k out, recorded as `judge_cost_usd` in each judged results file).
+On the free-tier Space, with two vCPUs against this laptop's, expect the
+tool share of latency — the reranker — to be larger.
+
+**Run-to-run variance, same configuration, one day apart.** This run
+regenerated the same 71 items as the judged fact-tool run with nothing
+changed but the day. 68 of 71 answers are byte-identical.
+`figure_primary` 1.000 → 1.000, `figure_exact`
+0.900 → 0.900, `agent_hit` 0.422 → 0.408, terminal
+failures 1 → 1. That is the noise floor for the judge-free metrics on
+this benchmark; a change smaller than it is not a finding.
+
+---
+
 ## Findings
 
 Ranked. The first two are the ones worth your time.

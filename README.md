@@ -248,6 +248,28 @@ request is logged server-side, not returned. `tokens_used` is currently always
 
 Optional `ticker` field narrows retrieval to a single company.
 
+`meta` is the request's own meter, present on every successful answer:
+
+```json
+"meta": {
+  "trace_id": "0a1b2c3d-...",
+  "latency_ms": 6812.4,
+  "llm_calls": 3,
+  "input_tokens": 9120,
+  "output_tokens": 210,
+  "cost_usd": 0.002595,
+  "tools": {"lookup_financial_fact": 2, "compute_metric": 1},
+  "tool_ms_total": 1420.6,
+  "backend": "direct"
+}
+```
+
+`cost_usd` is computed from the repo's own dated price table
+([agent/pricing.py](agent/pricing.py)), never read from a vendor dashboard,
+and is `null` for a model the table does not know. `trace_id` is the run id
+LangSmith shows as the trace when `LANGSMITH_TRACING=true`. `tokens_used`
+is the sum of the two token counts.
+
 ### `POST /query/stream`
 
 Same request body as `/query`, but streams the answer as Server-Sent Events
@@ -260,9 +282,40 @@ curl -N -X POST http://localhost:8080/query/stream \
 ```
 
 Each line is one JSON event: `{"type":"token","text":...}` (repeated),
-then `{"type":"sources","items":[...]}`, then `{"type":"done"}`
-(or `{"type":"error","message":...}`). CORS origins are controlled by the
+then `{"type":"sources","items":[...]}`, then `{"type":"meta", ...}` with
+the same fields as `/query`'s `meta`, then `{"type":"done"}`
+(or `{"type":"error","message":...}`). The chat UI renders `meta` under each
+answer as seconds, tokens, dollars, tools called and the trace id. CORS origins are controlled by the
 `FRONTEND_ORIGINS` env var (comma-separated; defaults include `http://localhost:3000`).
+
+---
+
+## Observability
+
+Two layers, kept deliberately separate.
+
+**Traces: LangSmith.** The agent is LangGraph, so setting three environment
+variables traces every run with no code: `LANGSMITH_TRACING=true`,
+`LANGSMITH_API_KEY`, `LANGSMITH_PROJECT`. Every tool call, every model call
+and every retrieved passage is visible per run, and the `trace_id` the API
+returns is the id to open. Traces are on for the deployed demo; tests force
+tracing off, and the eval harness runs with it off unless a run is meant to
+be inspected (the cost run below used a dedicated project).
+
+**Numbers: our own meter.** [agent/meter.py](agent/meter.py) is a callback
+attached to every run, in the API and in the eval harness alike. It records
+wall-clock latency, model calls, tokens in and out, cost at a dated price
+table the repo owns, each tool call with its duration, and the root run id.
+Those numbers go into every results record and every API response, so a
+figure in [eval/EVALUATION.md](eval/EVALUATION.md) can be recomputed from
+the committed file and does not move when a vendor changes its cost table.
+The eval harness also records what each judge pass cost.
+
+Measured on the shipped configuration over the 71-item benchmark
+(EVALUATION.md, "Cost and latency"): latency p50 **1.9 s**, p95 5.9 s;
+6,199 tokens in and 94 out per query; **$0.0017 per query**,
+$0.12 for the whole benchmark. A judge pass over the same answers costs about
+$1.10, which is why evaluation spend is gated on the judge-free metrics first.
 
 ---
 
