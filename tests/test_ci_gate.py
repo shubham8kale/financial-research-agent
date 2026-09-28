@@ -1,7 +1,6 @@
 # tests/test_ci_gate.py
 #
-# The CI quality gate (eval/ci_gate.py) and the index slice it runs on
-# (eval/ci_corpus.py).  Pinned here: a threshold miss fails and a pass passes,
+# The CI quality gate (eval/ci_gate.py).  Pinned here: a threshold miss fails and a pass passes,
 # with the committed value carried alongside; the retrieval gate scores every
 # configuration in the gate file and writes per-item evidence; the judged gate
 # refuses an incomplete or differently-configured run; and the committed gate

@@ -23,9 +23,8 @@
 # A hit-rate threshold is at or below (hits − 2) / 71 for that file, so a
 # two-item loss passes and a three-item loss fails; MRR and nDCG thresholds
 # sit 0.03 below the committed value.  The gate prints the committed value
-# next to the one it measures, so a slice
-# that stopped reproducing the full index would show as a gap before it
-# showed as a failure.  The judged thresholds were calibrated from the
+# next to the one it measures, so a drift shows as a gap before it shows
+# as a failure.  The judged thresholds were calibrated from the
 # per-item scores of the committed judged run over the same ten items
 # (`python -m eval.ci_gate calibrate` prints both columns).  A threshold set
 # above its own calibration value fails `--dry-run`, so the gate cannot be
