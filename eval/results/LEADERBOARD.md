@@ -1,6 +1,6 @@
 # Leaderboard
 
-Regenerated 2026-09-28T17:10:46+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-09-28T18:00:36+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
@@ -20,6 +20,8 @@ Rows are comparable only within a table and only at the same benchmark version. 
 | run | date | mode | k | ticker_filter | n | hit@5 | recall@5 | mrr | ndcg@5 | recall@25 | p50 ms | config | file |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | retrieval-bm25-a308c41b72ea | 2026-09-28 | bm25 | 25 | none | 71 | 0.3521 | 0.3521 | 0.3036 | 0.2978 | 0.5704 | 241.5 | `a308c41b72ea` | [retrieval-bm25-a308c41b72ea.json](retrieval-bm25-a308c41b72ea.json) |
+| retrieval-ci-dense-a0bd9c206430 | 2026-09-28 | dense | 25 | none | 71 | 0.5070 | 0.4894 | 0.3569 | 0.3729 | 0.6796 | 34.8 | `a0bd9c206430` | [retrieval-ci-dense-a0bd9c206430.json](retrieval-ci-dense-a0bd9c206430.json) |
+| retrieval-ci-shipped-d8ca6cd2f348 | 2026-09-28 | dense | 25 | inferred | 71 | 0.6338 | 0.6056 | 0.4974 | 0.5085 | 0.7500 | 1511.2 | `d8ca6cd2f348` | [retrieval-ci-shipped-d8ca6cd2f348.json](retrieval-ci-shipped-d8ca6cd2f348.json) |
 | retrieval-dense-1e17cf5b5eab | 2026-09-28 | dense | 25 | no | 71 | 0.5070 | 0.4894 | 0.3569 | 0.3729 | 0.6796 | 17.5 | `1e17cf5b5eab` | [retrieval-dense-1e17cf5b5eab.json](retrieval-dense-1e17cf5b5eab.json) |
 | retrieval-dense-rerank-f100-84fdb1858a25 | 2026-09-28 | dense | 25 | none | 71 | 0.6197 | 0.6021 | 0.4818 | 0.4993 | 0.7007 | 1620.1 | `84fdb1858a25` | [retrieval-dense-rerank-f100-84fdb1858a25.json](retrieval-dense-rerank-f100-84fdb1858a25.json) |
 | retrieval-dense-rerank-f100-tf-inferred-ad3ace274d29 | 2026-09-28 | dense | 25 | inferred | 71 | 0.6056 | 0.5880 | 0.4857 | 0.4967 | 0.7148 | 1719.4 | `ad3ace274d29` | [retrieval-dense-rerank-f100-tf-inferred-ad3ace274d29.json](retrieval-dense-rerank-f100-tf-inferred-ad3ace274d29.json) |

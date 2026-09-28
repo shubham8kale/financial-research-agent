@@ -11,9 +11,9 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
 - **The deployed backend is a separate repository, redeployed deliberately.** It lives in
   its own Hugging Face Space repo rather than being built from this one on every push, so
-  the two can drift. Its application code is currently **in sync with `main`** — same
-  agent, API, retrieval and ingestion modules, same `gemini-3.1-flash-lite` default, same
-  terminal-failure guard, same pinned dependencies. What deliberately differs is the
+  the two can drift. Its application code is **synced by hand from `main`** and lags it
+  until the next sync: the fact tools, retrieval switches, meter and answer verification
+  described below reach the Space only when it is re-synced (see Deploy). What deliberately differs is the
   deployment machinery: the Space ships a **prebuilt Chroma index via Git LFS**, because
   re-embedding 67K chunks at image-build time exceeds Hugging Face's build timeout on the
   free CPU builder, whereas this repo's Dockerfile rebuilds the index and gitignores it.
@@ -42,8 +42,9 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
             ▼
    ┌──────────────────┐
    │  ReAct Agent     │   LangGraph create_react_agent, tool-calling loop
-   │ (agent/…)        │   tools: search_filings, list_companies, compare,
-   │                  │          lookup_financial_fact, compute_metric
+   │ (agent/…)        │   tools: search_filings, list_available_companies,
+   │                  │          compare_companies, lookup_financial_fact,
+   │                  │          compute_metric
    └────────┬─────────┘
             ▼
    ┌──────────────────┐       ┌──────────────────┐
@@ -52,7 +53,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
    └────────┬─────────┘       └────────┬─────────┘
             ▼                          ▼
    ┌────────────────────────────────────────────┐
-   │           FastAPI (api/main.py)            │   POST /query, GET /health
+   │           FastAPI (api/main.py)            │   POST /query, POST /query/stream, GET /health
    │   MCP-first, direct-agent fallback          │   lifespan-built agents
    └────────────────────────────────────────────┘
             ▼
@@ -71,7 +72,7 @@ Requests to `POST /query` try the MCP-backed agent first. If MCP is unreachable 
 Next.js UI  →  POST /query/stream (SSE)  →  FastAPI  →  LangGraph ReAct agent  →  ChromaDB + Gemini
 ```
 
-The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the request POSTs a JSON body) to parse `token` / `sources` / `done` events, rendering the answer live with inline citations. The `/query/stream` endpoint runs the agent to completion (same MCP-first, direct-agent fallback and 120 s timeout as `/query`, env-configurable via `AGENT_TIMEOUT_SECONDS`), then streams the final answer word-by-word — chosen over `astream_events` because isolating only the final-answer tokens across the tool-calling loop proved brittle.
+The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the request POSTs a JSON body) to parse the `token` / `sources` / `verification` / `meta` / `done` / `error` events, rendering the answer live with its citations, verdict and cost. The `/query/stream` endpoint runs the agent to completion (same MCP-first, direct-agent fallback and 120 s timeout as `/query`, env-configurable via `AGENT_TIMEOUT_SECONDS`), then streams the final answer word-by-word — chosen over `astream_events` because isolating only the final-answer tokens across the tool-calling loop proved brittle.
 
 ---
 
@@ -81,7 +82,7 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 |---|---|
 | Orchestration | LangChain, LangGraph (`create_react_agent`) |
 | Vector store | ChromaDB (embedded, persistent SQLite + binary index) |
-| Sparse index | `rank-bm25` over the same chunks, built from Chroma in ~10 s, pickled under `data/` (hybrid mode only) |
+| Sparse index | `rank-bm25` over the same chunks, built from Chroma on first use (about a minute) and pickled under `data/`; used by the `bm25` and `hybrid` modes, both off by default |
 | Embeddings | HuggingFace `sentence-transformers/all-MiniLM-L6-v2` (local, 384-dim) |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` (local CPU, ~90 MB), switched on by `RETRIEVAL_RERANK` |
 | Structured facts | Inline XBRL parsed from the same filings into SQLite (`data/facts.sqlite`, 6,089 facts, built in ~3 s) — see [docs/adr/0001](docs/adr/0001-sqlite-for-xbrl-facts.md) |
@@ -117,11 +118,12 @@ cp .env.example .env
 # 4. Build the vector index (first run only)
 #    Reads the 10-K filings already committed under data/sec_filings/ — no SEC
 #    download needed. Embeds 67,521 chunks locally on CPU. Measured on a cold
-#    clone: 25 minutes, 67,521 chunks, ~370 MB on disk. Only re-run this if
-#    data/chroma_db/ is missing.
+#    clone: about 26 minutes on a 12-core laptop, ~370 MB on disk. Only re-run
+#    this if data/chroma_db/ is missing.
 python -m ingestion.pipeline
 
-# 5. Ask the agent a question
+# 5. Run the agent on its built-in smoke question (no arguments; edit
+#    test_question in agent/financial_agent.py to ask something else)
 python -m agent.financial_agent
 # or, for a single-shot RAG query without the agent loop:
 python -m retrieval.query_engine "What was Apple's total revenue in fiscal 2025?"
@@ -134,8 +136,11 @@ Get a free Gemini API key at <https://aistudio.google.com/app/apikey>.
 Every retrieval the agent's tools make goes through
 [retrieval/retriever.py](retrieval/retriever.py), configured once per process
 from `RETRIEVAL_*` environment variables (documented in
-[.env.example](.env.example)). Unset, it is dense top-5 search — the shipped
-behaviour, byte for byte. Each switch was measured on its own and in
+[.env.example](.env.example)). Unset, it is dense top-5 search — the code
+default, byte for byte what the system shipped with before the ablation. The
+measured configuration (reranker plus inferred ticker filter) is what the
+deployment runs with the variables set; the tables below label it "measured
+configuration". Each switch was measured on its own and in
 combination with `python -m eval.run_retrieval_eval` before anything was
 turned on; the matrix is in [eval/EVALUATION.md](eval/EVALUATION.md).
 
@@ -144,6 +149,7 @@ turned on; the matrix is in [eval/EVALUATION.md](eval/EVALUATION.md).
 | `RETRIEVAL_MODE` | `dense` (default), `bm25`, `hybrid` | Dense similarity, exact-token BM25, or both fused with Reciprocal Rank Fusion |
 | `RETRIEVAL_RERANK` | `false` (default), `true` | Re-order `RETRIEVAL_FETCH_K` candidates with a CPU cross-encoder, keep the top k |
 | `RETRIEVAL_FETCH_K` | integer, default `25` | Candidates per source before fusion or reranking |
+| `RETRIEVAL_K` | integer, default `5` | Chunks returned per search call (the k the tools and the eval record) |
 | `RETRIEVAL_TICKER_FILTER` | `none` (default), `inferred` | Restrict search to the one company the question names; no restriction when it names zero or several |
 | `RETRIEVAL_RRF_K`, `RETRIEVAL_DENSE_WEIGHT`, `RETRIEVAL_SPARSE_WEIGHT` | | Hybrid fusion knobs |
 
@@ -161,9 +167,9 @@ agent gets two tools on top of it ([retrieval/facts.py](retrieval/facts.py)):
   that returns candidates rather than guessing. The fiscal year is a filter:
   unset means the most recent year in the filing, and the tool says so. Every
   result is cited like a passage (`AAPL_10K_fact_123`).
-- **`compute_metric(operation, a, b)`** — growth, difference, margin, ratio
-  and CAGR in Python, with the formula shown. The model picks the operands;
-  it never does the arithmetic.
+- **`compute_metric(operation, a, b, n=None)`** — difference, sum, ratio,
+  percent change, margin and CAGR (`n` years) in Python, with the formula
+  shown. The model picks the operands; it never does the arithmetic.
 
 The system prompt sends figure questions to the fact tool first and
 narrative questions to search. Build the table on its own with:
@@ -185,7 +191,10 @@ This starts two services sharing the `./data` volume:
 - `mcp-server` on port **8000** (MCP streamable-HTTP endpoint)
 - `api-server` on port **8080** (FastAPI)
 
-The first build is slow (CPU PyTorch + transformers download). Subsequent runs are cached.
+The first build is slow: CPU PyTorch and the transformer models download, and the image
+re-embeds all 67,521 chunks (about 26 minutes on a laptop CPU). Subsequent builds are
+cached. Compose bind-mounts `./data` over `/app/data`, so the index the container serves
+is the one on the host, not the one baked into the image.
 
 If `data/chroma_db/` is empty, run the ingestion pipeline inside the container:
 
@@ -234,15 +243,21 @@ curl -X POST http://localhost:8080/query \
     {
       "text": "Apple Inc. | 2025 Form 10-K | 35 The following table shows d ...",
       "ticker": "AAPL",
-      "source_file": "AAPL_10K_chunk_395"
+      "source_file": "AAPL_10K_chunk_395",
+      "cited": true
     }
   ],
   "tokens_used": 5080,
+  "meta": {
+    "trace_id": "0a1b2c3d-...", "latency_ms": 4639.2, "llm_calls": 3,
+    "input_tokens": 4900, "output_tokens": 180, "cost_usd": 0.001495,
+    "tools": {"lookup_financial_fact": 1}, "tool_ms_total": 210.4, "backend": "direct"
+  },
   "verification": {
-    "status": "verified",
+    "status": "verified", "mode": "strict",
     "n_claims": 1, "n_figures": 1, "n_supported": 1,
-    "failures": [], "cited": ["AAPL_10K_chunk_395"],
-    "attempts": 1, "repaired": false
+    "failures": [], "cited": ["AAPL_10K_chunk_395"], "not_disclosed": false,
+    "attempts": 1, "repaired": false, "contract_version": "da6f5bea0c8b"
   }
 }
 ```
@@ -254,14 +269,20 @@ in `source_file` as `TICKER_10K_chunk_N` (a tagged XBRL fact is
 cites that observation. Which agent served the request is in `meta.backend`.
 
 `verification` is the output contract's verdict (see "Verified answers"
-below): `status` is `verified`, `unverified`, `refused` or `skipped`;
-`failures` names each check that failed (`unknown_source`, `uncited_figure`,
-`unsupported_figure`, `dropped_figure`, `no_contract`) with the sentence and
-the figure; `cited` lists the observation ids the record rests on. When the
-status is `refused`, `answer` is a refusal that says what could not be
-verified, never the draft.
+below): `status` is `verified`, `unverified`, `refused` or `skipped`; `mode`
+is the `VERIFY_MODE` it ran under; `failures` names each check that failed
+(`unknown_source`, `uncited_figure`, `unsupported_figure`, `dropped_figure`,
+`empty_record`, `no_contract`) with the sentence and the figure; `cited`
+lists the observation ids the record rests on, and each source's `cited`
+flag is set from it only when the status is `verified`; `not_disclosed` is
+the record's flag for "the filings do not say"; `attempts` and `repaired`
+say whether the one repair was needed; `contract_version` hashes the
+structuring prompt and schema. A provider's or parser's error message never
+appears in the payload. When the status is `refused`, `answer` is a refusal
+that says what could not be verified, never the draft.
 
-Optional `ticker` field narrows retrieval to a single company.
+Optional `ticker` field appends the company to the question (`… (company: AAPL)`); with
+`RETRIEVAL_TICKER_FILTER=inferred` the retriever then restricts every search to it.
 
 `meta` is the request's own meter, present on every successful answer:
 
@@ -296,11 +317,15 @@ curl -N -X POST http://localhost:8080/query/stream \
   -d '{"question": "What were Apple total net sales in the most recent fiscal year?", "ticker": "AAPL"}'
 ```
 
-Each line is one JSON event: `{"type":"token","text":...}` (repeated),
-then `{"type":"sources","items":[...]}`, then `{"type":"verification", ...}`
-with the same fields as `/query`'s `verification`, then `{"type":"meta", ...}`
-with the same fields as `/query`'s `meta`, then `{"type":"done"}`
-(or `{"type":"error","message":...}`). The chat UI renders the verdict as a
+Each line is one JSON event: `{"type":"token","text":...}` (repeated), then
+`{"type":"sources","items":[{"ticker","chunk_idx","source","cited"}]}` (no
+`text`; a tagged fact's `chunk_idx` is `"fact N"`), then
+`{"type":"verification", ...}` with the same fields as `/query`'s
+`verification`, then `{"type":"meta", ...}` with the same fields as
+`/query`'s `meta`, then `{"type":"done"}` — or `{"type":"error","message":...}`,
+which carries an `outcome` (`empty_answer`, `recursion_limit`) when the agent
+finished without a usable answer. While the agent runs, the stream sends a
+`: keepalive` comment line every 10 s so an idle proxy does not drop it. The chat UI renders the verdict as a
 line above the sources (cited sources carry a check mark, a withheld answer
 is marked as such) and `meta` under each answer as seconds, tokens, dollars,
 tools called and the trace id. CORS origins are controlled by the
@@ -391,13 +416,13 @@ every retrieved chunk, every score — is committed under
 
 The benchmark question goes straight to the retriever; the top 25 chunk ids
 are scored against the labelled chunks. 71 items, under a minute per
-configuration, no API call. Seventeen configurations were measured this way
+configuration, no API call. Nineteen configurations were measured this way
 (the full matrix and findings 16–17 are in EVALUATION.md); the two that matter:
 
 | | hit@5 | recall@5 | MRR | nDCG@5 | recall@25 | p50 latency |
 |---|---|---|---|---|---|---|
 | dense top-5, as originally shipped | 0.507 | 0.489 | 0.357 | 0.373 | 0.680 | 17.5 ms |
-| **dense + cross-encoder rerank over 50 + inferred ticker filter** (ships now) | **0.634** | **0.606** | **0.496** | **0.507** | **0.750** | 893 ms |
+| **dense + cross-encoder rerank over 50 + inferred ticker filter** (the measured configuration; on with the `RETRIEVAL_*` variables) | **0.634** | **0.606** | **0.496** | **0.507** | **0.750** | 893 ms |
 | the same, table items only (n = 26) | 0.500 | | | | | |
 | the same, non-table items (n = 45) | 0.711 | | | | | |
 
@@ -423,17 +448,19 @@ a failure where faithfulness scored it 1.00 (findings 14 and 18).
 
 The cached `gemini-3.1-flash-lite` answers for all 71 items, re-judged by
 `gemini-3.6-flash` with each retrieved chunk as its own context. Terminal
-failures (7, all recursion-limit) count as 0. Evidence and per-stratum rows:
+failures (7, all recursion-limit) stay in the mean, scored on the placeholder
+text they returned, never excluded. Evidence and per-stratum rows:
 [baseline-v3-aea128d62403.json](eval/results/baseline-v3-aea128d62403.json).
 
 | n | faithfulness | answer relevancy | context recall | figure_exact | agent_hit |
 |---|---|---|---|---|---|
 | 71 | **0.826** | 0.764 | 0.718 | 0.640 (n = 50) | 0.437 |
 
-On the 62 answers shared with the schema-2 run below, the new instrument
+On the 61 answers byte-identical with the schema-2 run below, the new instrument
 returned the same `context_recall` on every item and faithfulness within two
 items of the old score. It also found that stripping the `[META 10-K, chunk
-412]` header from a context costs 0.13 faithfulness on identical answers,
+412]` header from a context costs 0.12 faithfulness on the same 71 answers
+(0.826 with the header, 0.704 without),
 because the chunk text says "the Company" and only the header says which one
 (EVALUATION.md finding 15). This is the baseline every retrieval change is
 compared against.
@@ -451,11 +478,13 @@ judge:
 | `agent_hit` (n = 71) | 0.437 | **0.662** | +0.23 |
 | terminal failures (recursion limit) | 7 | **1** | −6 |
 
-Six of the seven recursion-limit failures in the baseline now answer, every
-one with a figure to get right getting it right: the agent was searching
-without finding until its step budget ran out. The `temporal` items did not move — the model still quotes the prior
-year when the year is unstated — which is a period-selection problem, not a
-retrieval one. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-764b3da65d36.json](eval/results/rerank-v3-764b3da65d36.json).
+All seven recursion-limit failures in the baseline now answer, every one
+with a figure to get right getting it right: the agent was searching without
+finding until its step budget ran out; one new item (`qa_0063`) hit the limit
+instead, hence −6 net. The `temporal` items did not improve — `figure_exact`
+2 of 5 both times, and `figure_primary` fell from 4 of 5 to 2 of 5 — the model
+still quotes the prior year when the year is unstated, a period-selection
+problem, not a retrieval one; the fact tools close it in the next section. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-764b3da65d36.json](eval/results/rerank-v3-764b3da65d36.json).
 
 ### The fact tools inside the agent
 
@@ -494,8 +523,9 @@ and is not comparable with schema-3 runs.
 | context recall | 0.5152 | **0.6970** | +0.1818 |
 | terminal failures | **12 / 66** (10 empty, 2 recursion) | **6 / 66** (0 empty, 6 recursion) | |
 
-Judge `gemini-3.6-flash`, k=5, prompt `sha256:d1bedac20eb2`, RAGAS 0.4.3, 100%
-metric coverage on both runs.
+Judge `gemini-3.6-flash`, k=5, prompt `sha256:d1bedac20eb2`, RAGAS 0.4.3. Metric
+coverage 100% on the after run; the before run's ten empty answers scored NaN
+(84.8% coverage) and are counted as 0 above.
 
 **What the numbers hide, and why the evaluation record matters more than the
 table.** On the earlier model, 10 of 66 items returned an *empty* answer — and
@@ -540,13 +570,16 @@ python -m eval.chunk_labels
 python -m eval.run_eval --smoke --judge-provider groq
 
 # Re-score the cached answers per chunk (schema 3) — zero generation calls.
-LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-provider google --judge-model gemini-3.6-flash --label baseline-v3
+# The cache key holds the prompt hash and, unless VERIFY_MODE=off, the output
+# contract's tag; the baseline answers were cached under the pre-facts prompt,
+# so this reproduces at the commit the results file records (`git_commit`).
+VERIFY_MODE=off LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-provider google --judge-model gemini-3.6-flash --label baseline-v3
 
 # A full generation + judge run.
 LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --judge-provider google --judge-model gemini-3.6-flash --label rerun
 
-# Cross-family re-score from cache — zero generation calls.
-LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-provider groq --label crossjudge
+# Cross-family re-score from cache — zero generation calls (same caveat).
+VERIFY_MODE=off LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-provider groq --label crossjudge
 
 # Regenerate the leaderboard from every results file.
 python -m eval.leaderboard
@@ -564,7 +597,9 @@ already has a complete results file is reported, not re-run, unless `--force`
 is passed.
 
 The run is **checkpointed and resumable**, keyed on
-`(item id, agent model, prompt version)`, so a quota wall costs one item rather
+`(item id, agent model, prompt version)` plus the retrieval configuration and
+the output contract's mode and version when they differ from the defaults, so
+a quota wall costs one item rather
 than a run. `--score-only` re-judges cached answers with a different judge at zero
 generation cost. A partial run **withholds aggregates** — in stdout and in the
 JSON — so a stopped run cannot be mistaken for a finished one.
@@ -579,9 +614,9 @@ The agent model comes from `LLM_MODEL`. The judge is selected explicitly:
 | `--judge-provider groq` | Groq | `RAGAS_JUDGE_MODEL` | `RAGAS_JUDGE_API_KEY` |
 
 Credentials are read from the environment only, never accepted as flags. A
-cross-family judge check (Groq `gpt-oss-120b` re-scoring the same outputs) is run
-as standard practice — see EVALUATION.md finding 4 for what it did and did not
-show.
+cross-family judge check (Groq `gpt-oss-120b` re-scoring the same outputs) was
+run once, on 20 items of the schema-2 run — see EVALUATION.md finding 4 for
+what it did and did not show; the schema-3 runs are Gemini-judged only.
 
 ---
 
@@ -605,8 +640,9 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
    Actions cache on the slice's hash
 2. `python -m eval.ci_gate retrieval`: the dense baseline and the shipped
    configuration scored against the 71 labelled items with the retriever-only
-   runner (no LLM call). Seven thresholds, each two benchmark items below the
-   committed value; the PASS/FAIL table lands on the run's summary page and
+   runner (no LLM call). Seven thresholds: each hit rate at or below two
+   items under the committed value, MRR and nDCG 0.03 under it, so a one- or
+   two-item loss passes and a three-item loss fails; the PASS/FAIL table lands on the run's summary page and
    the per-item results are uploaded as a build artefact. The slice reproduces
    the full-index numbers for both configurations (EVALUATION.md, "CI quality
    gate")
@@ -614,7 +650,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
 2. `npm run lint`
-3. `npm test` (3 Vitest tests on the SSE streaming client; Node 22 — vitest 4 requires >=20.19)
+3. `npm test` (3 Vitest tests on the chat page's handling of streamed events, SSE client mocked; Node 22 — vitest 4 requires >=20.19)
 4. `npm run build`
 
 `.github/workflows/eval-judged.yml` is the paid half, run by hand from the
@@ -672,7 +708,9 @@ financial-research-agent/
 ├── api/
 │   └── main.py                     # FastAPI app, MCP-first + direct fallback
 ├── data/
-│   └── chroma_db/                  # Persistent vector index (gitignored)
+│   ├── sec_filings/                # The five FY2025 10-K submissions, committed (84 MB)
+│   ├── chroma_db/                  # Persistent vector index (gitignored; rebuilt by the pipeline)
+│   └── facts.sqlite                # Tagged XBRL facts (gitignored; built by the pipeline or ingestion.xbrl)
 ├── eval/
 │   ├── benchmark.csv               # 71 labelled Q&A rows (full benchmark)
 │   ├── benchmark_smoke.csv         # 5 of those rows, for --dry-run and CI
@@ -689,6 +727,8 @@ financial-research-agent/
 │   ├── ci_gate.json                # Thresholds, each naming the committed file it was set from
 │   ├── ci_corpus.py                # Cuts / embeds the CI index slice
 │   ├── ci_corpus.jsonl.gz          # The slice: 3,991 chunks that reproduce the full-index numbers
+│   ├── ablation.py                 # Renders the retrieval ablation matrix from results files
+│   ├── recompute_deterministic.py  # Re-derives the judge-free metrics on any results file
 │   ├── EVALUATION.md               # Method, findings, limitations
 │   ├── results/                    # Committed per-item evidence + LEADERBOARD.md (tracked)
 │   └── cache/                      # Agent-output cache (gitignored)
@@ -698,19 +738,24 @@ financial-research-agent/
 │   ├── chunker.py                  # Recursive splitter, 512 chars / 50 overlap
 │   ├── embedder.py                 # MiniLM → ChromaDB upsert
 │   ├── xbrl.py                     # Inline XBRL → data/facts.sqlite (6,089 tagged facts)
-│   └── pipeline.py                 # download → clean → chunk → embed → facts
+│   └── pipeline.py                 # locate the committed filing → clean → chunk → embed → facts
 ├── mcp_server/
 │   └── server.py                   # FastMCP server, streamable-HTTP transport
 ├── retrieval/
 │   ├── query_engine.py             # Single-shot RAG (no agent loop)
 │   ├── retriever.py                # The one retrieval call, behind RetrievalConfig
+│   ├── sparse.py                   # BM25 over the same chunks (bm25 / hybrid modes)
+│   ├── rerank.py                   # Cross-encoder reranker
+│   ├── tickers.py                  # Which company a question names (the inferred filter)
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
 ├── tests/                          # 201 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   ├── test_query_stream.py        # SSE streaming contract (2)
-│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (25)
+│   ├── test_query_meta.py          # the meter on /query and the meta stream event (2)
+│   ├── test_meter.py               # latency, tokens, cost, tool timings, trace id (6)
+│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (27)
 │   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, deterministic aggregation (8)
 │   ├── test_retriever.py           # fusion, BM25, ticker inference, retrieval switches (13)
 │   ├── test_tool_wiring.py         # tool observations round-trip through the parser (4)
@@ -719,7 +764,10 @@ financial-research-agent/
 │   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
 │   ├── test_ci_gate.py             # gate thresholds, judged checks, the index slice (17)
 │   └── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (19)
+├── web/                            # Next.js chat client (see web/README.md)
 ├── docs/adr/                       # Architecture decision records
+├── conftest.py                     # Test setup: tracing and verification forced off
+├── SECURITY.md
 ├── ROADMAP.md                      # Six upgrades done, three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
@@ -732,12 +780,12 @@ financial-research-agent/
 ## Known limitations
 
 - **Table chunking.** The recursive character splitter breaks 10-K tables across chunk boundaries, so numeric questions that depend on multi-row context (e.g. segment breakdowns) can retrieve partial rows. A dedicated table-aware splitter (or a layout-preserving parser like Unstructured) would close this gap.
-- **n = 66 for the reported runs establishes no statistical significance**, and five of seven question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 6 and 10.
-- **The reported runs are same-family judged, and the cross-family check is thin.** Both 66-item runs used a `gemini-3.6-flash` judge against a Gemini agent, so same-model-family bias applies to the headline numbers. A cross-family check was run — 20 of those items re-scored by Groq `openai/gpt-oss-120b` — and the two judges broadly agree (mean absolute divergence 0.025–0.061; agreement within 0.1 on 80–95% of items). The disagreement concentrates on the three `comparative` items, where the Gemini judge gave a flat 1.00 and the Groq judge 0.71–0.75. That is a signal worth acting on, not proof of bias: n = 3. See [eval/EVALUATION.md](eval/EVALUATION.md) finding 4.
+- **n = 71 for the headline runs (66 for the before/after model comparison) establishes no statistical significance**, and five of seven question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 6 and 10.
+- **The reported runs are same-family judged, and the cross-family check is thin.** Every judged run used a `gemini-3.6-flash` judge against a Gemini agent, so same-model-family bias applies to the headline numbers. A cross-family check was run — 20 of those items re-scored by Groq `openai/gpt-oss-120b` — and the two judges broadly agree (mean absolute divergence 0.025–0.061; agreement within 0.1 on 80–95% of items). The disagreement concentrates on the three `comparative` items, where the Gemini judge gave a flat 1.00 and the Groq judge 0.71–0.75. That is a signal worth acting on, not proof of bias: n = 3. See [eval/EVALUATION.md](eval/EVALUATION.md) finding 4.
 - **`answer_relevancy` is not reproducible to the third decimal.** RAGAS overrides the judge's temperature to 0.3 for any metric requesting n > 1 generations, which `answer_relevancy` always does. `faithfulness` and `context_recall` are stable run-to-run; small `answer_relevancy` differences are noise.
-- **Chunk labels mark the reference passage, not every passage that could answer.** The retrieval metrics score against the chunk(s) holding the passage the benchmark author cited. On 11 of 71 items the agent produced the right figure without ever retrieving a labelled chunk, because the same fact appears elsewhere in the filing. Retrieval scores are therefore a lower bound, and the figure check is the metric that says whether the answer was right.
+- **Chunk labels mark the reference passage, not every passage that could answer.** The retrieval metrics score against the chunk(s) holding the passage the benchmark author cited. On 12 of 71 items the dense baseline produced every ground-truth figure without ever retrieving a labelled chunk, because the same fact appears elsewhere in the filing. Retrieval scores are therefore a lower bound, and the figure check is the metric that says whether the answer was right.
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 155 backend tests plus 2 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path, the `/query` and `/query/stream` contracts, both terminal-failure states, list-shaped message content through every entry point that flattens it, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 201 backend tests plus 3 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). Still untested: `mcp_server/server.py` and the MCP tool contract in `agent/mcp_agent.py` — its `arun_agent` answer contract is covered, but the tool wiring is not — plus `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).

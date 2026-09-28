@@ -29,9 +29,11 @@ Chroma's metadata filter is neither indexed for it nor able to express it.
 
 ## Why SQLite
 
-- **Scale.** 6,089 facts across five filings. Every query the tools make is a
-  point lookup on an indexed key and returns in microseconds. There is no
-  workload here that a columnar engine would speed up.
+- **Scale.** 6,089 facts across five filings. Lookups are indexed on ticker,
+  concept and fiscal year; the concept resolver scans one ticker's distinct
+  concept names and the segment filter is a `LIKE`, and the tool still
+  returns in about 2 ms (p50; 14 ms p95 measured). There is no workload here
+  that a columnar engine would speed up.
 - **Zero cost.** Ships with Python; nothing to install, pin, audit or load
   into RAM on the free-tier Space.
 - **Build time.** The table is rebuilt from scratch in about three seconds as

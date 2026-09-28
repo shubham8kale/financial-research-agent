@@ -24,7 +24,7 @@ number. Every run carries a config hash and lands on
 
 **What it measured on the shipped dense retriever**, question sent verbatim,
 k = 25, 71 items: a relevant chunk in the top 5 on **50.7%** of items, in the
-top 25 on 68.0%, MRR 0.357, nDCG@5 0.373, 17.5 ms per query
+top 25 on 70.4%, MRR 0.357, nDCG@5 0.373, 17.5 ms per query
 ([`retrieval-dense-1e17cf5b5eab.json`](eval/results/retrieval-dense-1e17cf5b5eab.json)).
 Half the time the dense retriever does not put the right page in front of the
 model. That is the number the next item exists to move.
@@ -38,7 +38,7 @@ top 5, no filter, no reranking. hit@5 0.507.
 
 **Now.** Every retrieval technique is a field on `RetrievalConfig`
 ([retrieval/retriever.py](retrieval/retriever.py)), set by `RETRIEVAL_*` env
-vars and defaulting to the shipped behaviour. Seventeen configurations were
+vars and defaulting to dense top-5, the code default. Nineteen configurations were
 scored with the retriever-only runner — BM25, hybrid fusion with weight and
 depth sweeps, a cross-encoder reranker at three fetch depths, ticker filters
 inferred from the question and the oracle upper bound — for no LLM calls
@@ -71,8 +71,9 @@ fact tool was used on 34 of 71 items and the calculator on 8.
 **Left open.** `agent_hit_rate` counts index chunks only, so it falls when
 a question is answered from the fact table without a search (0.66 to 0.42);
 read it now as which path answered, not as quality. One `comparative` item
-(`qa_0062`) hit the recursion limit on this run and not on the previous one
-— run-to-run variance on an n = 4 stratum. The concept resolver is a synonym
+(`qa_0062`) hit the recursion limit on this run and on every run of this
+configuration since — a consistent failure of the fact-first prompt on that
+item, not variance. The concept resolver is a synonym
 table plus a name search; a line item it does not know ("Google Search &
 other revenues") falls back to search, which still answered correctly.
 
@@ -97,12 +98,13 @@ and the leaderboard has cost-per-query and p50 columns
 1.9 s, p95 5.9 s, 6,199 tokens in and 94 out per query, **$0.0017 per
 query**, $0.12 for the whole benchmark. 37% of wall time is inside tools,
 almost all of it the reranked search at 0.8 s per call. The same run is a
-second sample of the fact-tool configuration one day apart: 68 of 71
+second sample of the fact-tool configuration 1.7 hours apart: 68 of 71
 answers byte-identical, every judge-free metric within noise — the noise
 floor the next comparisons are read against.
 
 **Left open.** 7 of 58 fact lookups were rejected because the model left
-out the required `concept` argument, and retried; each is a wasted model
+out the required `concept` argument (it mostly retried; on one item it
+repeated the mistake, on another it fell back to search); each is a wasted model
 round trip and an argument for a default or a louder description on that
 parameter. The reranker is the latency; on the free-tier Space its share
 will be larger than here.
@@ -121,7 +123,7 @@ two items under the committed values ([eval/ci_gate.py](eval/ci_gate.py),
 value fails the dry-run). It runs on a committed 3,991-chunk slice of the
 index ([eval/ci_corpus.py](eval/ci_corpus.py)) that reproduces the
 full-index numbers for both gated configurations — a full rebuild embeds
-67,521 chunks in about 27 minutes on a 12-core laptop; the slice embeds in
+67,521 chunks in about 26 minutes on a 12-core laptop; the slice embeds in
 2.5 and is cached. The judged run is a manual workflow over ten fixed items
 with thresholds calibrated from the committed judged run, about $0.20 a
 click ([eval/EVALUATION.md](eval/EVALUATION.md), "CI quality gate").
@@ -157,7 +159,7 @@ for the wrong year that is in the cited passage verifies (limitation 15).
 The structuring call doubles p50 latency (finding 21); a smaller model for
 it, or a record emitted in the agent's final turn, would take that back.
 Zero refusals here means the refusal path is exercised by tests and one live
-incident, not by benchmark traffic (limitation 18).
+incident, not by benchmark traffic (limitation 17).
 
 ---
 
@@ -251,8 +253,9 @@ and `comparative` are 3 and 4 — since those are exactly the rows the results
 tables cannot support. Added only when an upgrade specifically needs them.
 
 **Exhaustive answer-bearing labels.** The chunk labels mark the passage the
-benchmark author cited, not every chunk that states the same fact. On 11 of 71
-items the agent produced the right figure without touching a labelled chunk.
+benchmark author cited, not every chunk that states the same fact. On 12 of 71
+items the dense baseline produced every ground-truth figure without touching a
+labelled chunk.
 Retrieval scores are therefore a lower bound. Labelling every answer-bearing
 chunk would tighten them, and would also invite labelling toward whatever the
 retriever happens to return; the figure check already answers "was the answer
