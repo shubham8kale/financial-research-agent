@@ -24,14 +24,22 @@ COLUMNS = (
 )
 
 
-def load_retrieval_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
+def load_retrieval_runs(results_dir: Path = RESULTS_DIR, bench_version: str | None = None) -> list[dict]:
+    """Complete retrieval runs; with *bench_version*, only those scored against that benchmark + labels.
+
+    Runs from different index builds carry different labels and cannot share a
+    table, so the renderer is given one version at a time.
+    """
     runs = []
     for path in sorted(results_dir.glob("retrieval-*.json")):
         with open(path, encoding="utf-8") as f:
             payload = json.load(f)
-        if payload.get("result_kind") == "retrieval" and payload.get("aggregates"):
-            payload["_file"] = path.name
-            runs.append(payload)
+        if payload.get("result_kind") != "retrieval" or not payload.get("aggregates"):
+            continue
+        if bench_version and (payload.get("config") or {}).get("benchmark_version") != bench_version:
+            continue
+        payload["_file"] = path.name
+        runs.append(payload)
     return runs
 
 

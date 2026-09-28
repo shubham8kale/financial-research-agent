@@ -128,7 +128,7 @@
       "grounded_rate",
       "verified_rate"
     ],
-    "figure_match_version": "3",
+    "figure_match_version": "4",
     "price_table_date": "2026-09-27",
     "verify_mode": "strict",
     "contract_version": "da6f5bea0c8b",
@@ -263,13 +263,13 @@
         "contract_version": "da6f5bea0c8b"
       },
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "figure_draft": null,
@@ -6196,13 +6196,13 @@
         "contract_version": "da6f5bea0c8b"
       },
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "figure_draft": null,
@@ -7305,13 +7305,13 @@
         "contract_version": "da6f5bea0c8b"
       },
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2023",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "figure_draft": null,
@@ -7428,13 +7428,13 @@
         "contract_version": "da6f5bea0c8b"
       },
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2023",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "figure_draft": null,
@@ -8608,13 +8608,13 @@
         "contract_version": "da6f5bea0c8b"
       },
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "figure_draft": null,
@@ -9243,6 +9243,14 @@
       },
       "judge_model": "gemini-3.6-flash",
       "judge_provider": "google"
+    }
+  ],
+  "recomputed": [
+    {
+      "what": "figure_* and grounding only; agent_* kept (run predates the current labels)",
+      "at": "2026-09-28T22:01:17+00:00",
+      "figure_match_version": "4",
+      "labels_file": null
     }
   ]
 }

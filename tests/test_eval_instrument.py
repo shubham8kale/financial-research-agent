@@ -171,8 +171,10 @@ def test_primary_figure_is_the_answer_not_the_context():
     assert right["figure_exact"] is False and set(right["missing"]) == {"2024", "$87,464 million"}
     wrong = figure_match(gt, "Intelligent Cloud revenue for fiscal year 2024 was $87,464 million.")
     assert wrong["figure_primary"] is False
-    # a ground truth whose only figure is a year uses that year
-    assert figure_match("fiscal year ended September 27, 2025", "It ended September 27, 2025.")["primary"] == "2025"
+    # a ground truth whose only figure is a year is not applicable (version 4): a
+    # year is not a number an answer can get right, and crediting it padded the rate
+    year_only = figure_match("fiscal year ended September 27, 2025", "It ended September 27, 2025.")
+    assert year_only["applicable"] is False and year_only["primary"] is None and year_only["figure_primary"] is None
     assert figure_match("no numbers here", "none")["figure_primary"] is None
 
 
@@ -182,7 +184,7 @@ def test_more_precise_answers_match_a_rounded_ground_truth():
     assert figure_match("$26.4 billion", "increased by $26,448 million")["figure_exact"] is True
     assert figure_match("$416,161 million", "$416.2 billion")["figure_exact"] is True     # within tolerance
     # the rounding rule never rescues a wrong year or a different figure
-    assert figure_match("fiscal 2025", "fiscal 2024")["figure_exact"] is False
+    assert figure_match("$58,705 million in fiscal 2025", "$58,705 million in fiscal 2024")["figure_exact"] is False
     assert figure_match("$58,705 million", "$43,229 million")["figure_exact"] is False
     assert figure_match("14%", "12%")["figure_exact"] is False
 
@@ -205,7 +207,7 @@ def test_form_and_item_numbers_are_not_figures():
     ]
     gt = "I cannot find a specific 2025 Reality Labs revenue figure in the provided 10-K."
     out = figure_match(gt, "Reality Labs revenue was $2,207 million in 2025.")
-    assert out["n_expected"] == 1 and out["figure_exact"] is True   # only 2025 is a figure here
+    assert out["applicable"] is False and out["figure_primary"] is None   # 2025 is the only figure, and a year (v4)
 
 
 # ── experiment bookkeeping ───────────────────────────────────────────────────

@@ -29,8 +29,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from eval.chunk_labels import LABELS_FILE, load_labels  # noqa: E402
+from eval.experiment import benchmark_version  # noqa: E402
 from eval.figure_match import FIGURE_MATCH_VERSION  # noqa: E402
-from eval.run_eval import RESULTS_DIR, attach_deterministic_metrics, build_aggregates, save_results  # noqa: E402
+from eval.run_eval import (  # noqa: E402
+    BENCHMARK_FILE, RESULTS_DIR, attach_deterministic_metrics, build_aggregates, save_results,
+)
 
 
 def recompute(path: Path, labels: dict | None) -> dict:
@@ -39,14 +42,20 @@ def recompute(path: Path, labels: dict | None) -> dict:
     if payload.get("result_kind", "generation") != "generation":
         raise ValueError(f"{path.name} is not a generation results file")
     records = payload["results"]
-    attach_deterministic_metrics(records, labels)
+    # The labels belong to one index.  A run made on another (its config records a
+    # different benchmark_version) keeps the agent_* it was scored with; only the
+    # figure and grounding metrics, which depend on stored text alone, are redone.
+    current = benchmark_version(BENCHMARK_FILE, LABELS_FILE) if labels and LABELS_FILE.exists() else None
+    same_index = bool(labels) and payload.get("config", {}).get("benchmark_version") == current
+    attach_deterministic_metrics(records, labels if same_index else None, keep_agent_retrieval=not same_index)
     if payload.get("aggregates") is not None:
         payload["aggregates"] = build_aggregates(records)
     payload.setdefault("recomputed", []).append({
-        "what": "deterministic metrics (figure_*, agent_*) and aggregates",
+        "what": ("deterministic metrics (figure_*, grounding, agent_*) and aggregates" if same_index
+                 else "figure_* and grounding only; agent_* kept (run predates the current labels)"),
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "figure_match_version": FIGURE_MATCH_VERSION,
-        "labels_file": str(LABELS_FILE.relative_to(REPO_ROOT)).replace("\\", "/") if labels else None,
+        "labels_file": str(LABELS_FILE.relative_to(REPO_ROOT)).replace("\\", "/") if same_index else None,
     })
     payload["config"]["figure_match_version"] = FIGURE_MATCH_VERSION
     save_results(payload, path)

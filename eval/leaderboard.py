@@ -50,6 +50,12 @@ def _fmt(v) -> str:
     return str(v)
 
 
+def _bench(cfg: dict) -> str:
+    """The benchmark + labels hash a run was scored against; rows with different values are not comparable."""
+    v = str(cfg.get("benchmark_version") or "—")
+    return v.replace("sha256:", "")[:12]
+
+
 def _date(payload: dict) -> str:
     return (payload.get("timestamp") or "")[:10]
 
@@ -76,11 +82,13 @@ def _gen_row(path: Path, p: dict) -> str:
         return _fmt((ov.get(name) or {}).get("mean_failures_as_zero"))
 
     return "| " + " | ".join([
-        p.get("run_id", path.stem), _date(p), cfg.get("agent_model", "—"),
+        p.get("run_id", path.stem), _date(p), _bench(cfg), cfg.get("agent_model", "—"),
         f"{cfg.get('judge_provider', '')}/{cfg.get('judge_model', '')}", cfg.get("context_format", "chunk"),
         str(ov.get("n_items", "—")),
         m("faithfulness"), m("answer_relevancy"), m("context_recall"),
-        _fmt(det.get("figure_exact_rate")), _fmt(det.get("figure_primary_rate")), _fmt(det.get("agent_hit_rate")),
+        _fmt(det.get("figure_exact_rate")), _fmt(det.get("figure_primary_rate")),
+        (f"{_fmt(det.get('agent_hit_rate_searched'))} ({det.get('n_searched')})" if det.get("n_searched") is not None
+         else _fmt(det.get("agent_hit_rate"))),
         ("—" if cost.get("cost_usd_mean") is None else f"${cost['cost_usd_mean']:.4f}"),
         ("—" if cost.get("latency_ms_p50") is None else f"{cost['latency_ms_p50'] / 1000:.1f} s"),
         f"`{cfg.get('config_hash', '—')}`", f"[{path.name}]({path.name})",
@@ -107,7 +115,7 @@ def _ret_row(path: Path, p: dict) -> str:
     ov = p["aggregates"]["overall"]
     lat = (p["aggregates"].get("latency_ms") or {})
     return "| " + " | ".join([
-        p.get("run_id", path.stem), _date(p), rc.get("mode", "—"), str(rc.get("k", "—")),
+        p.get("run_id", path.stem), _date(p), _bench(cfg), rc.get("mode", "—"), str(rc.get("k", "—")),
         _fmt(rc.get("ticker_filter")), str(ov.get("n_items", "—")),
         _fmt(ov.get("hit@5")), _fmt(ov.get("recall@5")), _fmt(ov.get("mrr")), _fmt(ov.get("ndcg@5")),
         _fmt(ov.get("recall@25")), ("—" if lat.get("p50") is None else f"{lat['p50']:.1f}"),
@@ -132,8 +140,8 @@ def render(results: list[tuple[Path, dict]]) -> str:
         "",
         "## Generation runs (schema 3: per-chunk contexts)",
         "",
-        "| run | date | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit | cost/query | p50 latency | config | file |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| run | date | benchmark | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit (searched, n) | cost/query | p50 latency | config | file |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     lines += [_gen_row(p, d) for p, d in sorted(gen, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | | | | |"]
     lines += [
@@ -141,13 +149,14 @@ def render(results: list[tuple[Path, dict]]) -> str:
         "`figure_exact`: share of items whose answer contains every ground-truth figure, context figures included "
         "(deterministic, no judge). `figure_primary`: share whose answer contains the figure the question asked for "
         "(the first non-year figure in the ground truth). `agent_hit`: share of labelled items where any relevant "
-        "index chunk appeared in the agent's tool observations. `cost/query` and `p50 latency` are measured by the "
+        "index chunk appeared in the agent's tool observations, over the items that searched the index at all "
+        "(an item answered from the fact table cannot have seen a chunk). `cost/query` and `p50 latency` are measured by the "
         "harness's own meter on runs generated after it existed (agent calls only; the judge is separate).",
         "",
         "## Retrieval runs (retriever alone, no LLM)",
         "",
-        "| run | date | mode | k | ticker_filter | n | hit@5 | recall@5 | mrr | ndcg@5 | recall@25 | p50 ms | config | file |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| run | date | benchmark | mode | k | ticker_filter | n | hit@5 | recall@5 | mrr | ndcg@5 | recall@25 | p50 ms | config | file |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     lines += [_ret_row(p, d) for p, d in sorted(ret, key=lambda x: _date(x[1]), reverse=True)] or ["| _none yet_ | | | | | | | | | | | | | |"]
     lines += [

@@ -731,6 +731,9 @@ def print_report(payload: dict) -> None:
     print("  ground truth contains a figure).  agent_*: labelled relevant chunks that")
     print("  appeared in the agent's tool observations (n = labelled items).")
     det = agg["overall"].get("deterministic") or {}
+    if det.get("n_searched") is not None:
+        print(f"  agent_hit_rate_searched: {det['agent_hit_rate_searched']} over the {det['n_searched']} items that "
+              "searched the index (the rest answered from the fact table and cannot have seen a chunk).")
     if det.get("n_grounding_applicable"):
         print(f"\n  grounding: {det['grounded_rate']} of {det['n_grounding_applicable']} items have every draft figure "
               f"in an observation ({det['grounded_figure_rate']} of figures).")
@@ -1136,8 +1139,14 @@ DETERMINISTIC_METRICS = ("figure_recall", "figure_exact_rate", "figure_primary_r
                          "grounded_rate", "verified_rate")
 
 
-def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> None:
+def attach_deterministic_metrics(records: list[dict], labels: dict | None, keep_agent_retrieval: bool = False) -> None:
     """Compute the judge-free metrics for every record, in place.
+
+    keep_agent_retrieval leaves each record's stored ``agent_retrieval`` alone:
+    a run made on an earlier index carries chunk ids from that index, and
+    scoring them against today's labels would be meaningless.  The figure and
+    grounding metrics depend only on the stored answer and observations and
+    are always recomputed.
 
     figure_*   eval/figure_match.py against the ground truth — the check that
                scores a right-figure-wrong-year answer as 0 where faithfulness
@@ -1172,6 +1181,8 @@ def attach_deterministic_metrics(records: list[dict], labels: dict | None) -> No
         draft = r.get("draft_answer")
         r["figure_draft"] = figure_match(r.get("ground_truth", ""), draft) if draft is not None and draft != r.get("answer") else None
         r["grounding"] = figure_grounding(draft if draft is not None else r.get("answer", ""), r.get("observations") or [])
+        if keep_agent_retrieval and r.get("agent_retrieval") is not None:
+            continue
         groups = scorable_groups(labels, r["id"]) if labels else []
         ranked = r.get("retrieved_chunk_ids") or []
         if groups:
@@ -1234,6 +1245,10 @@ def _deterministic_block(rows: list[dict]) -> dict:
     fig = [r["figure"] for r in rows if (r.get("figure") or {}).get("applicable")]
     drafts = [r.get("figure_draft") or r.get("figure") for r in rows if ((r.get("figure_draft") or r.get("figure")) or {}).get("applicable")]
     lab = [r["agent_retrieval"] for r in rows if (r.get("agent_retrieval") or {}).get("labelled")]
+    # agent_hit_rate over every labelled item reads as a quality score and is not one: an
+    # item answered from the fact table without a search cannot have seen a chunk.  The
+    # `_searched` variant is the same test over the items that searched the index at all.
+    lab_searched = [r["agent_retrieval"] for r in rows if (r.get("agent_retrieval") or {}).get("labelled") and _searched(r)]
     grd = [r["grounding"] for r in rows if (r.get("grounding") or {}).get("applicable")]
     ver = [r["verification"] for r in rows if (r.get("verification") or {}).get("status") not in (None, "skipped")]
 
@@ -1251,6 +1266,8 @@ def _deterministic_block(rows: list[dict]) -> dict:
         "agent_hit_rate": _mean([1.0 if a["hit"] else 0.0 for a in lab]),
         "agent_recall": _mean([a["recall"] for a in lab]),
         "agent_mrr": _mean([a["mrr"] for a in lab]),
+        "n_searched": len(lab_searched),
+        "agent_hit_rate_searched": _mean([1.0 if a["hit"] else 0.0 for a in lab_searched]),
         # grounding: every figure in the draft is in something the agent saw (n = items with a figure in the draft)
         "n_grounding_applicable": len(grd),
         "grounded_rate": _mean([1.0 if g["grounded"] else 0.0 for g in grd]),
@@ -1262,6 +1279,14 @@ def _deterministic_block(rows: list[dict]) -> dict:
         "refused_rate": _mean([1.0 if v["status"] == "refused" else 0.0 for v in ver]),
         "verification_failures": _count_failures(ver),
     }
+
+
+def _searched(record: dict) -> bool:
+    """Did this run search the index at all?  From the meter's tool counts, else from the chunk ids seen."""
+    tools = record.get("tools_used") or {}
+    if tools:
+        return bool(tools.get("search_filings") or tools.get("compare_companies"))
+    return bool(record.get("retrieved_chunk_ids"))
 
 
 def _count_failures(verifications: list[dict]) -> dict:

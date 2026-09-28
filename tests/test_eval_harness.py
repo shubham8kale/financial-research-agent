@@ -10,6 +10,8 @@
 # the same per-chunk contexts a fresh run would, or the re-scored baseline is
 # not a baseline.
 
+import json
+
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from eval import run_eval
@@ -124,3 +126,71 @@ def test_schema_and_unhashed_keys():
     assert run_eval.SCHEMA_VERSION == 3
     # throttling knobs must never change a config hash
     assert {"judge_requests_per_second", "agent_sleep_seconds"} <= set(run_eval._UNHASHED_CONFIG_KEYS)
+
+
+# ── the generate / cache / stop loop ─────────────────────────────────────────
+
+def _bench(n=3):
+    return [{"id": f"qa_{i:04d}", "question": f"q{i}", "ground_truth": "$1 million", "question_type": "numerical",
+             "ticker": "AAPL"} for i in range(1, n + 1)]
+
+
+def _fake_capture(fail_on=None, exc=None):
+    calls = []
+
+    def capture(question, verify_mode="off"):
+        calls.append((question, verify_mode))
+        if question == fail_on:
+            raise exc
+        return (f"answer to {question}", ["[1] ticker=AAPL  chunk_idx=1\n    text says $1 million"], 3, {"meter": None})
+    return capture, calls
+
+
+def test_generate_outputs_reuses_cached_items_and_checkpoints_every_new_one(monkeypatch, tmp_path):
+    monkeypatch.setattr(run_eval, "AGENT_SLEEP_SECONDS", 0)
+    capture, calls = _fake_capture()
+    monkeypatch.setattr(run_eval, "run_agent_capture", capture)
+    tag = "strict-abcd1234"
+    cached_key = run_eval._cache_key("qa_0001", "m", "p", "", tag)
+    cache = {cached_key: {"id": "qa_0001", "question": "q1", "ground_truth": "$1 million", "answer": "cached",
+                          "observations": [], "question_type": "numerical"}}
+    cache_path = tmp_path / "cache.json"
+    records, stop = run_eval.generate_outputs(_bench(3), "m", "p", cache, cache_path=cache_path,
+                                              verify_mode="strict", contract_tag=tag)
+    assert stop is None
+    assert [c for c, _ in calls] == ["q2", "q3"] and all(m == "strict" for _, m in calls)
+    assert records[0]["answer"] == "cached" and records[1]["answer"] == "answer to q2"
+    on_disk = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert set(on_disk) == {run_eval._cache_key(f"qa_000{i}", "m", "p", "", tag) for i in (1, 2, 3)}
+    # an entry cached under the untagged key (a run without the contract) is a different configuration
+    assert run_eval._cache_key("qa_0001", "m", "p") not in on_disk
+
+
+def test_generate_outputs_stops_on_a_quota_wall_without_caching_a_stub(monkeypatch, tmp_path):
+    monkeypatch.setattr(run_eval, "AGENT_SLEEP_SECONDS", 0)
+    capture, _ = _fake_capture(fail_on="q2", exc=RuntimeError("429 RESOURCE_EXHAUSTED: quota exceeded"))
+    monkeypatch.setattr(run_eval, "run_agent_capture", capture)
+    cache_path = tmp_path / "cache.json"
+    records, stop = run_eval.generate_outputs(_bench(3), "m", "p", {}, cache_path=cache_path)
+    assert [r["id"] for r in records] == ["qa_0001"]
+    assert stop and "quota" in stop and "qa_0002" in stop
+    on_disk = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert list(on_disk) == [run_eval._cache_key("qa_0001", "m", "p")]      # no stub for the item that hit the wall
+
+
+def test_generate_outputs_records_a_non_quota_failure_and_continues(monkeypatch, tmp_path):
+    monkeypatch.setattr(run_eval, "AGENT_SLEEP_SECONDS", 0)
+    capture, _ = _fake_capture(fail_on="q2", exc=ValueError("boom"))
+    monkeypatch.setattr(run_eval, "run_agent_capture", capture)
+    records, stop = run_eval.generate_outputs(_bench(3), "m", "p", {}, cache_path=tmp_path / "cache.json")
+    assert stop is None and [r["id"] for r in records] == ["qa_0001", "qa_0002", "qa_0003"]
+    assert records[1]["error"] == "boom" and records[1]["answer"].startswith("<agent error")
+    assert records[1]["observations"] == [] and records[2]["answer"] == "answer to q3"
+
+
+def test_record_reports_the_k_the_tools_retrieve(monkeypatch):
+    monkeypatch.setenv("RETRIEVAL_K", "7")
+    rec = run_eval._record(_bench(1)[0], "m", "p", answer="a", observations=[], n_messages=0)
+    assert rec["k"] == 7
+    monkeypatch.delenv("RETRIEVAL_K")
+    assert run_eval._record(_bench(1)[0], "m", "p", answer="a", observations=[], n_messages=0)["k"] == 5

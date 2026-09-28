@@ -121,7 +121,7 @@
     ],
     "config_hash": "4a3f267adb41",
     "context_format": "chunk",
-    "figure_match_version": "3"
+    "figure_match_version": "4"
   },
   "run_status": {
     "complete": true,
@@ -186,11 +186,11 @@
         "n_terminal_failure": 0
       },
       "deterministic": {
-        "n_figure_applicable": 50,
-        "figure_recall": 0.732,
-        "figure_exact_rate": 0.64,
-        "figure_primary_rate": 0.76,
-        "figure_primary_rate_draft": 0.76,
+        "n_figure_applicable": 45,
+        "figure_recall": 0.7022,
+        "figure_exact_rate": 0.6,
+        "figure_primary_rate": 0.7333,
+        "figure_primary_rate_draft": 0.7333,
         "n_labelled": 71,
         "agent_hit_rate": 0.4366,
         "agent_recall": 0.4296,
@@ -243,7 +243,7 @@
           "n_terminal_failure": 0
         },
         "deterministic": {
-          "n_figure_applicable": 8,
+          "n_figure_applicable": 4,
           "figure_recall": 1.0,
           "figure_exact_rate": 1.0,
           "figure_primary_rate": 1.0,
@@ -467,11 +467,11 @@
           "n_terminal_failure": 0
         },
         "deterministic": {
-          "n_figure_applicable": 1,
-          "figure_recall": 1.0,
-          "figure_exact_rate": 1.0,
-          "figure_primary_rate": 1.0,
-          "figure_primary_rate_draft": 1.0,
+          "n_figure_applicable": 0,
+          "figure_recall": null,
+          "figure_exact_rate": null,
+          "figure_primary_rate": null,
+          "figure_primary_rate_draft": null,
           "n_labelled": 3,
           "agent_hit_rate": 0.3333,
           "agent_recall": 0.3333,
@@ -657,13 +657,13 @@
         "AAPL_10K_chunk_354"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -4633,13 +4633,13 @@
         "META_10K_chunk_856"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5464,13 +5464,13 @@
         "MSFT_10K_chunk_296"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2023",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -5540,13 +5540,13 @@
         "META_10K_chunk_5185"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2023",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -6388,13 +6388,13 @@
         "META_10K_chunk_891"
       ],
       "figure": {
-        "applicable": true,
-        "n_expected": 1,
-        "n_found": 1,
-        "figure_recall": 1.0,
-        "figure_exact": true,
-        "primary": "2025",
-        "figure_primary": true,
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
         "missing": []
       },
       "agent_retrieval": {
@@ -6874,6 +6874,12 @@
       "at": "2026-09-28T17:00:11+00:00",
       "figure_match_version": "3",
       "labels_file": "eval/benchmark_chunks.json"
+    },
+    {
+      "what": "figure_* and grounding only; agent_* kept (run predates the current labels)",
+      "at": "2026-09-28T22:01:16+00:00",
+      "figure_match_version": "4",
+      "labels_file": null
     }
   ]
 }

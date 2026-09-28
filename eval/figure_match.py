@@ -39,9 +39,9 @@ def figure_match(ground_truth: str, answer: str) -> dict:
     """Score how many ground-truth figures the answer reproduces.
 
     Returns a dict with:
-      applicable      False when the ground truth contains no figure — the
-                      metric then says nothing about the item and every score
-                      is None, never 1.0.
+      applicable      False when the ground truth contains no figure other
+                      than a year — the metric then says nothing about the
+                      item and every score is None, never 1.0.
       n_expected      distinct figures in the ground truth
       n_found         of those, how many the answer contains
       figure_recall   n_found / n_expected
@@ -52,7 +52,8 @@ def figure_match(ground_truth: str, answer: str) -> dict:
       missing         the expected figures the answer lacks, as written
     """
     expected = _dedupe(extract_figures(ground_truth))
-    if not expected:
+    primary = primary_figure(expected)
+    if not expected or primary is None:
         return {
             "applicable": False, "n_expected": 0, "n_found": 0,
             "figure_recall": None, "figure_exact": None,
@@ -61,7 +62,6 @@ def figure_match(ground_truth: str, answer: str) -> dict:
     found = extract_figures(answer)
     missing = [e for e in expected if not any(_matches(e, f) for f in found)]
     n_found = len(expected) - len(missing)
-    primary = primary_figure(expected)
     return {
         "applicable": True,
         "n_expected": len(expected),

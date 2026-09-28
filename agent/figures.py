@@ -58,7 +58,14 @@ RELATIVE_TOLERANCE = 5e-4
 
 # Bumped whenever extraction or matching changes; recorded in results files so a
 # figure score can always be traced to the rule that produced it.
-FIGURE_MATCH_VERSION = "3"
+#   1  first version; read the "10" in "10-K" as a figure
+#   2  form/item numbers and month days are not figures
+#   3  primary figure (the first non-year figure) and precision-aware rounding
+#   4  a ground truth whose only figures are years is NOT applicable: a year is
+#      not an answer a figure check can credit, and treating it as the primary
+#      figure padded the primary-figure rate with five items and let a
+#      question whose ground truth held no figure at all count as a pass
+FIGURE_MATCH_VERSION = "4"
 
 # A number that names a form or a section is not a figure: "10-K", "8-K",
 # "Item 7A", "Form 10-Q", "Section 13".  Without this rule a ground truth that
@@ -171,14 +178,16 @@ def dedupe(figures: list[Figure]) -> list[Figure]:
 
 
 def primary_figure(figures: list[Figure]) -> Figure | None:
-    """The figure the question is about: the first non-year figure, else the first figure.
+    """The figure the question is about: the first non-year figure, or None when there is none.
 
     Ground truths in this benchmark lead with the answer and add context
     after it — "$106,265 million for fiscal year 2025 (fiscal 2024: $87,464
     million)".  The strict check demands every figure, including the context;
-    this picks out the one that answers the question.
+    this picks out the one that answers the question.  A year alone is never
+    a primary figure: an answer that names the right year has not produced a
+    number, so such an item is not applicable to the figure check (version 4).
     """
     for f in figures:
         if not f.is_year:
             return f
-    return figures[0] if figures else None
+    return None
