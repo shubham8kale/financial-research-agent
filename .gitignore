@@ -240,6 +240,8 @@ prompt.md
 # committed per-item results are the evidence a reviewer opens (see eval/EVALUATION.md).
 eval/results.json
 eval/cache/
+# Written by eval/ci_gate.py on every CI run; uploaded as a workflow artefact instead.
+eval/results/ci/
 
 # Internal deployment runbook — kept local, not published.
 DEPLOY.md

@@ -109,6 +109,32 @@ will be larger than here.
 
 ---
 
+## Done: a quality gate in CI
+
+**Was.** CI linted, ran a dry-run that made no retrieval call, and ran the
+unit tests. A change that halved hit@5 would have passed.
+
+**Now.** Every pull request scores the dense baseline and the shipped
+configuration against the 71 labelled items and fails below thresholds set
+two items under the committed values ([eval/ci_gate.py](eval/ci_gate.py),
+[eval/ci_gate.json](eval/ci_gate.json); a threshold above its own source
+value fails the dry-run). It runs on a committed 3,991-chunk slice of the
+index ([eval/ci_corpus.py](eval/ci_corpus.py)) that reproduces the
+full-index numbers for both gated configurations — a full rebuild embeds
+67,521 chunks in about 27 minutes on a 12-core laptop; the slice embeds in
+2.5 and is cached. The judged run is a manual workflow over ten fixed items
+with thresholds calibrated from the committed judged run, about $0.20 a
+click ([eval/EVALUATION.md](eval/EVALUATION.md), "CI quality gate").
+
+**Left open.** The gate is a regression detector, not a quality measure:
+two items of slack means a one-item loss passes. BM25 cannot be scored on a
+slice (its IDF is corpus-wide) and is not gated. The judged smoke meets a
+smaller haystack than production, so its scores bound the full-corpus ones
+from above. A chunking change (item 1 below) invalidates the labels and the
+slice together; both are regenerated with two commands.
+
+---
+
 ## 1. Table-aware chunking, then re-label
 
 **Now.** 26 of 71 items depend on a table and they are the stratum nothing

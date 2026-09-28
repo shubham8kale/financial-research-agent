@@ -90,12 +90,12 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 155 tests, no network / API key / index required |
+| Backend tests | pytest — 182 tests, no network / API key / index required |
 | Frontend tests | Vitest + React Testing Library — 2 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
 | Hosting | Vercel (frontend) + Hugging Face Spaces (backend), both free tier |
-| CI | GitHub Actions (backend lint + dry-run, frontend lint + tests + build) |
+| CI | GitHub Actions: lint, tests, build, and a retrieval quality gate on every PR (thresholds in `eval/ci_gate.json`, scored on a committed index slice); the judged run is a manual, paid workflow |
 
 ---
 
@@ -494,6 +494,13 @@ LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-pro
 
 # Regenerate the leaderboard from every results file.
 python -m eval.leaderboard
+
+# The CI quality gate, locally: cut the index slice (30 s), embed it apart from
+# the shipped index (~2.5 min), score the gated configurations against it.
+python -m eval.ci_corpus build
+CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_corpus index
+CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_gate retrieval
+python -m eval.ci_gate calibrate        # the judged smoke thresholds next to their calibration values
 ```
 
 Every run records a hash of its resolved configuration. A configuration that
@@ -524,14 +531,29 @@ show.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and PR to `main`/`master` as two
-parallel jobs:
+Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
+`main`/`master` as three parallel jobs, none of which needs a secret:
 
 **Backend (`build`)**
 1. Install `requirements.txt` (CPU PyTorch extra index)
 2. `flake8 .` with `--max-line-length 120 --ignore E501,W503`
-3. `python -m eval.run_eval --dry-run`
-4. `pytest` (155 tests; no zero-test escape hatch — a vanished suite fails the build)
+3. `python -m eval.run_eval --dry-run`, `python -m eval.run_retrieval_eval --dry-run`
+   and `python -m eval.ci_gate retrieval --dry-run` — the last one checks that
+   every threshold in `eval/ci_gate.json` sits at or below the committed value
+   it was set from, so the gate cannot be edited past what was measured
+4. `pytest` (182 tests; no zero-test escape hatch — a vanished suite fails the build)
+
+**Retrieval quality gate (`retrieval-gate`)**
+1. Embed the committed index slice ([`eval/ci_corpus.jsonl.gz`](eval/ci_corpus.jsonl.gz),
+   3,991 chunks) into Chroma — a few minutes once, then restored from the
+   Actions cache on the slice's hash
+2. `python -m eval.ci_gate retrieval`: the dense baseline and the shipped
+   configuration scored against the 71 labelled items with the retriever-only
+   runner (no LLM call). Seven thresholds, each two benchmark items below the
+   committed value; the PASS/FAIL table lands on the run's summary page and
+   the per-item results are uploaded as a build artefact. The slice reproduces
+   the full-index numbers for both configurations (EVALUATION.md, "CI quality
+   gate")
 
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
@@ -539,7 +561,14 @@ parallel jobs:
 3. `npm test` (2 Vitest tests on the SSE streaming client; Node 22 — vitest 4 requires >=20.19)
 4. `npm run build`
 
-No secrets are required — the backend dry-run path makes no LLM calls.
+`.github/workflows/eval-judged.yml` is the paid half, run by hand from the
+Actions tab and never on a push or a schedule: the agent and the judge over
+ten fixed benchmark items on the same slice, thresholds calibrated from the
+committed judged run over those items, about 60 judge calls and $0.20 per
+run. It reads `GEMINI_API_KEY` (and `RAGAS_JUDGE_API_KEY` for the free Groq
+cross-family judge option) from repository secrets; an incomplete run, or one
+whose agent model, retrieval configuration or item set differs from the
+calibration, fails the gate regardless of score.
 
 ---
 
@@ -573,7 +602,9 @@ This is worth knowing before sending anyone the demo link: a plain retry can lea
 
 ```
 financial-research-agent/
-├── .github/workflows/ci.yml        # GitHub Actions: lint, eval dry-run, pytest, frontend
+├── .github/workflows/
+│   ├── ci.yml                      # Every PR: lint, dry-runs, pytest, retrieval quality gate, frontend
+│   └── eval-judged.yml             # Manual: agent + judge on 10 items, judged thresholds (~$0.20)
 ├── agent/
 │   ├── financial_agent.py          # Direct in-process ReAct agent
 │   ├── mcp_agent.py                # Same ReAct loop, tools sourced from MCP
@@ -594,6 +625,10 @@ financial-research-agent/
 │   ├── figure_match.py             # Ground-truth figures reproduced in the answer
 │   ├── experiment.py               # Config hash, benchmark version, prior-run lookup
 │   ├── leaderboard.py              # Regenerates results/LEADERBOARD.md
+│   ├── ci_gate.py                  # The quality gate: thresholds vs measured, PASS/FAIL, step summary
+│   ├── ci_gate.json                # Thresholds, each naming the committed file it was set from
+│   ├── ci_corpus.py                # Cuts / embeds the CI index slice
+│   ├── ci_corpus.jsonl.gz          # The slice: 3,991 chunks that reproduce the full-index numbers
 │   ├── EVALUATION.md               # Method, findings, limitations
 │   ├── results/                    # Committed per-item evidence + LEADERBOARD.md (tracked)
 │   └── cache/                      # Agent-output cache (gitignored)
@@ -610,7 +645,7 @@ financial-research-agent/
 │   ├── query_engine.py             # Single-shot RAG (no agent loop)
 │   ├── retriever.py                # The one retrieval call, behind RetrievalConfig
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 155 tests; no network, key or index needed
+├── tests/                          # 182 tests; no network, key or index needed
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
@@ -621,7 +656,8 @@ financial-research-agent/
 │   ├── test_tool_wiring.py         # tool observations round-trip through the parser (4)
 │   ├── test_ablation.py            # ablation matrix rendering (2)
 │   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator (10)
-│   └── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
+│   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
+│   └── test_ci_gate.py             # gate thresholds, judged checks, the index slice (17)
 ├── docs/adr/                       # Architecture decision records
 ├── ROADMAP.md                      # Three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server

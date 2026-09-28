@@ -54,6 +54,12 @@ jobs:
         # Fails if the labels file goes missing or stops matching the benchmark.
         run: python -m eval.run_retrieval_eval --dry-run
 
+      - name: Quality gate dry-run
+        # Validates eval/ci_gate.json against the committed results files it
+        # names: every threshold must sit at or below the value it was set
+        # from, so a threshold can never be edited above what was measured.
+        run: python -m eval.ci_gate retrieval --dry-run
+
       - name: Run pytest
         # No zero-test escape hatch. This step used to treat pytest's exit code
         # 5 ("collected no tests") as success, from when the suite was empty.
@@ -62,6 +68,67 @@ jobs:
         # while CI stayed green. --strict-markers and -p no:cacheprovider keep
         # the run reproducible on a clean runner.
         run: python -m pytest --tb=short --strict-markers -p no:cacheprovider
+
+  retrieval-gate:
+    # The quality gate (eval/ci_gate.py): the two gated retrieval
+    # configurations are scored against the labelled benchmark on the
+    # committed index slice (eval/ci_corpus.py) and the build fails below
+    # the thresholds in eval/ci_gate.json. No LLM call and no secret. The
+    # slice is embedded once (a few minutes) and cached on its own hash;
+    # a warm run restores it in seconds. The judged, paid half of the gate
+    # is a manual workflow: eval-judged.yml.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache the embedding and reranker models
+        # all-MiniLM-L6-v2 and cross-encoder/ms-marco-MiniLM-L-6-v2, ~90 MB
+        # each, keyed on the files that name them.
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ hashFiles('ingestion/embedder.py', 'retrieval/rerank.py') }}
+
+      - name: Restore the CI index
+        # Keyed on the slice and on everything that decides how it is
+        # embedded; a change to any of them rebuilds rather than reuses.
+        id: index-cache
+        uses: actions/cache@v4
+        with:
+          path: data/chroma_db
+          key: ci-index-${{ hashFiles('eval/ci_corpus.jsonl.gz', 'ingestion/embedder.py', 'requirements.txt') }}
+
+      - name: Build the CI index from the committed slice
+        if: steps.index-cache.outputs.cache-hit != 'true'
+        run: python -m eval.ci_corpus index
+
+      - name: Retrieval quality gate
+        # Writes the PASS/FAIL table to the run's summary page and the
+        # per-item results to eval/results/ci/ (gitignored; uploaded below).
+        run: python -m eval.ci_gate retrieval
+
+      - name: Upload per-item results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrieval-gate-results
+          path: eval/results/ci/
+          if-no-files-found: ignore
 
   frontend:
     runs-on: ubuntu-latest

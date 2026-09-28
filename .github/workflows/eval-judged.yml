@@ -1,0 +1,107 @@
+name: Judged evaluation (manual)
+
+# The paid half of the quality gate: the agent answers the ten-item smoke
+# subset over the CI index slice and a judge model scores the answers, then
+# eval/ci_gate.py applies the judged thresholds (eval/ci_gate.json).  About
+# 60 judge calls, roughly $0.20 with gemini-3.6-flash, so it runs only when
+# someone clicks "Run workflow" — never on a push, never on a schedule.
+#
+# Secrets (repository settings → Secrets and variables → Actions):
+#   GEMINI_API_KEY       agent calls, and the judge when judge_provider=google
+#   RAGAS_JUDGE_API_KEY  the Groq key, used only when judge_provider=groq
+# The retrieval gate in ci.yml needs neither.
+
+on:
+  workflow_dispatch:
+    inputs:
+      judge_provider:
+        description: "Judge. google = gemini-3.6-flash (the thresholds were calibrated on it); groq = free cross-family judge, scores not comparable to the third decimal"
+        type: choice
+        options: [google, groq]
+        default: google
+      max_judge_calls:
+        description: "Hard cap on judge calls (the harness stops cleanly at the cap; an incomplete run fails the gate)"
+        default: "90"
+
+permissions:
+  contents: read
+
+# One judged run at a time: two at once would double the spend for no information.
+concurrency:
+  group: judged-eval
+  cancel-in-progress: false
+
+jobs:
+  judged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LLM_MODEL: gemini-3.1-flash-lite
+      RAGAS_LLM_MODEL: gemini-3.6-flash
+      RAGAS_JUDGE_PROVIDER: ${{ inputs.judge_provider }}
+      RAGAS_JUDGE_MODEL: openai/gpt-oss-120b
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      RAGAS_JUDGE_API_KEY: ${{ secrets.RAGAS_JUDGE_API_KEY }}
+      # The shipped retrieval configuration (eval/EVALUATION.md, "The configuration that ships").
+      RETRIEVAL_RERANK: "true"
+      RETRIEVAL_FETCH_K: "50"
+      RETRIEVAL_TICKER_FILTER: inferred
+      LANGSMITH_TRACING: "false"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache the embedding and reranker models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ hashFiles('ingestion/embedder.py', 'retrieval/rerank.py') }}
+
+      - name: Restore the CI index
+        id: index-cache
+        uses: actions/cache@v4
+        with:
+          path: data/chroma_db
+          key: ci-index-${{ hashFiles('eval/ci_corpus.jsonl.gz', 'ingestion/embedder.py', 'requirements.txt') }}
+
+      - name: Build the CI index from the committed slice
+        if: steps.index-cache.outputs.cache-hit != 'true'
+        run: python -m eval.ci_corpus index
+
+      - name: Build the XBRL fact table from the committed filings
+        # The agent's lookup_financial_fact tool reads data/facts.sqlite; a few seconds.
+        run: python -m ingestion.xbrl
+
+      - name: Run the agent and the judge on the smoke subset
+        run: |
+          python -m eval.run_eval \
+            --ids "$(python -m eval.ci_gate judged-ids)" \
+            --judge-provider "${{ inputs.judge_provider }}" \
+            --max-judge-calls "${{ inputs.max_judge_calls }}" \
+            --label ci-judged \
+            --out eval/results/ci/judged.json
+
+      - name: Judged quality gate
+        run: python -m eval.ci_gate judged --results eval/results/ci/judged.json
+
+      - name: Upload the results file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: judged-results
+          path: eval/results/ci/
+          if-no-files-found: ignore

@@ -46,12 +46,16 @@ from pathlib import Path
 
 from lxml import etree
 
+from ingestion.downloader import DATA_DIR as FILINGS_ROOT
 from ingestion.embedder import CHROMA_PERSIST_DIR
 
 logger = logging.getLogger(__name__)
 
+# The filings are the committed inputs (data/sec_filings/); the fact table is
+# a derived artefact and lives next to the index it accompanies, so pointing
+# CHROMA_PERSIST_DIR elsewhere moves the table too but never the inputs.
 DATA_DIR = CHROMA_PERSIST_DIR.parent
-FILINGS_DIR = DATA_DIR / "sec_filings" / "sec-edgar-filings"
+FILINGS_DIR = FILINGS_ROOT / "sec-edgar-filings"
 FACTS_DB = DATA_DIR / "facts.sqlite"
 
 _DOC_RE = re.compile(r"<DOCUMENT>\s*<TYPE>([^\n<]+)\n(.*?)</DOCUMENT>", re.S)

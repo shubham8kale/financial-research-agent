@@ -88,6 +88,7 @@
 # minimal code changes.
 
 import logging
+import os
 from pathlib import Path
 
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -106,7 +107,13 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 # Directory where ChromaDB persists its SQLite + binary index files.
 # Keeping this outside the Python package directory prevents accidental
 # inclusion in source distributions or Docker build contexts.
-CHROMA_PERSIST_DIR = Path(__file__).resolve().parent.parent / "data" / "chroma_db"
+# CHROMA_PERSIST_DIR in the environment points every reader at a different
+# index — a rebuild under test, or the CI slice (eval/ci_corpus.py) — without
+# touching the shipped one.  retrieval/sparse.py and ingestion/xbrl.py keep
+# their derived files (the BM25 pickle, the fact table) next to whichever
+# index this names.
+_DEFAULT_CHROMA_DIR = Path(__file__).resolve().parent.parent / "data" / "chroma_db"
+CHROMA_PERSIST_DIR = Path(os.getenv("CHROMA_PERSIST_DIR") or _DEFAULT_CHROMA_DIR).resolve()
 
 # The name of the ChromaDB collection that stores the financial filing chunks.
 # A single collection is fine for this corpus; add more collections if you

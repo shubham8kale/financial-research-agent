@@ -621,6 +621,91 @@ this benchmark; a change smaller than it is not a finding.
 
 ---
 
+## CI quality gate
+
+Every pull request now runs the retrieval instrument and fails below a
+threshold; the judged run is a workflow someone has to click. Both go
+through [`eval/ci_gate.py`](../eval/ci_gate.py) with the thresholds in
+[`eval/ci_gate.json`](../eval/ci_gate.json).
+
+**What runs on every PR.** The two configurations that matter — the dense
+baseline every number in this document started from, and the configuration
+that ships (dense 50 → cross-encoder → 25 under the inferred ticker filter)
+— are scored with the retriever-only runner against the 71 labelled items:
+no LLM call, no secret, about two minutes on the runner once the index is
+cached. Seven thresholds. Each sits two benchmark items (2/71 = 0.028)
+below the value in the committed results file it names, and the dry-run
+that every build starts with refuses a threshold above its own source
+value, so the gate cannot be tightened past what was ever measured.
+
+| configuration | metric | committed, full index | CI slice | threshold |
+|---|---|---|---|---|
+| dense | hit@5 | 0.507 | 0.507 | ≥ 0.479 |
+| dense | mrr | 0.357 | 0.357 | ≥ 0.328 |
+| dense | hit@25 | 0.704 | 0.704 | ≥ 0.676 |
+| shipped | hit@5 | 0.634 | 0.634 | ≥ 0.606 |
+| shipped | mrr | 0.496 | 0.497 | ≥ 0.468 |
+| shipped | ndcg@5 | 0.507 | 0.508 | ≥ 0.479 |
+| shipped | hit@25 | 0.789 | 0.789 | ≥ 0.761 |
+
+**The index CI scores against.** A full rebuild embeds 67,521 chunks — about
+27 minutes on a 12-core laptop, longer on a hosted runner — so CI does not
+do it. [`eval/ci_corpus.py`](../eval/ci_corpus.py) cuts a slice of the index
+and commits it ([`eval/ci_corpus.jsonl.gz`](../eval/ci_corpus.jsonl.gz):
+3,991 chunks, 434 KB): for each benchmark question the 50 nearest chunks
+with no filter and the 50 nearest under the inferred ticker filter, every
+labelled chunk, every chunk the agent retrieved with its own queries in the
+committed schema-3 runs, and 2,000 seeded random distractors. A chunk's
+embedding depends only on its own text, so a question's ranking over the
+slice at depth ≤ 50 is its ranking over the full index, and neither gated
+configuration looks deeper than 50. The table above is that claim measured:
+the slice reproduces every hit rate exactly, and the one-thousandth on MRR
+and nDCG is a single tie reordering. Embedding the slice takes about 2.5
+minutes and GitHub Actions caches the result on the fixture's hash. BM25 is
+not reproducible on a slice — its IDF is corpus-wide — and hybrid retrieval
+lost the ablation, so neither is gated. The gate also refuses to score an
+index whose chunk count is neither the slice's nor the labelled full index's,
+so a rebuilt index cannot be scored against stale labels.
+
+**The judged run, on a click.**
+[`.github/workflows/eval-judged.yml`](../.github/workflows/eval-judged.yml)
+runs the agent and the judge over ten fixed items — one or more from every
+stratum, chosen for stability: each was answered identically on the two
+committed runs of the shipped configuration a day apart (`qa_0062`, which
+hit the recursion limit on one run of two, and `qa_0064`, a correct "not
+disclosed" answer the judge scores 0, are left out on purpose) — and applies
+thresholds calibrated from what the committed judged run scored on those
+same ten items (`python -m eval.ci_gate calibrate`):
+
+| metric | calibration (`facts-v3`, 10 items) | threshold |
+|---|---|---|
+| faithfulness | 1.000 | ≥ 0.85 |
+| answer_relevancy | 0.930 | ≥ 0.75 |
+| context_recall | 0.800 | ≥ 0.60 |
+| figure_primary_rate | 1.000 | ≥ 0.85 |
+| terminal failures | 0 | ≤ 1 |
+
+About 60 judge calls, roughly $0.20 with `gemini-3.6-flash`; it never runs
+on a push or a schedule, and two clicks cannot run at once. A run whose
+agent model, retrieval configuration or item set differs from the
+calibration fails regardless of score, as does an incomplete one. A run
+under another judge — the free Groq cross-family judge is an input option —
+is scored but flagged, since two judges do not agree to the third decimal
+(finding 4).
+
+**What it does and does not catch.** A retrieval regression in code — a
+reranker that stops reordering, a filter that stops filtering, a chunk id
+format change — fails the build; a chunking change that alters chunk ids
+fails it loudly, because the labels stop resolving, until the labels and the
+slice are regenerated (two commands). The judged smoke catches "the agent
+broke": recursion failures, lost faithfulness, wrong figures. It cannot see
+a one-item change, and on the slice the agent's own reworded queries meet a
+smaller haystack than in production, so its scores bound the full-corpus
+ones from above. Two items of slack on the retrieval gate means a one-item
+loss passes: it is a regression detector, not the measurement.
+
+---
+
 ## Findings
 
 Ranked. The first two are the ones worth your time.
@@ -1357,6 +1442,14 @@ LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval \
 
 # Rebuild the leaderboard from every results file.
 python -m eval.leaderboard
+
+# The CI quality gate, locally. Cut the slice from the full index (30 s), embed
+# it apart from the shipped index (~2.5 min), score the gated configurations
+# against it; then the judged smoke thresholds next to their calibration values.
+python -m eval.ci_corpus build
+CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_corpus index
+CHROMA_PERSIST_DIR=/tmp/ci_slice python -m eval.ci_gate retrieval
+python -m eval.ci_gate calibrate
 ```
 
 A run whose resolved configuration already has a complete results file prints
@@ -1440,3 +1533,12 @@ Including the ones that weaken the numbers above.
     on those items reads 0.794 against 0.905 elsewhere. Reported as measured.
     `agent_hit_rate` likewise counts index chunks only and drops when a
     question is answered without a search.
+17. **The CI gate measures a slice, and measures it with slack.** The
+    committed 3,991-chunk slice reproduces the full-index numbers for the two
+    gated configurations (the table under "CI quality gate"), but it cannot
+    score BM25 or hybrid retrieval at all, and its thresholds sit two items
+    under the committed values, so a one-item regression passes. The judged
+    smoke run scores ten items on that slice, where the agent's own reworded
+    queries meet a smaller haystack than in production. Both gates are
+    regression detectors; the numbers in this document remain the
+    measurement.
