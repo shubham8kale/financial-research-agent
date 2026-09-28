@@ -48,6 +48,12 @@ jobs:
         # path without making any LLM calls — so it runs without GEMINI_API_KEY.
         run: python -m eval.run_eval --dry-run
 
+      - name: Retrieval eval dry-run
+        # Loads the benchmark and eval/benchmark_chunks.json and checks that
+        # every item still has a chunk label. No index, no model, no LLM call.
+        # Fails if the labels file goes missing or stops matching the benchmark.
+        run: python -m eval.run_retrieval_eval --dry-run
+
       - name: Run pytest
         # No zero-test escape hatch. This step used to treat pytest's exit code
         # 5 ("collected no tests") as success, from when the suite was empty.
