@@ -109,6 +109,21 @@ def _segment_token(segment: str) -> str:
     return _SEGMENT_ALIASES.get(key, key.replace(" ", ""))
 
 
+def segment_matches(dims: str, token: str) -> bool:
+    """True if *token* appears in the MEMBER of any dimension in *dims* ("axis=member;...").
+
+    The member is what names a segment ("us-gaap:ServiceMember"); the axis
+    names the breakdown ("srt:ProductOrServiceAxis").  Matching the whole
+    string let the token "service" hit every product row through the axis
+    name, so a lookup for Apple's services revenue returned Products first.
+    """
+    for pair in (dims or "").split(";"):
+        _, _, member = pair.partition("=")
+        if token and token in member.split(":")[-1].lower():
+            return True
+    return False
+
+
 def split_segment(concept_query: str) -> tuple[str, str | None]:
     """'Google Cloud revenue' -> ('revenue', 'google cloud').
 
@@ -268,13 +283,18 @@ class FactStore:
         if annual_only:
             sql.append("AND (period_type='instant' OR days > 300)")
         if segment:
+            # Coarse SQL prefilter on the whole dims string, then the exact test on
+            # the member names in Python: the prefilter alone matched axis names.
             sql.append("AND lower(dims) LIKE ?")
             args.append(f"%{_segment_token(segment)}%")
         else:
             sql.append("AND dim_count = 0")
-        sql.append("ORDER BY dim_count, days DESC, abs(value) DESC LIMIT ?")
-        args.append(limit)
+        sql.append("ORDER BY dim_count, days DESC, abs(value) DESC")
         rows = [self._row(r) for r in self._con.execute(" ".join(sql), args)]
+        if segment:
+            token = _segment_token(segment)
+            rows = [r for r in rows if segment_matches(r.dims, token)]
+        rows = rows[:limit]
         info["years_available"] = self.years_available(ticker, concepts)
         if not rows and not segment:
             # Nothing consolidated: offer the segment breakdown instead of silence.
@@ -324,6 +344,9 @@ def compute(operation: str, a: float, b: float, n: int | None = None) -> dict:
         if op == "cagr_pct":
             if not n or n <= 0:
                 return {"error": "cagr_pct needs n (number of periods) > 0"}
+            if b == 0 or (a / b) <= 0:
+                # A fractional power of a negative ratio is a complex number, not a growth rate.
+                return {"error": "cagr_pct needs a and b of the same sign and non-zero (the ratio a/b must be positive)"}
             result = ((a / b) ** (1 / n) - 1) * 100
         else:
             result = fn(a, b)

@@ -159,3 +159,31 @@ def test_compute_is_deterministic_and_shows_its_formula():
 def test_missing_database_is_a_clear_error(tmp_path):
     with pytest.raises(FileNotFoundError):
         FactStore(tmp_path / "nope.sqlite")
+
+
+# ── review issue 6: the segment filter and the CAGR guard ────────────────────
+
+def test_segment_filter_matches_member_names_not_axis_names():
+    tok = facts_mod._segment_token("services")
+    assert tok == "service"
+    assert facts_mod.segment_matches("srt:ProductOrServiceAxis=us-gaap:ServiceMember", tok)
+    assert not facts_mod.segment_matches("srt:ProductOrServiceAxis=us-gaap:ProductMember", tok)
+    assert not facts_mod.segment_matches("srt:ProductOrServiceAxis=aapl:IPhoneMember", tok)
+    assert facts_mod.segment_matches("us-gaap:StatementBusinessSegmentsAxis=meta:RealityLabsMember",
+                                     facts_mod._segment_token("reality labs"))
+    assert not facts_mod.segment_matches("", "service")
+
+
+def test_lookup_segment_does_not_match_through_the_axis_name(store):
+    # the synthetic filing tags one product row on srt:ProductOrServiceAxis (test:WidgetMember)
+    rows, info = store.lookup("TEST", "revenue", segment="widget")
+    assert [r.value for r in rows] == [500e6] and info["segment"] == "widget"
+    rows, _ = store.lookup("TEST", "revenue", segment="services")
+    assert rows == [], "'service' matched the axis name ProductOrServiceAxis and returned the product row"
+
+
+def test_cagr_refuses_a_non_positive_ratio():
+    assert "error" in compute("cagr_pct", -5.0, 10.0, 3)
+    assert "error" in compute("cagr_pct", 5.0, 0.0, 3)
+    assert "error" in compute("cagr_pct", 5.0, -10.0, 3)
+    assert abs(compute("cagr_pct", 121.0, 100.0, 2)["result"] - 10.0) < 1e-9
