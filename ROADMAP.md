@@ -84,7 +84,10 @@ benchmark question sent to the retriever verbatim, a relevant chunk lands in
 the top 5 on 50.7% of items; across the agent's own tool calls on the same
 items it lands anywhere in what the agent saw on **43.7%**
 (`agent_hit_rate`, reported on every generation run). The agent's rewording
-loses retrieval relative to the plain question.
+loses retrieval relative to the plain question. With the reranker and ticker
+filter switched on, `agent_hit_rate` rises to 66.2% — the reranker recovers
+some of what the rewording loses, because it re-reads the query and the
+candidates together.
 
 **Still unmeasured.** Stability. The same item on two agent models changed the
 retrieved passages on 7 of 8 (finding 3), and the same item on the same model
@@ -137,7 +140,7 @@ and `comparative` are 3 and 4 — since those are exactly the rows the results
 tables cannot support. Added only when an upgrade specifically needs them.
 
 **Exhaustive answer-bearing labels.** The chunk labels mark the passage the
-benchmark author cited, not every chunk that states the same fact. On 12 of 71
+benchmark author cited, not every chunk that states the same fact. On 11 of 71
 items the agent produced the right figure without touching a labelled chunk.
 Retrieval scores are therefore a lower bound. Labelling every answer-bearing
 chunk would tighten them, and would also invite labelling toward whatever the

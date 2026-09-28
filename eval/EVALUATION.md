@@ -224,12 +224,12 @@ judge calls. Terminal failures (7, all recursion-limit) count as 0. Evidence:
 
 | stratum | n | faithfulness | answer relevancy | context recall | figure_exact (n) | agent_hit |
 |---|---|---|---|---|---|---|
-| **all** | **71** | **0.8263** | **0.7639** | **0.7183** | **0.6346** (52) | **0.4366** |
+| **all** | **71** | **0.8263** | **0.7639** | **0.7183** | **0.6200** (50) | **0.4366** |
 | single_hop | 17 | 0.8824 | 0.8317 | 0.8235 | 1.0000 (8) | 0.6471 |
 | numerical | 33 | 0.8232 | 0.7278 | 0.6970 | 0.5758 (33) | 0.4242 |
 | multi_hop | 1 | 1.0000 | 0.6225 | 1.0000 | n/a | 1.0000 |
 | comparative | 4 | 0.4583 | 0.5611 | 0.7500 | 0.3333 (3) | 0.2500 |
-| negative | 3 | 0.8889 | 0.9517 | 0.3333 | 1.0000 (3) | 0.3333 |
+| negative | 3 | 0.8889 | 0.9517 | 0.3333 | 1.0000 (1) | 0.3333 |
 | list | 8 | 0.9375 | 0.7614 | 0.5000 | n/a | 0.1250 |
 | temporal | 5 | 0.7000 | 0.8528 | 1.0000 | 0.4000 (5) | 0.4000 |
 
@@ -264,8 +264,8 @@ Computed by `attach_deterministic_metrics()` on the same 71 answers:
 
 | | value | n |
 |---|---|---|
-| `figure_exact_rate` — every ground-truth figure present in the answer | **0.6346** | 52 items whose ground truth contains a figure |
-| `figure_recall` — share of ground-truth figures present | 0.7231 | 52 |
+| `figure_exact_rate` — every ground-truth figure present in the answer | **0.6200** | 50 items whose ground truth contains a figure |
+| `figure_recall` — share of ground-truth figures present | 0.7120 | 50 |
 | `agent_hit_rate` — a labelled chunk seen anywhere in the agent's tool observations | **0.4366** | 71 |
 | `agent_recall` — share of reference groups the agent saw | 0.4296 | 71 |
 | `agent_mrr` — by the agent's own first-seen order | 0.2942 | 71 |
@@ -273,7 +273,11 @@ Computed by `attach_deterministic_metrics()` on the same 71 answers:
 Per-stratum values are in the schema-3 baseline results file and on the
 leaderboard. Items whose ground truth has no figure (`list`, most `negative`)
 are *not applicable* to the figure check and are reported as such, never as a
-pass.
+pass. These are figure-check **version 2** numbers: version 1 read the "10" in
+"10-K" as a figure and demanded it of the answer on three `negative` items;
+every schema-3 results file was brought to version 2 by
+[`recompute_deterministic.py`](recompute_deterministic.py), which records the
+recomputation inside the file, and no judge score was touched.
 
 ---
 
@@ -342,6 +346,107 @@ missed and leaves it on 6 that dense had (`qa_0006`, `qa_0015`, `qa_0020`,
 `qa_0063`, `qa_0070`, `qa_0071`). Two of the six are `temporal` items whose
 retrieved neighbour states the same figure in a different table — finding 13's
 label-coverage caveat cuts both ways.
+
+### The winner inside the agent
+
+The retriever-only numbers say the right chunk is in front of the model more
+often. Whether the agent then answers better is a separate question, so the
+full benchmark was regenerated with the shipped configuration switched on —
+`gemini-3.1-flash-lite`, same prompt, same k = 5 per tool call, only
+`RETRIEVAL_RERANK`, `RETRIEVAL_FETCH_K` and `RETRIEVAL_TICKER_FILTER` changed
+— and compared with the schema-3 baseline on the judge-free metrics first,
+because those cost nothing and cannot drift. 71 agent runs, cached under a
+retrieval-tagged key so they can never be confused with the baseline's
+answers.
+
+| judge-free metric | baseline: dense top-5 | dense + rerank 50 + inferred ticker | change |
+|---|---|---|---|
+| `figure_exact_rate` (n = 50) | 0.6200 | **0.8600** | +0.2400 |
+| `figure_recall` (n = 50) | 0.7120 | **0.9210** | +0.2090 |
+| `agent_hit_rate` (n = 71) | 0.4366 | **0.6620** | +0.2254 |
+| `agent_recall` | 0.4296 | **0.6514** | +0.2218 |
+| `agent_mrr` | 0.2942 | **0.4395** | +0.1453 |
+| terminal failures (recursion limit) | 7 | **1** | −6 |
+| mean messages per item | 6.5 | 5.6 | |
+
+| stratum | n | figure_exact before → after | agent_hit before → after |
+|---|---|---|---|
+| single_hop | 17 | 1.000 → 1.000 | 0.647 → 0.882 |
+| numerical | 33 | 0.576 → **0.909** | 0.424 → 0.697 |
+| list | 8 | n/a | 0.125 → 0.375 |
+| temporal | 5 | 0.400 → 0.400 | 0.400 → 0.400 |
+| comparative | 4 | 0.333 → 0.667 | 0.250 → 0.750 |
+| negative | 3 | 1.000 → 1.000 (n = 1) | 0.333 → 0.000 |
+| multi_hop | 1 | n/a | 1.000 → 1.000 |
+
+Three things in this table are worth more than the headline.
+
+**Six of the baseline's seven recursion-limit failures now answer, and every
+one that has a figure to get right gets it right.** `qa_0003`, `qa_0011`,
+`qa_0031`, `qa_0043`, `qa_0054`, `qa_0055` and `qa_0060` all hit the step
+budget under dense retrieval; all but `qa_0003` have a figure in the ground
+truth and all six pass the figure check now, `qa_0003` answers without one.
+One new recursion-limit failure appeared (`qa_0063`, comparative). The agent
+was not incapable of those questions; it was searching, not finding, and
+searching again until the budget ran out. A "terminal failure" counted
+against the agent was a retrieval failure in disguise, which the schema-2
+instrument could not have shown because it had no retrieval metric to show
+it with.
+
+**The temporal stratum did not move.** Better retrieval puts the three-year
+table in front of the model, and the model still quotes the prior year on
+the same three items (`qa_0067`, `qa_0069`, `qa_0070`). Retrieval was never
+the cause of finding 2; the period has to be a filter on a structured fact
+rather than a choice left to the model, which is the structured-facts
+upgrade, not this one.
+
+**The two thin strata moved in opposite directions and neither is a
+finding.** `comparative` (n = 4) gained; `negative` (n = 3) lost its one
+agent hit — on questions whose "relevant chunk" is the passage showing a
+fact is absent, and where a reranker that surfaces the most on-topic passage
+is arguably doing its job. Read both as anecdote.
+
+Twelve items gained `figure_exact` and none lost it. 19 items gained an agent
+hit, 3 lost one (`qa_0006`, `qa_0064`, `qa_0067`).
+
+**What this comparison is not.** The baseline answers were generated on 10
+and 11 September and these on 27 September, on the same model id; the
+run-to-run variance of finding 3 was not sampled separately, so a part of
+any single item's movement may be that variance. The aggregate movements —
++0.24 on the figure check, −6 terminal failures — are far outside what
+finding 11's two repeat runs showed that variance to be (0.65 against 0.63
+faithfulness on ten items).
+
+### Judge-scored, same answers
+
+The same 71 answers, judged by `gemini-3.6-flash` under the schema-3
+instrument (426 judge calls), against the schema-3 baseline. Evidence:
+[`rerank-v3-764b3da65d36.json`](results/rerank-v3-764b3da65d36.json).
+
+| metric | baseline: dense top-5 | dense + rerank 50 + inferred ticker | change |
+|---|---|---|---|
+| faithfulness | 0.8263 | **0.9315** | +0.1052 |
+| answer relevancy | 0.7639 | **0.8688** | +0.1049 |
+| context recall | 0.7183 | **0.8873** | +0.1690 |
+| `figure_exact_rate` (n = 50) | 0.6200 | **0.8600** | +0.2400 |
+| `agent_hit_rate` (n = 71) | 0.4366 | **0.6620** | +0.2254 |
+| terminal failures | 7 | **1** | -6 |
+
+| stratum | n | faithfulness | answer relevancy | context recall |
+|---|---|---|---|---|
+| single_hop | 17 | 0.882 → 0.882 | 0.832 → 0.940 | 0.824 → 0.882 |
+| numerical | 33 | 0.823 → 0.990 | 0.728 → 0.960 | 0.697 → 1.000 |
+| multi_hop | 1 | 1.000 → 1.000 | 0.623 → 0.738 | 1.000 → 1.000 |
+| comparative | 4 | 0.458 → 0.750 | 0.561 → 0.577 | 0.750 → 1.000 |
+| negative | 3 | 0.889 → 0.722 | 0.952 → 0.301 | 0.333 → 0.000 |
+| list | 8 | 0.938 → 0.912 | 0.761 → 0.726 | 0.500 → 0.625 |
+| temporal | 5 | 0.700 → 1.000 | 0.853 → 0.853 | 1.000 → 1.000 |
+
+Items up / down: faithfulness 11 / 4,
+answer relevancy 29 / 22,
+context recall 13 / 1. Terminal
+failures count as 0 in every mean, and the judge's own run-to-run variance
+(finding 7) applies to the relevancy column in particular.
 
 ---
 
@@ -762,13 +867,11 @@ Where the retriever is weakest is also where the questions are hardest:
 metric (hit@5 0.46 against 0.53). Chunks cut mid-table are a plausible cause
 and now a testable one.
 
-### 13. Chunk labels are a lower bound: 12 items were answered correctly without a labelled chunk
+### 13. Chunk labels are a lower bound: 11 items were answered correctly without a labelled chunk
 
-On 12 of 71 items the agent's answer contains every ground-truth figure
+On 11 of 71 items the agent's answer contains every ground-truth figure
 (`figure_exact = True`) yet none of its tool observations contained a labelled
-chunk (`agent_hit = False`): `qa_0001`, `qa_0009`, `qa_0019`, `qa_0020`,
-`qa_0032`, `qa_0033`, `qa_0044`, `qa_0048`, `qa_0065`, `qa_0066`, `qa_0068`,
-`qa_0071`. `qa_0001` is the plainest case: the label is the cover page
+chunk (`agent_hit = False`): `qa_0001`, `qa_0009`, `qa_0019`, `qa_0020`, `qa_0032`, `qa_0033`, `qa_0044`, `qa_0048`, `qa_0066`, `qa_0068`, `qa_0071`. `qa_0001` is the plainest case: the label is the cover page
 (`AAPL_10K_chunk_0`, "For the fiscal year ended September 27, 2025"); the
 agent retrieved five chunks from the body of the filing, none of them the cover
 page, and answered from a passage that states the same date.
@@ -1042,10 +1145,11 @@ Including the ones that weaken the numbers above.
 5. **One embedding model**, used for both retrieval and the judge's relevancy
    comparison. That is self-contained and convenient, and it also means the judge
    shares the retriever's blind spots.
-6. **No retrieval-variant comparison yet.** One k, one chunk size, one splitter,
-   one strategy. Nothing was varied, so nothing here says any of those choices
-   is good. Instrument v2 makes a comparison measurable (finding 12); none has
-   been run.
+6. **The retrieval comparison covers ranking, not chunking.** Seventeen
+   retriever configurations were measured (Retrieval ablation, findings
+   16–17), but all over the same 512-character chunks and the same index.
+   Table-aware chunking, query rewriting and a larger reranker were not
+   measured; the first is ROADMAP item 1.
 7. **The judge-bias result is n = 3** on the comparative stratum. A signal, not a
    proof (finding 4).
 8. **`answer_relevancy` is not reproducible to the third decimal** (finding 7).
@@ -1076,8 +1180,13 @@ Including the ones that weaken the numbers above.
     generation.** The same 71 answers the schema-2 tables scored were re-judged
     per chunk, so the two instruments are compared on identical outputs — and
     no new sample of the run-to-run variance in findings 2 and 3 was taken.
-    A retrieval variant will be compared against a baseline generated in the
-    same session, not against this file.
+    The reranked configuration was compared against this file rather than
+    against a freshly generated dense baseline, to hold the judge spend at two
+    runs: its baseline answers date from 10–11 September and its own from 27
+    September, on the same model id. The judge-free deltas (+0.24 on the
+    figure check, −6 terminal failures) are far larger than the variance
+    finding 11 measured on repeat runs, but a same-session dense regeneration
+    has not been run.
 15. **The figure check tests presence, not attribution** (finding 14). An
     answer that quotes the right figure and the wrong one side by side passes
     unless a year is missing. The verbatim-citation verifier is the tighter

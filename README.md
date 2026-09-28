@@ -274,8 +274,8 @@ the 50.7% the plain question achieved.
 ### Figure check (no LLM)
 
 Every figure in the ground truth must appear in the answer; years must match
-exactly. On the 52 items whose ground truth contains a figure, the cached
-`gemini-3.1-flash-lite` answers pass **63.5%** (`figure_exact_rate`). This is
+exactly. On the 50 items whose ground truth contains a figure, the cached
+`gemini-3.1-flash-lite` answers pass **62.0%** (`figure_exact_rate`). This is
 the check that scores a right-figure-wrong-year answer as a failure where
 faithfulness scored it 1.00 (finding 14).
 
@@ -288,7 +288,7 @@ failures (7, all recursion-limit) count as 0. Evidence and per-stratum rows:
 
 | n | faithfulness | answer relevancy | context recall | figure_exact | agent_hit |
 |---|---|---|---|---|---|
-| 71 | **0.826** | 0.764 | 0.718 | 0.635 (n = 52) | 0.437 |
+| 71 | **0.826** | 0.764 | 0.718 | 0.620 (n = 50) | 0.437 |
 
 On the 62 answers shared with the schema-2 run below, the new instrument
 returned the same `context_recall` on every item and faithfulness within two
@@ -297,6 +297,24 @@ items of the old score. It also found that stripping the `[META 10-K, chunk
 because the chunk text says "the Company" and only the header says which one
 (EVALUATION.md finding 15). This is the baseline every retrieval change is
 compared against.
+
+### The reranker inside the agent
+
+The full benchmark regenerated with the shipped retrieval configuration
+switched on, same model, same prompt, compared on the metrics that need no
+judge:
+
+| | dense top-5 (baseline) | dense + rerank 50 + inferred ticker | change |
+|---|---|---|---|
+| `figure_exact` (n = 50) | 0.620 | **0.860** | +0.24 |
+| `agent_hit` (n = 71) | 0.437 | **0.662** | +0.23 |
+| terminal failures (recursion limit) | 7 | **1** | −6 |
+
+Six of the seven recursion-limit failures in the baseline now answer, every
+one with a figure to get right getting it right: the agent was searching
+without finding until its step budget ran out. The `temporal` items did not move — the model still quotes the prior
+year when the year is unstated — which is a period-selection problem, not a
+retrieval one. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-764b3da65d36.json](eval/results/rerank-v3-764b3da65d36.json).
 
 ### Answer quality, schema 2 (contexts scored as observation blobs)
 
@@ -503,7 +521,7 @@ financial-research-agent/
 - **n = 66 for the reported runs establishes no statistical significance**, and five of seven question-type strata are n ≤ 8 (`multi_hop` is a single item in the whole benchmark). The per-type breakdown is directional at best. Free-tier quota previously capped the reported run at n = 8 — the Gemini free tier allows 20 requests per day, per model, per project, measured from live 429 bodies — and the harness is checkpointed and resumable because of it; see [eval/EVALUATION.md](eval/EVALUATION.md) findings 6 and 10.
 - **The reported runs are same-family judged, and the cross-family check is thin.** Both 66-item runs used a `gemini-3.6-flash` judge against a Gemini agent, so same-model-family bias applies to the headline numbers. A cross-family check was run — 20 of those items re-scored by Groq `openai/gpt-oss-120b` — and the two judges broadly agree (mean absolute divergence 0.025–0.061; agreement within 0.1 on 80–95% of items). The disagreement concentrates on the three `comparative` items, where the Gemini judge gave a flat 1.00 and the Groq judge 0.71–0.75. That is a signal worth acting on, not proof of bias: n = 3. See [eval/EVALUATION.md](eval/EVALUATION.md) finding 4.
 - **`answer_relevancy` is not reproducible to the third decimal.** RAGAS overrides the judge's temperature to 0.3 for any metric requesting n > 1 generations, which `answer_relevancy` always does. `faithfulness` and `context_recall` are stable run-to-run; small `answer_relevancy` differences are noise.
-- **Chunk labels mark the reference passage, not every passage that could answer.** The retrieval metrics score against the chunk(s) holding the passage the benchmark author cited. On 12 of 71 items the agent produced the right figure without ever retrieving a labelled chunk, because the same fact appears elsewhere in the filing. Retrieval scores are therefore a lower bound, and the figure check is the metric that says whether the answer was right.
+- **Chunk labels mark the reference passage, not every passage that could answer.** The retrieval metrics score against the chunk(s) holding the passage the benchmark author cited. On 11 of 71 items the agent produced the right figure without ever retrieving a labelled chunk, because the same fact appears elsewhere in the filing. Retrieval scores are therefore a lower bound, and the figure check is the metric that says whether the answer was right.
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
