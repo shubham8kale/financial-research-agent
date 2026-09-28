@@ -11,9 +11,10 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **Cold start:** the backend runs on a free tier and sleeps after inactivity — the **first request may take ~30–60 s** to wake the container, after which answers stream token-by-token. Please don't load-test the live link (Gemini free-tier RPM limits).
 - **The deployed backend is a separate repository, redeployed deliberately.** It lives in
   its own Hugging Face Space repo rather than being built from this one on every push, so
-  the two can drift. Its application code is **synced by hand from `main`** and lags it
-  until the next sync: the fact tools, retrieval switches, meter and answer verification
-  described below reach the Space only when it is re-synced (see Deploy). What deliberately differs is the
+  the two can drift. Its application code is **synced by hand from `main`**; the last sync
+  is commit `11bb229` (2026-09-28), which carries everything described below — fact tools,
+  retrieval switches, meter and answer verification. A later commit on `main` reaches the
+  Space only at the next sync (see Deploy). What deliberately differs is the
   deployment machinery: the Space ships a **prebuilt Chroma index via Git LFS**, because
   re-embedding 67K chunks at image-build time exceeds Hugging Face's build timeout on the
   free CPU builder, whereas this repo's Dockerfile rebuilds the index and gitignores it.
@@ -669,9 +670,7 @@ calibration, fails the gate regardless of score.
 The whole stack runs on free tiers:
 
 - **Frontend → Vercel (Hobby).** Import the repo, set **Root Directory** to `web/`, and set `NEXT_PUBLIC_API_BASE_URL` to the backend URL.
-- **Backend → Hugging Face Spaces (Docker SDK).** Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets. To run the measured retrieval configuration rather than plain dense search, also set `RETRIEVAL_RERANK=true`, `RETRIEVAL_FETCH_K=50` and `RETRIEVAL_TICKER_FILTER=inferred` as Space variables; the cross-encoder (~90 MB) downloads on first start, which adds to the cold start once per rebuild, and reranking adds roughly a second of CPU per retrieval call on the free tier's two cores.
-
-  The Space ships a prebuilt index and skips the ingestion pipeline, so it also needs `python -m ingestion.xbrl` run once (about three seconds) to create `data/facts.sqlite`; without it the fact tools tell the agent to fall back to search.
+- **Backend → Hugging Face Spaces (Docker SDK).** Set `GEMINI_API_KEY` and `FRONTEND_ORIGINS` as Space secrets. The Space's own Dockerfile sets the measured retrieval configuration (`RETRIEVAL_RERANK=true`, `RETRIEVAL_FETCH_K=50`, `RETRIEVAL_TICKER_FILTER=inferred`) as image environment, pre-downloads the cross-encoder (~90 MB) at build time, and runs `python -m ingestion.xbrl` at build time (about three seconds) to create `data/facts.sqlite` from the LFS-shipped filings; Space variables of the same names override the image defaults. Reranking adds roughly a second of CPU per retrieval call on the free tier's two cores, and verification adds a second model call per answer.
 
   Note that this repo's [Dockerfile](Dockerfile) and the one in the deployed Space differ deliberately. Here, the image **rebuilds** the Chroma index at build time from the committed filings under `data/sec_filings/` using local MiniLM embeddings, so the ~360–370 MB index never has to live in git. Re-embedding 67,521 chunks exceeds Hugging Face's build timeout on the free CPU builder, so the Space instead **ships a prebuilt index via Git LFS** and skips the rebuild. Copying this Dockerfile into the Space would produce a build that times out.
 

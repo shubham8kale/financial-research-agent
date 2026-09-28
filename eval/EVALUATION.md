@@ -1693,8 +1693,9 @@ Including the ones that weaken the numbers above.
     future re-run against a different judge is a new baseline, not a continuation.
 12. **The deployed demo is a manually synced copy.** The Hugging Face Space is a
     separate repository, not built from this one on every push. Its application
-    code is a hand-synced copy that, until the next sync, predates the six
-    upgrades measured here, and the deployment machinery differs by design (it
+    code is a hand-synced copy, last synced at commit `11bb229` (2026-09-28),
+    which carries the six upgrades measured here; the deployment machinery
+    differs by design (it
     ships a prebuilt Chroma index via Git LFS). Because the sync is manual it can
     drift again, so the revision serving any given demo session is not guaranteed
     to be the revision measured here. See the README.
