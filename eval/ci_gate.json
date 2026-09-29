@@ -10,7 +10,7 @@
           "mode": "dense",
           "k": 25
         },
-        "committed": "eval/results/retrieval-dense-eb4d1b4fefba.json",
+        "committed": "eval/results/retrieval-dense-5571ce86feed.json",
         "thresholds": {
           "hit@5": 0.478,
           "mrr": 0.328,
@@ -26,7 +26,7 @@
           "rerank": true,
           "ticker_filter": "inferred"
         },
-        "committed": "eval/results/retrieval-dense-rerank-f50-tf-inferred-14ba1d196c5a.json",
+        "committed": "eval/results/retrieval-dense-rerank-f50-tf-inferred-65a9dd460723.json",
         "thresholds": {
           "hit@5": 0.633,
           "mrr": 0.51,
@@ -49,7 +49,7 @@
       "qa_0066",
       "qa_0067"
     ],
-    "subset_note": "One or more items from every stratum (single_hop 2, numerical 3, multi_hop 1, list 1, comparative 1, negative 1, temporal 1), each answered identically on the two committed runs of the measured configuration 1.7 hours apart and again under the output contract; qa_0062 (recursion limit on every run of this configuration) and qa_0064 (a correct 'not disclosed' answer the judge scores 0) are left out on purpose.",
+    "subset_note": "One or more items from every stratum (single_hop 2, numerical 3, multi_hop 1, list 1, comparative 1, negative 1, temporal 1), chosen for stability on the first index: each was answered identically on the two committed runs of the measured configuration 1.7 hours apart and again under the output contract. On the rebuilt index 8 of the 10 drafts are byte-identical to the first-index contract run and 2 (qa_0047, qa_0057) differ in wording only. qa_0062 (recursion limit on every first-index run of this configuration) and qa_0064 (a correct 'not disclosed' answer the judge scores 0) are left out on purpose; qa_0024, the rebuilt index's one recursion-limit item, is not in the subset.",
     "expect": {
       "agent_model": "gemini-3.1-flash-lite",
       "judge_model": "gemini-3.6-flash",
@@ -59,10 +59,11 @@
         "fetch_k": 50,
         "ticker_filter": "inferred"
       },
-      "verify_mode": "off"
+      "verify_mode": "strict",
+      "contract_version": "da6f5bea0c8b"
     },
-    "verify_mode_note": "The calibration run predates the output contract, so the judged workflow sets VERIFY_MODE=off and scores exactly what was calibrated. Under the contract (contract-v3) all ten items verified on the first attempt with drafts identical to the calibration run, so the numbers would be the same today; recalibrate from a judged strict run before changing this to strict.",
-    "calibrated_from": "eval/results/facts-v3-70db17ff5e31.json",
+    "verify_mode_note": "Calibrated on reindex-v3, a strict-mode run on the rebuilt index judged by gemini-3.6-flash, so the judged workflow runs VERIFY_MODE=strict and scores what production serves: the verified answer, or the refusal. A run under another verify mode or another contract version fails regardless of score; recalibrate from a new judged run after changing either. The earlier calibration (facts-v3, first index, no contract) gave faithfulness 1.000, answer_relevancy 0.930, context_recall 0.800, figure_primary 1.000 on the same ten items.",
+    "calibrated_from": "eval/results/reindex-v3-5b1deb95bdcc.json",
     "thresholds": {
       "faithfulness": 0.85,
       "answer_relevancy": 0.75,

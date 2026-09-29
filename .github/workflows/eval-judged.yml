@@ -47,11 +47,12 @@ jobs:
       RETRIEVAL_RERANK: "true"
       RETRIEVAL_FETCH_K: "50"
       RETRIEVAL_TICKER_FILTER: inferred
-      # The judged thresholds were calibrated on a run made before the output
-      # contract existed (eval/ci_gate.json, expect.verify_mode), so this run
-      # scores exactly that: the agent's own answers.  The contract is covered
-      # by its unit tests and by verified_rate on every generation run.
-      VERIFY_MODE: "off"
+      # The judged thresholds were calibrated on a strict-mode run on the
+      # rebuilt index (eval/ci_gate.json: expect.verify_mode and
+      # expect.contract_version), so this run scores what production serves —
+      # the verified answer, or the refusal — and a contract change fails the
+      # gate until it is recalibrated.
+      VERIFY_MODE: "strict"
       LANGSMITH_TRACING: "false"
       PYTHONUNBUFFERED: "1"
 

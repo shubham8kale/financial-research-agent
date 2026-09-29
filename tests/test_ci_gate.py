@@ -139,10 +139,18 @@ def test_judged_gate_refuses_a_run_of_a_different_configuration():
 def test_judged_gate_refuses_a_run_under_another_verify_mode():
     gate = ci_gate.load_gate()
     sub = _judged_payload(gate)
-    sub["config"]["verify_mode"] = "strict"
+    sub["config"]["verify_mode"] = "off"
+    passed, summary, _ = ci_gate.run_judged_gate(gate, sub)
+    assert not passed and "verify_mode is 'off', calibrated on 'strict'" in summary
+
+
+def test_judged_gate_refuses_a_run_under_another_contract_version():
+    gate = ci_gate.load_gate()
+    sub = _judged_payload(gate)
     sub["config"]["contract_version"] = "abc"
     passed, summary, _ = ci_gate.run_judged_gate(gate, sub)
-    assert not passed and "verify_mode is 'strict', calibrated on 'off'" in summary
+    expected = gate["judged"]["expect"]["contract_version"]
+    assert not passed and f"contract_version is 'abc', calibrated on '{expected}'" in summary
 
 
 def test_judged_values_count_agent_errors_and_unexplained_nans():
@@ -184,8 +192,8 @@ def test_validate_gate_reports_a_threshold_above_its_calibration():
     gate = ci_gate.load_gate()
     gate["retrieval"]["configs"][0]["thresholds"]["hit@5"] = 0.99
     gate["judged"]["thresholds"]["faithfulness"] = 1.01
-    gate["judged"]["expect"]["verify_mode"] = "strict"    # the calibration run predates the contract
+    gate["judged"]["expect"]["verify_mode"] = "off"    # the calibration run was made under the contract, strict
     problems = ci_gate.validate_gate(gate)
     assert any("dense: threshold hit@5 0.99 is above" in p for p in problems)
     assert any("judged: threshold faithfulness 1.01 is above" in p for p in problems)
-    assert any("calibration run does not match `expect`: verify_mode is 'off'" in p for p in problems)
+    assert any("calibration run does not match `expect`: verify_mode is 'strict'" in p for p in problems)
