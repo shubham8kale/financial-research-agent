@@ -229,6 +229,16 @@ def test_benchmark_version_changes_with_content(tmp_path):
     assert v1.startswith("sha256:")
 
 
+def test_benchmark_version_ignores_line_endings(tmp_path):
+    # The repository stores LF; a Windows checkout can hold the same file as CRLF until
+    # git normalises it.  One committed benchmark must hash to one version on both.
+    lf, crlf = tmp_path / "b.csv", tmp_path / "b2" / "b.csv"
+    crlf.parent.mkdir()
+    lf.write_bytes(b"id,question\nqa_1,what\n")
+    crlf.write_bytes(b"id,question\r\nqa_1,what\r\n")
+    assert benchmark_version(lf) == benchmark_version(crlf)
+
+
 def test_find_existing_result_ignores_partial_runs(tmp_path):
     (tmp_path / "partial.json").write_text(json.dumps({
         "config": {"config_hash": "abc"}, "run_status": {"complete": False}}), encoding="utf-8")

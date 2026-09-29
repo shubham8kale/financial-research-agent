@@ -32,10 +32,17 @@ def config_hash(config: dict, length: int = 12) -> str:
 
 
 def file_sha256(path: Path) -> str:
+    """SHA-256 of the file with CRLF line endings read as LF.
+
+    The repository stores text as LF (.gitattributes), but a file written on
+    Windows sits on disk as CRLF until git next touches it, and the same
+    committed benchmark then hashed to two different versions on two
+    checkouts.  Hashing the LF form makes the version a property of the
+    content git commits, whatever the line endings of the working copy.
+    """
     h = hashlib.sha256()
     with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 20), b""):
-            h.update(block)
+        h.update(f.read().replace(b"\r\n", b"\n"))
     return h.hexdigest()
 
 

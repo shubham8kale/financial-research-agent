@@ -195,7 +195,7 @@ def main() -> int:
         "items": items,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w", encoding="utf-8") as f:
+    with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(payload, f, indent=1, ensure_ascii=False)
         f.write("\n")
     print(json.dumps(payload["summary"], indent=2))
