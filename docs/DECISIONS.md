@@ -120,6 +120,11 @@ year (figure check version 4).
 regression detector: one or two items of movement is within the measured
 run-to-run noise, three is not (CI quality gate section).
 
+**The judged gate runs strict and pins the contract version.** Calibrated
+on a strict-mode run on the rebuilt index (finding 22), the gate scores what
+production serves; a run under another verify mode or contract version fails
+until it is recalibrated, so the contract cannot drift unmeasured.
+
 **CI rebuilds the real index.** With the clean corpus embedding in about a
 minute, CI builds the same index the docs measure from the committed filings
 and caches it on their hash; an earlier committed slice was retired when the

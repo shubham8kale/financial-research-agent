@@ -25,7 +25,7 @@ number. Every run carries a config hash and lands on
 **What it measured on the shipped dense retriever**, question sent verbatim,
 k = 25, 71 items: a relevant chunk in the top 5 on **50.7%** of items, in the
 top 25 on 74.7%, MRR 0.358, nDCG@5 0.369, 13.6 ms per query
-([`retrieval-dense-eb4d1b4fefba.json`](eval/results/retrieval-dense-eb4d1b4fefba.json); the same 50.7% on the first index).
+([`retrieval-dense-5571ce86feed.json`](eval/results/retrieval-dense-5571ce86feed.json); the same 50.7% on the first index).
 Half the time the dense retriever does not put the right page in front of the
 model. That is the number the next item exists to move.
 
@@ -156,9 +156,12 @@ agent when the stream's client leaves; the two fact-store bugs are fixed with
 tests; the generate / cache / stop loop is tested; and
 [docs/DECISIONS.md](docs/DECISIONS.md) and a license exist.
 
-**Left open.** Answer quality has not been judged on the rebuilt index
-(limitation 19; about $1.10). The Space still ships its index through LFS
-although a build-time rebuild would now fit.
+**Left open.** The shipped configuration was judged on the rebuilt index
+(faithfulness 0.949 against 0.957, inside run-to-run variance) and the
+judged CI gate is recalibrated on that run in strict mode; the baseline and
+reranker-only configurations were not re-judged, so findings 16–21's
+before/after remain the first index's. The Space still ships its index
+through LFS although a build-time rebuild would now fit.
 
 ---
 

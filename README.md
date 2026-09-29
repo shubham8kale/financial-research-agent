@@ -5,8 +5,8 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 ## In one minute
 
 - **What it is.** Five FY2025 10-K filings, cleaned to their 10-K documents (4,783 chunks) and their tagged XBRL facts (6,089), behind a LangGraph ReAct agent with five tools, a FastAPI streaming API, an MCP server and a Next.js chat UI. Free tiers throughout.
-- **What is measured, and where.** A 71-item labelled benchmark ([eval/EVALUATION.md](eval/EVALUATION.md), every number traceable to a file under [eval/results/](eval/results/)). Retrieval, scored without a model: the shipped configuration puts a relevant chunk in the top 5 on **66.2%** of questions (dense alone 50.7%). Answers: the figure the question asked for is in the answer on **100%** of the items that have one (judged runs, first index), faithfulness 0.957. Every answer is verified against what was retrieved before it is served (70 of 70 verified on the latest run), at about $0.002 and 4 s per query on a laptop.
-- **What it is not.** Not a production service (no auth, no rate limit, one small corpus), not statistically powered (n = 71, five strata under 9 items), and its answer-quality judge has not yet been re-bought on the rebuilt index (limitation 19).
+- **What is measured, and where.** A 71-item labelled benchmark ([eval/EVALUATION.md](eval/EVALUATION.md), every number traceable to a file under [eval/results/](eval/results/)). Retrieval, scored without a model: the shipped configuration puts a relevant chunk in the top 5 on **66.2%** of questions (dense alone 50.7%). Answers, judged on the rebuilt index: the figure the question asked for is in the answer on **100%** of the items that have one, faithfulness 0.949 (0.957 on the first index). Every answer is verified against what was retrieved before it is served (70 of 70 verified on the latest run), at about $0.002 and 4 s per query on a laptop.
+- **What it is not.** Not a production service (no auth, no rate limit, one small corpus), not statistically powered (n = 71, five strata under 9 items), and the judged before/after of each upgrade was measured on the first index (limitation 19).
 - **What changed after review.** Three-quarters of the first index was XBRL markup, identifiers and metadata rather than 10-K text; finding 22 records the audit, the fix and every number that moved. [docs/DECISIONS.md](docs/DECISIONS.md) lists the design decisions with their evidence. MIT licensed.
 
 ---
@@ -461,7 +461,7 @@ The cached `gemini-3.1-flash-lite` answers for all 71 items, re-judged by
 `gemini-3.6-flash` with each retrieved chunk as its own context. Terminal
 failures (7, all recursion-limit) stay in the mean, scored on the placeholder
 text they returned, never excluded. Evidence and per-stratum rows:
-[baseline-v3-aea128d62403.json](eval/results/baseline-v3-aea128d62403.json).
+[baseline-v3-a05e986405ba.json](eval/results/baseline-v3-a05e986405ba.json).
 
 | n | faithfulness | answer relevancy | context recall | figure_exact | agent_hit |
 |---|---|---|---|---|---|
@@ -495,7 +495,7 @@ finding until its step budget ran out; one new item (`qa_0063`) hit the limit
 instead, hence −6 net. The `temporal` items did not improve — `figure_exact`
 2 of 5 both times, and `figure_primary` fell from 4 of 5 to 2 of 5 — the model
 still quotes the prior year when the year is unstated, a period-selection
-problem, not a retrieval one; the fact tools close it in the next section. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-764b3da65d36.json](eval/results/rerank-v3-764b3da65d36.json).
+problem, not a retrieval one; the fact tools close it in the next section. Judge-scored on the same answers: faithfulness 0.826 → **0.931**, answer relevancy 0.764 → 0.869, context recall 0.718 → 0.887. Evidence: [rerank-v3-c27752c52dab.json](eval/results/rerank-v3-c27752c52dab.json).
 
 ### The fact tools inside the agent
 
@@ -517,7 +517,14 @@ fiscal year is an argument to a lookup, not a column the model picks. On
 the items that used the fact tool faithfulness is 0.984. Context recall
 fell on those same items because the metric was built for passages and is
 now handed fact rows (EVALUATION.md limitation 16). Evidence:
-[facts-v3-70db17ff5e31.json](eval/results/facts-v3-70db17ff5e31.json).
+[facts-v3-7b536024e855.json](eval/results/facts-v3-7b536024e855.json).
+
+**On the rebuilt index** (EVALUATION.md finding 22): the same configuration
+under the output contract, judged the same way, scores faithfulness
+0.949, answer relevancy 0.890, context recall 0.845 and `figure_primary`
+1.000 (n = 46), with 70 of 70 answers verified — within a hundredth of
+the first-index numbers above. Evidence:
+[reindex-v3-5b1deb95bdcc.json](eval/results/reindex-v3-5b1deb95bdcc.json).
 
 ### Answer quality, schema 2 (contexts scored as observation blobs)
 

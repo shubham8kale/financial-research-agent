@@ -71,9 +71,13 @@ every document in each EDGAR submission — exhibits, XBRL taxonomy files and
 the HTML-escaped XBRL instance — and 74% of the 67,521-chunk index was
 escaped markup, XBRL identifiers or MetaLinks JSON; 23% was prose. It now reads the 10-K document alone: 4,783 chunks, 86% prose,
 built in 72 seconds instead of 26 minutes. **Every retrieval number in this
-document is on the rebuilt index**; the judged answer-quality runs predate
-it and are marked as such, and the judge-free run on the new index is under
-finding 22.
+document is on the rebuilt index.** The judged runs that built the tools
+(findings 16–21) predate it and are marked as such; the shipped
+configuration was then judged on the rebuilt index (finding 22):
+faithfulness 0.949, answer relevancy 0.890, context recall 0.845
+against 0.957 / 0.894 / 0.852 on the first index — inside the run-to-run
+variance finding 11 measured. The corpus fix changed what retrieval finds,
+not what the model answers.
 
 ---
 
@@ -214,7 +218,7 @@ not every chunk that states the same fact. Finding 13 quantifies the gap.
 unchanged to the dense retriever (all-MiniLM-L6-v2, ChromaDB, no filter),
 asks for 25 chunks, and scores the ranked ids against the labels. 71 items,
 no LLM call, 13.6 ms p50 per query on the current 4,783-chunk index.
-Evidence: [`retrieval-dense-eb4d1b4fefba.json`](results/retrieval-dense-eb4d1b4fefba.json).
+Evidence: [`retrieval-dense-5571ce86feed.json`](results/retrieval-dense-5571ce86feed.json).
 
 | stratum | n | hit@5 | recall@5 | MRR | nDCG@5 | recall@10 | recall@25 |
 |---|---|---|---|---|---|---|---|
@@ -239,7 +243,7 @@ context for the refusal behaviour, not as a retrieval failure in the usual
 sense. Thin strata are thin here as everywhere: `multi_hop` is one item.
 
 The same measurement on the first index gave hit@5 0.507 as well
-([`retrieval-dense-1e17cf5b5eab.json`](results/retrieval-dense-1e17cf5b5eab.json)): the junk that made up
+([`retrieval-dense-e53da55931de.json`](results/retrieval-dense-e53da55931de.json)): the junk that made up
 three-quarters of that index was not competing for the top 5 of a dense search, it was
 competing with exact-token search and with the reranker (finding 22).
 
@@ -257,7 +261,7 @@ The 71 `gemini-3.1-flash-lite` answers in the cache (prompt
 per chunk and prefixed with their provenance. Zero generation calls; 426
 judge calls. Terminal failures (7, all recursion-limit) stay in every mean,
 scored on the placeholder text they returned, never excluded. Evidence:
-[`baseline-v3-aea128d62403.json`](results/baseline-v3-aea128d62403.json).
+[`baseline-v3-a05e986405ba.json`](results/baseline-v3-a05e986405ba.json).
 
 | stratum | n | faithfulness | answer relevancy | context recall | figure_exact (n) | agent_hit |
 |---|---|---|---|---|---|---|
@@ -342,25 +346,25 @@ The matrix is regenerated from the results files by `python -m eval.ablation
 
 | configuration | hit@5 | recall@5 | MRR | nDCG@5 | recall@10 | recall@25 | table hit@5 | p50 ms | file |
 |---|---|---|---|---|---|---|---|---|---|
-| dense, rerank fetch=50 | 0.662 | 0.630 | 0.529 | 0.538 | 0.665 | 0.743 | 0.481 | 785.2 | [dense-rerank-f50](results/retrieval-dense-rerank-f50-f685e695b18a.json) |
-| dense, rerank fetch=50, ticker=inferred | 0.662 | 0.630 | 0.541 | 0.546 | 0.680 | 0.771 | 0.481 | 750.9 | [dense-rerank-f50-tf-inferred](results/retrieval-dense-rerank-f50-tf-inferred-14ba1d196c5a.json) |
-| dense, rerank fetch=100 | 0.648 | 0.627 | 0.516 | 0.532 | 0.665 | 0.711 | 0.481 | 1549.8 | [dense-rerank-f100](results/retrieval-dense-rerank-f100-6a2b5a7610ae.json) |
-| dense, rerank fetch=100, ticker=inferred | 0.648 | 0.627 | 0.528 | 0.539 | 0.665 | 0.753 | 0.481 | 1606.0 | [dense-rerank-f100-tf-inferred](results/retrieval-dense-rerank-f100-tf-inferred-34f47fc55166.json) |
-| dense, rerank fetch=25 | 0.648 | 0.620 | 0.514 | 0.527 | 0.655 | 0.725 | 0.481 | 432.6 | [dense-rerank-f25](results/retrieval-dense-rerank-f25-c78dcd0e3370.json) |
-| hybrid, rerank fetch=25 | 0.634 | 0.623 | 0.523 | 0.533 | 0.658 | 0.750 | 0.481 | 574.6 | [hybrid-rerank-f25](results/retrieval-hybrid-rerank-f25-1d1fe4ddf911.json) |
-| hybrid, rerank fetch=50 | 0.634 | 0.623 | 0.522 | 0.532 | 0.669 | 0.718 | 0.481 | 979.3 | [hybrid-rerank-f50](results/retrieval-hybrid-rerank-f50-414e872bc3c7.json) |
-| hybrid, rerank fetch=50, ticker=inferred | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1043.8 | [hybrid-rerank-f50-tf-inferred](results/retrieval-hybrid-rerank-f50-tf-inferred-3bc6bb2b0efc.json) |
-| hybrid, rerank fetch=50, ticker=oracle | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1042.1 | [hybrid-rerank-f50-tf-oracle](results/retrieval-hybrid-rerank-f50-tf-oracle-7ec033cdeb78.json) |
-| hybrid, ticker=inferred | 0.606 | 0.599 | 0.430 | 0.457 | 0.672 | 0.792 | 0.444 | 30.6 | [hybrid-tf-inferred](results/retrieval-hybrid-tf-inferred-a70fd4a6a436.json) |
-| hybrid | 0.592 | 0.585 | 0.400 | 0.433 | 0.644 | 0.750 | 0.407 | 27.3 | [hybrid](results/retrieval-hybrid-a0c4d2d732c9.json) |
-| hybrid, rrf_k=20 | 0.592 | 0.585 | 0.394 | 0.428 | 0.644 | 0.750 | 0.407 | 30.3 | [hybrid-rrf20](results/retrieval-hybrid-rrf20-b87bdb385f31.json) |
-| hybrid, fetch=50 | 0.578 | 0.567 | 0.401 | 0.426 | 0.658 | 0.750 | 0.407 | 26.9 | [hybrid-f50](results/retrieval-hybrid-f50-5ad2e1d25835.json) |
-| hybrid, w=1.0/0.5 | 0.578 | 0.560 | 0.401 | 0.423 | 0.680 | 0.725 | 0.407 | 26.9 | [hybrid-sw0.5](results/retrieval-hybrid-sw0.5-7cd7332109b3.json) |
-| dense, ticker=inferred | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 22.0 | [dense-tf-inferred](results/retrieval-dense-tf-inferred-32f799903650.json) |
-| dense, ticker=oracle | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 23.1 | [dense-tf-oracle](results/retrieval-dense-tf-oracle-6affaa6c8917.json) |
-| hybrid, w=1.0/2.0 | 0.535 | 0.535 | 0.357 | 0.390 | 0.606 | 0.683 | 0.333 | 29.7 | [hybrid-sw2](results/retrieval-hybrid-sw2-d424a4aae4b7.json) |
-| dense | 0.507 | 0.489 | 0.358 | 0.369 | 0.595 | 0.725 | 0.370 | 13.6 | [dense](results/retrieval-dense-eb4d1b4fefba.json) |
-| bm25 | 0.394 | 0.394 | 0.299 | 0.300 | 0.578 | 0.683 | 0.148 | 12.6 | [bm25](results/retrieval-bm25-3bc53167968f.json) |
+| dense, rerank fetch=50 | 0.662 | 0.630 | 0.529 | 0.538 | 0.665 | 0.743 | 0.481 | 785.2 | [dense-rerank-f50](results/retrieval-dense-rerank-f50-489f8c258136.json) |
+| dense, rerank fetch=50, ticker=inferred | 0.662 | 0.630 | 0.541 | 0.546 | 0.680 | 0.771 | 0.481 | 750.9 | [dense-rerank-f50-tf-inferred](results/retrieval-dense-rerank-f50-tf-inferred-65a9dd460723.json) |
+| dense, rerank fetch=100 | 0.648 | 0.627 | 0.516 | 0.532 | 0.665 | 0.711 | 0.481 | 1549.8 | [dense-rerank-f100](results/retrieval-dense-rerank-f100-82e4c431f458.json) |
+| dense, rerank fetch=100, ticker=inferred | 0.648 | 0.627 | 0.528 | 0.539 | 0.665 | 0.753 | 0.481 | 1606.0 | [dense-rerank-f100-tf-inferred](results/retrieval-dense-rerank-f100-tf-inferred-b82fb24bab94.json) |
+| dense, rerank fetch=25 | 0.648 | 0.620 | 0.514 | 0.527 | 0.655 | 0.725 | 0.481 | 432.6 | [dense-rerank-f25](results/retrieval-dense-rerank-f25-6ca601a0fbfc.json) |
+| hybrid, rerank fetch=25 | 0.634 | 0.623 | 0.523 | 0.533 | 0.658 | 0.750 | 0.481 | 574.6 | [hybrid-rerank-f25](results/retrieval-hybrid-rerank-f25-25dd9f13ac04.json) |
+| hybrid, rerank fetch=50 | 0.634 | 0.623 | 0.522 | 0.532 | 0.669 | 0.718 | 0.481 | 979.3 | [hybrid-rerank-f50](results/retrieval-hybrid-rerank-f50-9432e95c991d.json) |
+| hybrid, rerank fetch=50, ticker=inferred | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1043.8 | [hybrid-rerank-f50-tf-inferred](results/retrieval-hybrid-rerank-f50-tf-inferred-6840e5d6edd4.json) |
+| hybrid, rerank fetch=50, ticker=oracle | 0.634 | 0.623 | 0.535 | 0.539 | 0.669 | 0.775 | 0.481 | 1042.1 | [hybrid-rerank-f50-tf-oracle](results/retrieval-hybrid-rerank-f50-tf-oracle-8ba54909dc39.json) |
+| hybrid, ticker=inferred | 0.606 | 0.599 | 0.430 | 0.457 | 0.672 | 0.792 | 0.444 | 30.6 | [hybrid-tf-inferred](results/retrieval-hybrid-tf-inferred-b103be4450e5.json) |
+| hybrid | 0.592 | 0.585 | 0.400 | 0.433 | 0.644 | 0.750 | 0.407 | 27.3 | [hybrid](results/retrieval-hybrid-2b28152274f3.json) |
+| hybrid, rrf_k=20 | 0.592 | 0.585 | 0.394 | 0.428 | 0.644 | 0.750 | 0.407 | 30.3 | [hybrid-rrf20](results/retrieval-hybrid-rrf20-5574d89e6b3a.json) |
+| hybrid, fetch=50 | 0.578 | 0.567 | 0.401 | 0.426 | 0.658 | 0.750 | 0.407 | 26.9 | [hybrid-f50](results/retrieval-hybrid-f50-ae2a27a70146.json) |
+| hybrid, w=1.0/0.5 | 0.578 | 0.560 | 0.401 | 0.423 | 0.680 | 0.725 | 0.407 | 26.9 | [hybrid-sw0.5](results/retrieval-hybrid-sw0.5-c6724b8409f9.json) |
+| dense, ticker=inferred | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 22.0 | [dense-tf-inferred](results/retrieval-dense-tf-inferred-0aab2af05ba4.json) |
+| dense, ticker=oracle | 0.549 | 0.532 | 0.403 | 0.412 | 0.651 | 0.768 | 0.407 | 23.1 | [dense-tf-oracle](results/retrieval-dense-tf-oracle-34a06b35809e.json) |
+| hybrid, w=1.0/2.0 | 0.535 | 0.535 | 0.357 | 0.390 | 0.606 | 0.683 | 0.333 | 29.7 | [hybrid-sw2](results/retrieval-hybrid-sw2-5a50d0a89612.json) |
+| dense | 0.507 | 0.489 | 0.358 | 0.369 | 0.595 | 0.725 | 0.370 | 13.6 | [dense](results/retrieval-dense-5571ce86feed.json) |
+| bm25 | 0.394 | 0.394 | 0.299 | 0.300 | 0.578 | 0.683 | 0.148 | 12.6 | [bm25](results/retrieval-bm25-61fd1f01d385.json) |
 
 **Read the rows against the baseline `dense` row (hit@5 0.507).** Findings 16
 and 17 are what the matrix shows.
@@ -468,7 +472,7 @@ faithfulness on ten items).
 
 The same 71 answers, judged by `gemini-3.6-flash` under the schema-3
 instrument (426 judge calls), against the schema-3 baseline. Evidence:
-[`rerank-v3-764b3da65d36.json`](results/rerank-v3-764b3da65d36.json).
+[`rerank-v3-c27752c52dab.json`](results/rerank-v3-c27752c52dab.json).
 
 | metric | baseline: dense top-5 | dense + rerank 50 + inferred ticker | change |
 |---|---|---|---|
@@ -550,7 +554,7 @@ retrieval switched on, `gemini-3.1-flash-lite`, then judged by
 `gemini-3.6-flash` (426 judge calls) under the schema-3 instrument. The
 comparison is against the reranked run, which is the shipped configuration
 without the fact tools, and against the dense baseline. Evidence:
-[`facts-v3-70db17ff5e31.json`](results/facts-v3-70db17ff5e31.json).
+[`facts-v3-7b536024e855.json`](results/facts-v3-7b536024e855.json).
 
 | metric | dense baseline | + reranker | + reranker + fact tools |
 |---|---|---|---|
@@ -626,7 +630,7 @@ retrieval, fact tools, `gemini-3.1-flash-lite` — regenerated once more over
 all 71 items with the meter on and tracing on (LangSmith project
 `fra-eval-cost-v3`, so every record's `trace_id` opens). Agent calls only; no
 judge pass was bought for this run. Evidence:
-[`cost-v3-f5faee254363.json`](results/cost-v3-f5faee254363.json).
+[`cost-v3-2d69cde009fc.json`](results/cost-v3-2d69cde009fc.json).
 
 | per query (n = 71) | value |
 |---|---|
@@ -700,7 +704,7 @@ could not verify, and the UI marks the answer as withheld.
 **Measured on the benchmark**, shipped configuration plus the contract, all
 71 items regenerated with tracing on (LangSmith project
 `fra-eval-contract-v3`), no judge pass. Evidence:
-[`contract-v3-1587bfef1bd1.json`](results/contract-v3-1587bfef1bd1.json);
+[`contract-v3-76b8f532c332.json`](results/contract-v3-76b8f532c332.json);
 the comparison column is the same configuration without the contract,
 generated 11 hours earlier the same day.
 
@@ -796,25 +800,25 @@ are left out on purpose) —
 and applies thresholds calibrated from what the committed judged run scored
 on those same ten items (`python -m eval.ci_gate calibrate`):
 
-| metric | calibration (`facts-v3`, 10 items) | threshold |
+| metric | calibration (`reindex-v3`, 10 items) | threshold |
 |---|---|---|
 | faithfulness | 1.000 | ≥ 0.85 |
-| answer_relevancy | 0.930 | ≥ 0.75 |
+| answer_relevancy | 0.927 | ≥ 0.75 |
 | context_recall | 0.800 | ≥ 0.60 |
 | figure_primary_rate | 1.000 | ≥ 0.85 |
 | terminal failures | 0 | ≤ 1 |
 
 About 60 judge calls, roughly $0.20 with `gemini-3.6-flash`; it never runs
 on a push or a schedule, and two clicks cannot run at once. It runs with
-`VERIFY_MODE=off`, because its thresholds were calibrated on a run made
-before the output contract existed; under the contract all ten items
-verified with drafts identical to the calibration run (`contract-v3`), so
-the numbers would not differ, but the gate refuses a run whose mode differs
-from its calibration rather than assume that. The calibration run was made
-on the first index; the ten items are answered from the fact table or from
-passages the rebuilt index retrieves as well, so the thresholds stand, and
-they will be recalibrated from the first judged run on the rebuilt index. A
-run whose agent model, retrieval configuration or item set differs from the
+`VERIFY_MODE=strict`: the thresholds are calibrated on `reindex-v3`, a
+strict-mode run on the rebuilt index, so the gate scores what production
+serves — the verified answer, or the refusal — and it pins the contract
+version, so a change to the contract fails the gate until it is
+recalibrated. (The first calibration, `facts-v3` on the first index before
+the contract existed, gave 1.000 / 0.930 / 0.800 / 1.000 on the same ten
+items; eight of the ten drafts are byte-identical between the two runs and
+the other two differ in wording.) A run whose agent model, retrieval
+configuration, verify mode, contract version or item set differs from the
 calibration fails regardless of score, as does an incomplete one, one with a
 judge NaN the harness cannot explain, or one in which the agent raised. A
 run under another judge — the free Groq cross-family judge is an input
@@ -1341,7 +1345,7 @@ provenance prefix
 is therefore the context format for schema 3, and `context_format` is part of
 the hashed configuration so the two formats can never share a results file.
 The bare-chunk run is kept as
-[`baseline-v3-plain-4a3f267adb41.json`](results/baseline-v3-plain-4a3f267adb41.json),
+[`baseline-v3-plain-1f47fcda5bae.json`](results/baseline-v3-plain-1f47fcda5bae.json),
 labelled as such, because it is the measurement behind this finding.
 
 What it says beyond this repository: a faithfulness score depends on the
@@ -1510,7 +1514,7 @@ precisely than the people who wrote the labels to show it.
 The output contract's figure test (`agent/contract.py`, `figure_grounding`)
 can be run without citations against any stored record: is every figure in
 the answer present in *something* the agent saw? On the dense baseline
-([`baseline-v3`](results/baseline-v3-aea128d62403.json)) 3 of 41 answers
+([`baseline-v3`](results/baseline-v3-a05e986405ba.json)) 3 of 41 answers
 with a figure fail it — `qa_0007` ($12,989 million, the difference between
 two Services net sales figures), `qa_0034` ($26,448 million, the difference
 between two revenue figures) and `qa_0053` (23.40%, a growth rate) — each a
@@ -1541,8 +1545,8 @@ and the observations with their ids, returning a schema-constrained record.
 Over the 71 items it added 742 input tokens and $0.0004 per query, and 2.2 s
 per query on average — the p50 went from 1.9 s to 3.7 s, the p95 from 5.9 s
 to 9.1 s
-([`contract-v3`](results/contract-v3-1587bfef1bd1.json) against
-[`cost-v3`](results/cost-v3-f5faee254363.json)). The tokens are cheap on a
+([`contract-v3`](results/contract-v3-76b8f532c332.json) against
+[`cost-v3`](results/cost-v3-2d69cde009fc.json)). The tokens are cheap on a
 flash-lite model; the wall clock is not, because the call is sequential
 (it needs the draft) and structured output on this model runs slower than a
 plain turn. Two ways to take the latency back, neither measured: a smaller
@@ -1618,10 +1622,11 @@ better number: dense → cross-encoder over 50 → inferred filter, hit@5
 nearly as good as 50.
 
 **The agent on the rebuilt index.** All 71 items regenerated once with the
-shipped configuration and the output contract in strict mode, judge-free
-([`reindex-v3-ed9525a07d24.json`](results/reindex-v3-ed9525a07d24.json); tracing on, LangSmith project
-`fra-eval-reindex-v3`), against the same configuration and contract on the
-first index (`contract-v3`):
+shipped configuration and the output contract in strict mode, then judged
+by `gemini-3.6-flash` ([`reindex-v3-5b1deb95bdcc.json`](results/reindex-v3-5b1deb95bdcc.json);
+tracing on, LangSmith project `fra-eval-reindex-v3`). The judge-free rows
+are against the same configuration and contract on the first index
+(`contract-v3`):
 
 | judge-free, 71 items | rebuilt index (`reindex-v3`) | first index (`contract-v3`) |
 |---|---|---|
@@ -1637,12 +1642,33 @@ first index (`contract-v3`):
 
 The figure n differs by one because `qa_0066` carries a figure since its
 correction (finding 19's version-4 note) and the first-index run was scored
-against the ground truth it was generated with. 51 of 71 drafts are
-byte-identical to the first-index run's; the recursion-limit item moved
-from `qa_0062` to `qa_0024`, which is not among the judged smoke's ten. The
-answer-quality judge has not been bought on this index (limitation 19); the
-figure check and the grounding check are the evidence that the answers did
-not get worse, and a judge pass (about $1.10) is the next spend.
+against the ground truth it was generated with.
+
+The judged rows are against the same configuration judged on the first
+index (`facts-v3`, made before the contract existed; its ten-item subset is
+the one the CI gate was first calibrated on):
+
+| judged by `gemini-3.6-flash`, 71 items | rebuilt index (`reindex-v3`) | first index (`facts-v3`) | change |
+|---|---|---|---|
+| faithfulness | 0.949 | 0.957 | -0.009 |
+| answer relevancy | 0.890 | 0.894 | -0.004 |
+| context recall | 0.845 | 0.852 | -0.007 |
+| faithfulness on the items that used the fact tool | 0.990 (n = 34) | 0.984 (n = 34) | |
+
+50 of 71 drafts are byte-identical to `facts-v3`'s, and the three means
+moved by less than a hundredth, inside the run-to-run variance finding 11
+measured on ten items. Item by item the movement is more instructive than
+the means. `qa_0062`, the comparative item that hit the recursion limit on
+every first-index run, now answers (faithfulness 0.86); `qa_0064`'s "not
+disclosed" answer scores 1.0 where the same words scored 0 before; `qa_0024`,
+a `list` item, hits the recursion limit instead, and it is not among the
+judged smoke's ten. Two `single_hop` items lost faithfulness: `qa_0015`
+gives the same Seattle address as before and scored 0 against contexts that
+overlap the old ones (judge variance, finding 7), and `qa_0027` names
+Sundar Pichai correctly from chunks that do not say so — a prose claim the
+retrieval did not support, served as verified because the contract's checks
+attribute figures and citations, not free-text claims (limitation 19).
+Cost and latency fell slightly with the smaller index.
 
 **What it says beyond this repository.** Every retrieval number in a RAG
 evaluation is a number about a corpus, and a corpus that nobody has sampled
@@ -1690,12 +1716,12 @@ never be separated from the configuration that produced it.
 | Items | 66 | 66 | 20 | 71 | 71 |
 | Judge calls | 386 | 396 | 121 | 426 | 0 |
 | Contexts | observation blobs | observation blobs | observation blobs | chunk + provenance | chunk ids vs labels |
-| Results file | [`baseline66`](results/baseline66-af83fa6.json) | [`rerun66`](results/rerun66-af83fa6.json) | [`crossjudge20`](results/crossjudge20-af83fa6.json) | [`baseline-v3`](results/baseline-v3-aea128d62403.json) | [`dense-rerank-f50-tf-inferred`](results/retrieval-dense-rerank-f50-tf-inferred-8f6ef861d7e7.json) |
+| Results file | [`baseline66`](results/baseline66-af83fa6.json) | [`rerun66`](results/rerun66-af83fa6.json) | [`crossjudge20`](results/crossjudge20-af83fa6.json) | [`baseline-v3`](results/baseline-v3-a05e986405ba.json) | [`dense-rerank-f50-tf-inferred`](results/retrieval-dense-rerank-f50-tf-inferred-b90fb53e560e.json) |
 
-The runs after the instrument — [`rerank-v3`](results/rerank-v3-764b3da65d36.json),
-[`facts-v3`](results/facts-v3-70db17ff5e31.json),
-[`cost-v3`](results/cost-v3-f5faee254363.json) and
-[`contract-v3`](results/contract-v3-1587bfef1bd1.json) — are stamped the same
+The runs after the instrument — [`rerank-v3`](results/rerank-v3-c27752c52dab.json),
+[`facts-v3`](results/facts-v3-7b536024e855.json),
+[`cost-v3`](results/cost-v3-2d69cde009fc.json) and
+[`contract-v3`](results/contract-v3-76b8f532c332.json) — are stamped the same
 way: agent `gemini-3.1-flash-lite`, judge `gemini-3.6-flash` where judged,
 retrieval `dense, rerank fetch=50, ticker=inferred`, prompt
 `sha256:99d36aed6b9c` from `facts-v3` on (rules 7–8 added), and on
@@ -1772,7 +1798,10 @@ python -m eval.ci_gate calibrate
 # VERIFY_MODE=off (the mode did not exist); set it to re-score their cache.
 VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
   python -m eval.run_eval --generate-only --label contract-v3 --cache-file eval/cache/agent_outputs_contract.json
-# The same on the rebuilt index (finding 22) was labelled reindex-v3.
+# The same on the rebuilt index (finding 22) was labelled reindex-v3, then judged
+# from its cache with no agent call:
+VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
+  python -m eval.run_eval --score-only --label reindex-v3 --cache-file eval/cache/agent_outputs_reindex.json
 ```
 
 A run whose resolved configuration already has a complete results file prints
@@ -1874,9 +1903,11 @@ Including the ones that weaken the numbers above.
     the committed values, so a one- or two-item regression passes, and the
     judged smoke run scores ten items. Both gates are regression detectors;
     the numbers in this document remain the measurement.
-19. **Answer quality has not been judged on the rebuilt index.** The judged
-    runs (`baseline-v3`, `rerank-v3`, `facts-v3`) and the meter and contract
-    runs were made on the first index; the rebuilt index has a judge-free
-    run only (finding 22), whose figure and grounding checks say the answers
-    did not get worse. A judge pass costs about $1.10 and is the next spend;
-    until then the faithfulness and relevancy numbers describe the old index.
+19. **The judged before/after of each upgrade is the first index's, and the
+    contract checks figures, not prose.** Findings 16–21 were judged on the
+    first index; on the rebuilt index only the shipped configuration was
+    judged (finding 22), where the two indexes agree to within a hundredth.
+    The baseline and the reranker-only configurations were not re-judged.
+    Finding 22 also shows the contract's edge: `qa_0027` served a correct
+    name its retrieved chunks did not contain, verified, because the checks
+    attribute figures and citations and cannot see an unsupported prose claim.
