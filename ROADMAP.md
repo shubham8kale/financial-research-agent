@@ -241,15 +241,17 @@ field now makes that a diff between two results files.
 
 **Now.** The eval harness deliberately runs the in-process agent, to measure
 answer quality without a network hop confounding it. That was the right call
-for the eval, and it leaves the MCP server with **no test and no score against
-it** — despite being a headline feature of the architecture.
+for the eval, and it leaves the MCP server with **no score against it** —
+despite being a headline feature of the architecture. A contract test now pins
+its tool discovery, argument schemas and observation format
+(`tests/test_mcp_contract.py`), but no benchmark run goes through it.
 
 The deployed Space does not exercise it either: `/health` there reports
 `mcp_server: false`, so production always runs the in-process fallback. Running
 an MCP server as a second container is not something a single-container demo
 deployment warrants, so this is a deliberate deployment choice rather than a
-defect — but it does mean the MCP path has neither tests nor production traffic
-behind it.
+defect — but it does mean the MCP path has neither an evaluation score nor
+production traffic behind it.
 
 **Why it matters.** The two paths can diverge silently. `langchain-mcp-adapters`
 returns tool results in a different shape from the in-process tools (a list of
@@ -259,8 +261,8 @@ same question, and nothing today would catch it. The API falls back from MCP to
 the direct agent on failure, which means a user can silently get served by
 whichever path happened to work.
 
-The cheap first step is a contract test on the MCP tool schemas and result
-shapes. The useful second step is running the existing benchmark through the MCP
+The cheap first step, a contract test on the MCP tool schemas and result
+shapes, is done (`tests/test_mcp_contract.py`). The useful second step is running the existing benchmark through the MCP
 agent and diffing per-item scores against the direct-agent baseline — the
 harness already caches by agent configuration, and both tool sources now parse
 through `agent/observations.py`, so this costs one generation pass and no new
