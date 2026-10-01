@@ -43,9 +43,8 @@ logger = logging.getLogger(__name__)
 #   - The embedding model (all-MiniLM-L6-v2) truncates at 256 word-piece tokens,
 #     roughly 1 000 characters, so a 512-character chunk always fits whole —
 #     anything materially larger would be silently cut off mid-passage.
-#     Embedding quality also peaks at shorter, focused passages: academic work
-#     (e.g. Shi et al. 2023 "REPLUG") shows that ~200–600 token chunks yield
-#     the best retrieval precision for long-document Q&A.
+#     The size follows from that window; it was not tuned.  Chunk size is
+#     not among the retrieval configurations ablated in eval/EVALUATION.md.
 #   - 512 characters ≈ 100–150 tokens for English prose, well within the
 #     embedding window and small enough to stay semantically tight.
 #   - Going larger (e.g. 2 048 chars) risks mixing multiple topics in one

@@ -98,11 +98,12 @@ def build_embeddings() -> HuggingFaceEmbeddings:
         model_kwargs={"device": "cpu"},
         # encode_kwargs are forwarded to SentenceTransformer.encode().
         # normalize_embeddings=True scales every vector to unit length before
-        # storing it.  ChromaDB uses cosine similarity by default, and cosine
-        # similarity is only well-defined on unit vectors — without
-        # normalisation, vectors with different magnitudes would produce
-        # misleading similarity scores, causing irrelevant chunks to rank above
-        # relevant ones purely because of text length differences.
+        # storing it.  The collection uses ChromaDB's default distance, squared
+        # L2 (no hnsw:space is set; the persisted index reports "space": "l2").
+        # On unit vectors, squared L2 = 2 - 2 * cosine similarity, so L2 ranks
+        # chunks exactly as cosine similarity would.  Without normalisation, L2
+        # would also reward or penalise a vector for its magnitude, not just
+        # its direction, and chunks would rank partly on length.
         encode_kwargs={
             "normalize_embeddings": True,
             "batch_size": ENCODE_BATCH_SIZE,

@@ -13,7 +13,7 @@
 #   question (str)
 #       │
 #       ▼
-#   similarity_search()        ← ChromaDB cosine search, top-K chunks
+#   similarity_search()        ← ChromaDB L2 search (cosine-equivalent on unit vectors), top-K
 #       │
 #       ▼
 #   _build_context_block()     ← formats chunks as numbered, labelled passages
@@ -198,8 +198,9 @@ class QueryResult:
         Will equal INSUFFICIENT_CONTEXT_PHRASE if the vector store returned
         no chunks or the model judged the context insufficient.
     sources:
-        The Document objects retrieved from ChromaDB, in descending order of
-        cosine similarity.  Each document carries ``metadata`` with at least:
+        The Document objects retrieved from ChromaDB, nearest first (ascending
+        L2 distance, which on unit vectors is descending cosine similarity).
+        Each document carries ``metadata`` with at least:
           - ``ticker``    : stock symbol (e.g. "AAPL")
           - ``source``    : absolute path to the originating filing
           - ``chunk_idx`` : integer index within the source document
@@ -309,7 +310,8 @@ def ask(
         vectorstore = build_vectorstore(embeddings=build_embeddings())
 
     # ── 3. Retrieve the top-k most relevant chunks ────────────────────────────
-    # ChromaDB uses cosine similarity on the normalised MiniLM-L6-v2 vectors.
+    # ChromaDB ranks by squared L2 distance on the normalised MiniLM-L6-v2
+    # vectors, which orders chunks exactly as cosine similarity would.
     # The query text is embedded with the same model that was used at index
     # time — this is guaranteed because both ingestion and retrieval call
     # build_embeddings() which always returns the same EMBEDDING_MODEL constant.
