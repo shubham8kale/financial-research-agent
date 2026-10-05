@@ -201,9 +201,14 @@ tool-metrics output records its sha256 instead. It was written before any
 results file's tool fields were opened, from the question, ground truth,
 `question_type`, `section`, the prompt rules and the tool docstrings only,
 audited by three independent labellers and widened where a defensible
-alternative existed. It was not revised after the first results (R2), including
-the four first-tool misses, two of which are arguable. The labels are blind but
-not independent of the author: the labellers are language models reading the same
+alternative existed. It was not revised after the first results (R2) until the
+owner's review of 2026-10-05, which is post hoc (made after the results of
+`contract-v3`, `reindex-v3`, `upgrade-control` and `upgrade-v1` had been read):
+four items whose question names no company were widened to accept a
+`list_available_companies` first call, and the misses on `qa_0008`, `qa_0029`,
+`qa_0038` and `qa_0065` stand (`audit.owner_review` in
+`eval/benchmark_tools.json`). The labels are blind only as first written, and not
+independent of the author: the labellers are language models reading the same
 rules (the "Tool-call quality" section's limits).
 
 **An experiment gets its own cache file, a distinct label and a recorded tool

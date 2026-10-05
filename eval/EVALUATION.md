@@ -804,7 +804,8 @@ allowed at all, the tools that are required, the companies it concerns and the
 fiscal year the question names. It is a sidecar, deliberately not part of
 `benchmark_version` (which hashes the CSV and the chunk labels, so a new column
 would have orphaned every committed results file); the tool-metrics output
-records its sha256 (`0dd9b822…`). It was written from the question, ground
+records its sha256 (`0dd9b822…` as first written, `96bf2169…` since the
+2026-10-05 review below). It was written from the question, ground
 truth, `question_type`, `section`, the prompt's rules and the tool docstrings
 alone, **before any results file's tool fields were opened**, and committed on
 its own. Three independent labellers (language models handed only those same
@@ -813,8 +814,13 @@ first-tool set on 65, 64 and 61 of 71 items and the allowed set on 61, 56 and
 62; the author widened where they named a defensible alternative and narrowed
 where all three found a fact lookup indefensible (eleven items changed). Six
 items require `compute_metric` (a growth rate, change or difference: rule 8).
-The labels were **not revised after the first results** (R2), including the
-four first-tool misses below, two of which the author finds arguable.
+The labels were **not revised after the first results** (R2) until the owner's
+review of 2026-10-05, which is **post hoc**: it was made after the results of
+`contract-v3`, `reindex-v3`, `upgrade-control` and `upgrade-v1` had been read,
+it widened four items ("Label review (2026-10-05)" below, and `audit.owner_review`
+in the label file), and it is not the blind labelling described here. Every
+first-tool and tool-set figure below is on the reviewed labels, with the figure
+as first written beside it.
 
 **The metrics** ([`eval/tool_metrics.py`](tool_metrics.py), output in
 [`tool_metrics/`](tool_metrics/)), each a count over its denominator, overall
@@ -848,15 +854,18 @@ per-item pattern ([`tool_metrics/contract-v3-…`](tool_metrics/contract-v3-76b8
 | valid calls | 124 of 131 (94.7%); lookups 51 of 58 (87.9%) |
 | the 7 failed calls | all `lookup_financial_fact`, all "concept: Field required", on 6 items (`qa_0005`, `qa_0008`, `qa_0018`, `qa_0021`, `qa_0041`, `qa_0053`) |
 | items with more calls than model steps | 8 (`qa_0007`, `0012`, `0034`, `0043`, `0053`, `0060`, `0062`, `0069`) |
-| `first_tool_ok` / `tool_set_ok` | 67 of 71 / 67 of 71 |
+| `first_tool_ok` / `tool_set_ok`, labels as reviewed 2026-10-05 | 69 of 71 / 69 of 71 (as first written: 67 / 67 of 71) |
 
-The four items that miss are `qa_0008`, `qa_0065`, `qa_0068`, `qa_0071`, all because
-the first call was `list_available_companies`; `qa_0068` ("What were Google Cloud
-revenues?") and `qa_0071` ("What were AWS's net sales?") name no company, where
-a ticker-list call is defensible. `reindex-v3`, the same prompt and tools on
-the rebuilt index about five hours later (the index-matched baseline), made 129
-calls, 122 valid (the same 7 rejected, lookups 51 of 58), `tool_set_ok` 66 of 71
-and 2.65 agent model calls per query against 2.68. Its p50 latency is 3,230 ms
+As first written, four items missed: `qa_0008`, `qa_0065`, `qa_0068`, `qa_0071`,
+all because the first call was `list_available_companies`; `qa_0068` ("What were
+Google Cloud revenues?") and `qa_0071` ("What were AWS's net sales?") name no
+company, where a ticker-list call is defensible, and the owner's post hoc review
+of 2026-10-05 accepts it there. On the reviewed labels two misses remain,
+`qa_0008` and `qa_0065`, on items that name their company. `reindex-v3`, the same
+prompt and tools on the rebuilt index about five hours later (the index-matched
+baseline), made 129 calls, 122 valid (the same 7 rejected, lookups 51 of 58),
+`tool_set_ok` 68 of 71 (as first written: 66 of 71) and 2.65 agent model calls
+per query against 2.68. Its p50 latency is 3,230 ms
 against 3,684 ms (both without the terminal failure), a 12% difference between
 two runs that also differ in index; the median `search_filings` call took 859 ms
 and 861 ms, so the movement is in model time, and one pair of runs is not a noise
@@ -932,7 +941,7 @@ byte unchanged). Measured on the 17 items it targets (`ITEMS_B`: the eight
 | calls rejected | 5 | 5 | 0 | 0 | 0 |
 | terminal failures | 1 | 0 | 0 | 0 | 0 |
 | `figure_primary` / verified | 16 of 16 / 16 | 16 of 16 / 17 | 16 of 16 / 17 | 16 of 16 / 17 | 16 of 16 / 17 |
-| `first_tool_ok` / `tool_set_ok` | 15 / 15 of 17 | 15 / 14 of 17 | 15 / 14 of 17 | 15 / 15 of 17 | 17 / 16 of 17 |
+| `first_tool_ok` / `tool_set_ok`, labels as reviewed 2026-10-05 | 17 / 17 of 17 (as first written: 15 / 15) | 17 / 16 of 17 (as first written: 15 / 14) | 17 / 16 of 17 (as first written: 15 / 14) | 17 / 17 of 17 (as first written: 15 / 15) | 17 / 16 of 17 (as first written: 17 / 16) |
 
 The control column is the point of the table, and `reindex-v3` is what keeps it
 honest. Against `contract-v3` the first rule run moved everything (59 calls to 47,
@@ -963,7 +972,7 @@ with rule v2 on, each over all 71 items, against both baselines:
 | agent model calls per query | 2.68 | 2.65 | **2.49** | 2.37 |
 | `figure_primary` | 45 of 45 | 46 of 46 | **46 of 46** (45 of 45 on the original 45) | 46 of 46 |
 | verified / refused / terminal failures | 70 / 0 / 1 | 70 / 0 / 1 | **71 / 0 / 0** | 70 / 0 / 1 |
-| `first_tool_ok` / `tool_set_ok` (baselines' first call is completion order) | 67 / 67 of 71 | 67 / 66 of 71 | 65 / 64 of 71 | 70 / 69 of 71 |
+| `first_tool_ok` / `tool_set_ok`, labels as reviewed 2026-10-05 (baselines' first call is completion order) | 69 / 69 of 71 (as first written: 67 / 67) | 69 / 68 of 71 (as first written: 67 / 66) | 67 / 66 of 71 (as first written: 65 / 64) | 70 / 69 of 71 (as first written: 70 / 69) |
 | cost per query | $0.002067 | $0.002031 | $0.001987 | $0.002063 |
 | answers that became wrong, by reading every answer that changed against `contract-v3` | n/a | not read | **0** of 35 changed | **1** of 30 changed |
 
@@ -1011,15 +1020,46 @@ the day (and the machine's load), not the code. Only counts of model calls, step
 and batched calls are evidence about the change. Rule on and off had the same p50
 in the full runs (2,831 and 2,839 ms).
 
+**Label review (2026-10-05).** The owner reviewed the tool labels after the
+results files of `contract-v3`, `reindex-v3`, `upgrade-control` and `upgrade-v1`
+had been read, so this revision is **post hoc**, unlike the blind labelling and
+the 2026-10-04 adjudication described above, and the figures on the reviewed
+labels are not blind. The rule: `list_available_companies` is an acceptable first
+call, and an allowed tool, on an item whose question names no company, because
+the ticker a lookup needs must then be inferred from a product or segment name
+and the tool's own docstring sanctions confirming availability first; on an item
+that names its company the orientation call stays a selection error. Four items
+meet it and were widened (`first_tool_ok` and `allowed_tools` gain
+`list_available_companies`): `qa_0019` ("What was AWS's net sales in 2025?"),
+`qa_0020` ("What was AWS's operating income in 2025?"), `qa_0068` ("What were
+Google Cloud revenues?") and `qa_0071` ("What were AWS's net sales?"). The rule
+was applied to every item meeting it, not only to the misses: `qa_0019` and
+`qa_0020` were already passing in every committed run. Four misses are kept,
+because the question names the company and the first `list_available_companies`
+call was unneeded: `qa_0008`, `qa_0029`, `qa_0038` and `qa_0065`. `qa_0034` stays
+a `tool_set_ok` miss because `compute_metric` is required by the field's
+definition (a difference, rule 8): in `upgrade-control` the $26.4 billion
+difference was retrieved verbatim from MD&A after two lookups found nothing, so
+the miss is a rule-8 conformity miss, not arithmetic in the model's head. Effect
+on `first_tool_ok` / `tool_set_ok` of 71: `contract-v3` 67 / 67 to 69 / 69,
+`reindex-v3` 67 / 66 to 69 / 68, `upgrade-control` 65 / 64 to 67 / 66,
+`upgrade-v1` 70 / 69 unchanged; call validity is unchanged in every file. The
+wording fix of workstream A removed every rejected call and the model now makes
+two more unneeded orientation calls on named-company items (`qa_0029`,
+`qa_0038`); both movements sit inside the noise recorded in
+`docs/UPGRADE_RUN.md`. The record is the `audit.owner_review` entry of
+`benchmark_tools.json`; the regenerated files in `tool_metrics/` carry the new
+labels hash.
+
 ### What this does not show
 
 * The tool labels are author-written; the audit is by language models reading the
-  same rules, so they are blind but not independent, and two of the four
-  baseline first-tool misses are arguable. The `list_available_companies`-first
-  misses rise from 4 to 6 in the shipped run, under labels that were not widened
-  after the fact, and the two are not on one method: a baseline's first call is
-  the first to complete (it has no start offsets), a new run's is the earliest
-  to start.
+  same rules, so they are blind but not independent, and the owner's 2026-10-05
+  review of them is post hoc (above). On the reviewed labels the
+  `list_available_companies`-first misses rise from 2 in `contract-v3` to 4 in the
+  shipped run (as first written: 4 to 6), and the two are not on one method: a
+  baseline's first call is the first to complete (it has no start offsets), a new
+  run's is the earliest to start.
 * Every subset is small and was chosen for a reason: `ITEMS_A` for failing,
   `ITEMS_B` for being where the rule acts and where its wording was tuned. One
   run per configuration; run-to-run variation was not sampled for each new one
@@ -2366,12 +2406,16 @@ Including the ones that weaken the numbers above.
     Finding 22 also shows the contract's edge: `qa_0027` served a correct
     name its retrieved chunks did not contain, verified, because the checks
     attribute figures and citations and cannot see an unsupported prose claim.
-20. **The tool labels are blind but not independent.** `eval/benchmark_tools.json`
-    was written by the author before any results file's tool fields were opened
-    and audited by three language models given the same rules; there was no human
-    annotator. Two of the four baseline first-tool misses are arguable and the
-    labels were not revised after seeing them (a rule fixed in advance: labels
-    are not edited once results exist). The baselines' first call is the first to
+20. **The tool labels are blind but not independent, and were revised once, post
+    hoc.** `eval/benchmark_tools.json` was written by the author before any
+    results file's tool fields were opened and audited by three language models
+    given the same rules; there was no human annotator. On 2026-10-05 the owner
+    reviewed them after the results of `contract-v3`, `reindex-v3`,
+    `upgrade-control` and `upgrade-v1` had been read and widened four items
+    (`audit.owner_review`): that breaks the rule fixed in advance that labels are
+    not edited once results exist, and every first-tool and tool-set figure in this
+    document is on the reviewed labels, with the figure as first written beside it
+    ("Label review (2026-10-05)"). The baselines' first call is the first to
     complete, a new run's the earliest to start. `first_tool_ok` and `tool_set_ok`
     measure conformity to the prompt's tool rules, not correctness.
 21. **Every tool-call subset is small and was chosen for a reason, and each

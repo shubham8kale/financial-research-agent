@@ -17,7 +17,7 @@
   },
   "labels": {
     "file": "eval/benchmark_tools.json",
-    "sha256": "0dd9b822cfd3899ce638c7883351fdeb54b698ab2d5fc314abaddf094c73cfe5"
+    "sha256": "96bf21699ba9305738a8d6a70bb4f102a52b8a370a9b28bcc1e953875ce3c142"
   },
   "method": {
     "overlap_slack_ms": 50.0,
@@ -528,7 +528,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "t0",
         "batching": {
@@ -576,7 +575,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "t0",
         "batching": {
@@ -629,7 +627,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -702,7 +699,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -763,7 +759,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -832,7 +827,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -889,7 +883,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -945,7 +938,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -1001,7 +993,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -1070,7 +1061,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -1139,7 +1129,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {
@@ -1217,7 +1206,6 @@
           }
         },
         "failed_calls": 2,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "t0",
         "batching": {

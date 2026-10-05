@@ -17,7 +17,7 @@
   },
   "labels": {
     "file": "eval/benchmark_tools.json",
-    "sha256": "0dd9b822cfd3899ce638c7883351fdeb54b698ab2d5fc314abaddf094c73cfe5"
+    "sha256": "96bf21699ba9305738a8d6a70bb4f102a52b8a370a9b28bcc1e953875ce3c142"
   },
   "method": {
     "overlap_slack_ms": 50.0,
@@ -81,19 +81,19 @@
         }
       },
       "first_tool_ok": {
-        "n": 67,
+        "n": 69,
         "of": 71,
-        "rate": 0.9437
+        "rate": 0.9718
       },
       "tool_set_ok": {
-        "n": 66,
+        "n": 68,
         "of": 71,
-        "rate": 0.9296
+        "rate": 0.9577
       },
       "allowed_only_ok": {
-        "n": 67,
+        "n": 69,
         "of": 71,
-        "rate": 0.9437
+        "rate": 0.9718
       },
       "batched": {
         "method": "heuristic",
@@ -877,19 +877,19 @@
           }
         },
         "first_tool_ok": {
-          "n": 3,
+          "n": 5,
           "of": 5,
-          "rate": 0.6
+          "rate": 1.0
         },
         "tool_set_ok": {
-          "n": 3,
+          "n": 5,
           "of": 5,
-          "rate": 0.6
+          "rate": 1.0
         },
         "allowed_only_ok": {
-          "n": 3,
+          "n": 5,
           "of": 5,
-          "rate": 0.6
+          "rate": 1.0
         },
         "batched": {
           "method": "heuristic",
@@ -965,7 +965,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1011,7 +1010,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1057,7 +1055,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1103,7 +1100,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1154,7 +1150,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1200,7 +1195,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1251,7 +1245,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1307,7 +1300,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -1355,7 +1347,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1401,7 +1392,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1447,7 +1437,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1498,7 +1487,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1544,7 +1532,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1590,7 +1577,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1636,7 +1622,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1682,7 +1667,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1728,7 +1712,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -1774,7 +1757,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1820,7 +1802,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1866,7 +1847,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1917,7 +1897,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -1963,7 +1942,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2009,7 +1987,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2055,7 +2032,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2101,7 +2077,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2147,7 +2122,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2193,7 +2167,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2239,7 +2212,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2285,7 +2257,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2331,7 +2302,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2377,7 +2347,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2423,7 +2392,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2469,7 +2437,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2520,7 +2487,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2568,7 +2534,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2614,7 +2579,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2660,7 +2624,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2706,7 +2669,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2752,7 +2714,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2798,7 +2759,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -2849,7 +2809,6 @@
           }
         },
         "failed_calls": 1,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2895,7 +2854,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2941,7 +2899,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -2992,7 +2949,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3038,7 +2994,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3084,7 +3039,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3130,7 +3084,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3176,7 +3129,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3222,7 +3174,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3268,7 +3219,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3314,7 +3264,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3360,7 +3309,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3411,7 +3359,6 @@
           }
         },
         "failed_calls": 2,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3457,7 +3404,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3503,7 +3449,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3549,7 +3494,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3595,7 +3539,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3641,7 +3584,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3687,7 +3629,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3733,7 +3674,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3784,7 +3724,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -3830,7 +3769,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "search_filings",
         "first_tool_method": "completion",
         "batching": {
@@ -3881,7 +3819,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -3932,7 +3869,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -3988,7 +3924,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -4036,7 +3971,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -4082,7 +4016,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -4133,7 +4066,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -4159,12 +4091,10 @@
         "verification_status": "verified",
         "figure_applicable": true,
         "figure_primary": true,
-        "first_tool_ok": false,
-        "tool_set_ok": false,
-        "allowed_only_ok": false,
-        "disallowed": [
-          "list_available_companies"
-        ],
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
         "missing_required": []
       },
       {
@@ -4181,7 +4111,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -4227,7 +4156,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "lookup_financial_fact",
         "first_tool_method": "completion",
         "batching": {
@@ -4278,7 +4206,6 @@
           }
         },
         "failed_calls": 0,
-        "marker_failures": {},
         "first_tool": "list_available_companies",
         "first_tool_method": "completion",
         "batching": {
@@ -4304,12 +4231,10 @@
         "verification_status": "verified",
         "figure_applicable": true,
         "figure_primary": true,
-        "first_tool_ok": false,
-        "tool_set_ok": false,
-        "allowed_only_ok": false,
-        "disallowed": [
-          "list_available_companies"
-        ],
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
         "missing_required": []
       }
     ],

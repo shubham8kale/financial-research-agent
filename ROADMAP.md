@@ -209,10 +209,13 @@ rejected unchanged and 0 of 15 after (Fisher p = 0.057); on the shipped
 configuration over all 71 items, **0 of 119 calls were rejected**
 ([eval/EVALUATION.md](eval/EVALUATION.md), "Tool-call quality", finding 23).
 
-**Left open.** The labels are blind but written by the author and audited by
-models, not by a person, and two of the four baseline first-tool misses are
-arguable. A tolerant tool (accept a missing concept, return an observation that
-names it) was specified and not built because the wording was enough.
+**Left open.** The labels are blind as first written, but written by the author
+and audited by models, not by a person, and the owner reviewed them post hoc on
+2026-10-05 (four no-company items widened; the misses on `qa_0008`, `qa_0029`,
+`qa_0038` and `qa_0065` stand; `audit.owner_review` in
+[`eval/benchmark_tools.json`](eval/benchmark_tools.json)). A tolerant tool
+(accept a missing concept, return an observation that names it) was specified
+and not built because the wording was enough.
 
 ---
 

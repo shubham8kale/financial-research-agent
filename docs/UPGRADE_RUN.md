@@ -70,7 +70,7 @@ Python **224 to 358** (collected; three skip without the index or the fact table
 
 ### Needs the owner
 
-*Status, 2026-10-05 evening: items 1, 2 and 5 are closed (Post-run and Deployed sections below; the judge pass is upgrade-judged-7c50eed7da71.json); 4 stands at off; 7 is carried in every table; 3 (the 71 labels) and 6 (billing) remain the owner's.*
+*Status, 2026-10-05 evening: items 1, 2 and 5 are closed (Post-run and Deployed sections below; the judge pass is upgrade-judged-7c50eed7da71.json); 3 (the 71 labels) is closed on 2026-10-05 by the owner's review, which is post hoc (the `audit.owner_review` entry of `eval/benchmark_tools.json`; Post-run entry of 18:20); 4 stands at off; 7 is carried in every table; 6 (billing) remains the owner's.*
 
 1. **Review the commits** (`git log --oneline eda988e..HEAD`) and push them yourself. **Order matters: sync the Space first, then push**, because the web change tells users their follow-ups are remembered and the deployed backend does not do that until it is synced; a push to `main` also runs CI and probably auto-deploys the Vercel frontend. The Space sync and the Vercel deploy are manual and were not touched.
 2. Decide whether to **click the manual judged workflow** once (the prompt wording changed; JUDGED_RUNS_ALLOWED was 0).
@@ -437,6 +437,7 @@ Each number, its n, its definition and the file it comes from. `tm/` is `eval/to
 | tool metrics after the marker removal: identical to the committed files except that the always-empty per-item `marker_failures` key is no longer emitted (71 entries per file) | 2 files, 71 items each | regenerated outside the repo and compared structurally | `tm/upgrade-control-7c50eed7da71.json`, `tm/contract-v3-76b8f532c332.json` |
 | tests: 362 Python (358, plus 5 for the cache key, minus 3 marker tests, plus 2 call-validity tests), 16 web | | `pytest --collect-only`, `vitest run` | `pytest`, `npm test` |
 | post-run spend: $1.0339 actual, **$1.2924 counted**, of the $1.60 cap; cumulative counted $1.9442 with the upgrade run | 1 paid command | judge calls only, no agent call | ledger row 10 |
+| first tool call 67 of 71, tool set 66 of 71, shipped run, labels as reviewed 2026-10-05 (as first written 65 / 64; baselines 69 / 69 and 69 / 68) | 71 items | `first_tool_ok` / `tool_set_ok` on the labels as revised by the owner AFTER the results were read (post hoc; `audit.owner_review` in `eval/benchmark_tools.json`): conformity to the prompt's tool rules, not answer quality | `tm/upgrade-control-7c50eed7da71.json`, baselines `tm/contract-v3-76b8f532c332.json` and `tm/reindex-v3-5b1deb95bdcc.json` |
 
 ## Do not quote
 
@@ -448,7 +449,7 @@ Each number, its n, its definition and the file it comes from. `tm/` is `eval/to
 * **`b-rule-v1` against `contract-v3` as the rule's effect**: it changes the wording fix and the rule together; the rule-off control is the comparison.
 * **The batching rule as "safe" or "unsafe"**, and the rule on the full run as an improvement: it passed every gate and made one answer wrong.
 * **The 3 of 11 isolation successes as understanding**, and 11 of 11 as a rate: they are lucky defaults and a probe of eleven follow-ups written by the author.
-* **Anything within the measured noise**: p50 differences under about 15%, cost per query ($0.002067 to $0.001987), terminal failures of 0 or 1 (the failing item moves from run to run), `first_tool_ok` 65 or 67 or 70 of 71 (a handful of `list_available_companies` calls under labels that were not revised).
+* **Anything within the measured noise**: p50 differences under about 15%, cost per query ($0.002067 to $0.001987), terminal failures of 0 or 1 (the failing item moves from run to run), `first_tool_ok` 65 or 67 or 70 of 71 as written, 67 or 69 or 70 as reviewed (a handful of `list_available_companies` calls; the reviewed labels are post hoc).
 * **`tool_set_ok` or `first_tool_ok` as answer quality**: they measure conformity to the prompt's tool rules.
 * **`figure_primary` 46 of 46 against 45 of 45 as a gain**: the extra item is `qa_0066`, whose ground truth was corrected after `contract-v3` was generated.
 * **The `trace_id` in these results files**: tracing was off, so none opens in LangSmith.
@@ -614,6 +615,10 @@ What the owner does next, in this order:
 3. The manual judged workflow does **not** need clicking for the numbers (step 1 ran); click it once (about $0.20) only if the GitHub path itself should be exercised, and compare with `eval/ci_gate.json`.
 4. **Review the 71 labels** in `eval/benchmark_tools.json`.
 5. **Check Google billing** against the cumulative counted ledger ($1.9442).
+
+### 2026-10-05 18:20 Owner review of the tool labels: item 3 of the owner list closed, labels and tool metrics revised (post hoc)
+
+The owner decided that `list_available_companies` is an acceptable first call, and an allowed tool, on an item whose question names no company (the ticker must then be inferred from a product or segment name, and the tool's docstring sanctions confirming availability first), and stays a selection error on an item that names its company. The commit widened exactly four items in `eval/benchmark_tools.json` (`qa_0019`, `qa_0020`, `qa_0068`, `qa_0071`), recorded the rule, its date and the kept misses (`qa_0008`, `qa_0029`, `qa_0038`, `qa_0065`; `qa_0034` stays a rule-8 miss) in a new `audit.owner_review` entry, and regenerated all 15 files of `eval/tool_metrics/` from their own recorded sources, ids and baselines (the labels hash moves from `0dd9b822…` to `96bf2169…`). It is **post hoc**: made after the results of `contract-v3`, `reindex-v3`, `upgrade-control` and `upgrade-v1` had been read, unlike the blind labelling and the 2026-10-04 adjudication. Read from the regenerated files, `first_tool_ok` / `tool_set_ok` of 71 are `contract-v3` 69 / 69 (as first written 67 / 67), `reindex-v3` 69 / 68 (67 / 66), `upgrade-control` 67 / 66 (65 / 64) and `upgrade-v1` 70 / 69 (unchanged); call validity, batching, latency, cost, figure and verification figures did not move. A structural comparison of every regenerated file with its committed copy found movement only in the first-tool, tool-set, allowed-only and `disallowed` families and the labels hash, plus one thing outside that list: the 564 per-item `marker_failures: {}` entries (all empty) that the code stopped emitting in `6e9881c` are gone, which is the expected effect of regenerating at HEAD and is already recorded in the Post-run step 3 entry. `eval/EVALUATION.md` carries the new figures with the as-written ones beside them; the historical tables of this file were not rewritten.
 
 ## Deployed (2026-10-05)
 
