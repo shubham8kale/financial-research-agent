@@ -5,7 +5,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 ## In one minute
 
 - **What it is.** Five FY2025 10-K filings, cleaned to their 10-K documents (4,783 chunks) and their tagged XBRL facts (6,089), behind a LangGraph ReAct agent with five tools, a FastAPI streaming API, an MCP server and a Next.js chat UI. Free tiers throughout.
-- **What is measured, and where.** A 71-item labelled benchmark ([eval/EVALUATION.md](eval/EVALUATION.md), every number traceable to a file under [eval/results/](eval/results/)). Retrieval, scored without a model: the shipped configuration puts a relevant chunk in the top 5 on **66.2%** of questions (dense alone 50.7%). Answers, judged on the rebuilt index: the figure the question asked for is in the answer on **100%** of the items that have one, faithfulness 0.949 (0.957 on the first index). Every answer is verified against what was retrieved before it is served (70 of 70 verified on the latest run), at about $0.002 and 4 s per query on a laptop.
+- **What is measured, and where.** A 71-item labelled benchmark ([eval/EVALUATION.md](eval/EVALUATION.md), every number traceable to a file under [eval/results/](eval/results/)). Retrieval, scored without a model: the shipped configuration puts a relevant chunk in the top 5 on **66.2%** of questions (dense alone 50.7%). Answers, judged on the rebuilt index with the shipped prompt (n = 71, [upgrade-judged-7c50eed7da71.json](eval/results/upgrade-judged-7c50eed7da71.json)): the figure the question asked for is in the answer on **100%** of the items that have one (46 of 46), faithfulness 0.940 (0.949 under the previous prompt wording, [reindex-v3-5b1deb95bdcc.json](eval/results/reindex-v3-5b1deb95bdcc.json); 0.957 on the first index). Every answer is verified against what was retrieved before it is served (71 of 71 verified on the latest run, [upgrade-control-7c50eed7da71.json](eval/results/upgrade-control-7c50eed7da71.json): 0 refused, 0 terminal failures), at about $0.002 and 4 s per query on a laptop.
 - **What it is not.** Not a production service (no auth, no rate limit, one small corpus), not statistically powered (n = 71, five strata under 9 items), and the judged before/after of each upgrade was measured on the first index (limitation 19).
 - **What changed after review.** Three-quarters of the first index was XBRL markup, identifiers and metadata rather than 10-K text; finding 22 records the audit, the fix and every number that moved. [docs/DECISIONS.md](docs/DECISIONS.md) lists the design decisions with their evidence. MIT licensed.
 
@@ -99,7 +99,7 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 358 tests, no network or API key needed (three skip without the index or the fact table) |
+| Backend tests | pytest — 362 tests, no network or API key needed (three skip without the index or the fact table) |
 | Frontend tests | Vitest + React Testing Library — 16 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
@@ -377,11 +377,16 @@ figure in [eval/EVALUATION.md](eval/EVALUATION.md) can be recomputed from
 the committed file and does not move when a vendor changes its cost table.
 The eval harness also records what each judge pass cost.
 
-Measured on the shipped configuration over the 71-item benchmark
-(EVALUATION.md, "Cost and latency"): latency p50 **1.9 s**, p95 5.9 s;
-6,199 tokens in and 94 out per query; **$0.0017 per query**,
-$0.12 for the whole benchmark. A judge pass over the same answers costs about
-$1.10, which is why evaluation spend is gated on the judge-free metrics first.
+Measured on the agent alone (no output contract, so no structuring call) over
+the 71-item benchmark on the first, 67,521-chunk index (EVALUATION.md, "Cost and
+latency", run [`cost-v3`](eval/results/cost-v3-2d69cde009fc.json)): latency p50
+**1.9 s**, p95 5.9 s; 6,199 tokens in and 94 out per query; **$0.0017 per
+query**, $0.12 for the whole benchmark. The shipped configuration as it runs
+now (verification on, rebuilt index; a single run, [`upgrade-control`](eval/results/upgrade-control-7c50eed7da71.json),
+not a trend): p50 2,839 ms, p95 6,940 ms, 6,614 tokens in and 222 out per query,
+**$0.001987 per query**, $0.14 for the 71 items. A judge pass over the same
+answers costs about $1.03 ([`upgrade-judged`](eval/results/upgrade-judged-7c50eed7da71.json):
+426 calls), which is why evaluation spend is gated on the judge-free metrics first.
 
 **Tool calls are measured too.** `python -m eval.tool_metrics <results.json>` reports,
 from the stored per-call record and a label file written before any results were
@@ -546,11 +551,20 @@ now handed fact rows (EVALUATION.md limitation 16). Evidence:
 [facts-v3-7b536024e855.json](eval/results/facts-v3-7b536024e855.json).
 
 **On the rebuilt index** (EVALUATION.md finding 22): the same configuration
-under the output contract, judged the same way, scores faithfulness
+under the output contract, judged the same way, scored faithfulness
 0.949, answer relevancy 0.890, context recall 0.845 and `figure_primary`
-1.000 (n = 46), with 70 of 70 answers verified — within a hundredth of
-the first-index numbers above. Evidence:
+1.000 (n = 46), with 70 of 70 answers verified, under the **previous prompt
+wording** (`sha256:99d36aed6b9c`). Evidence:
 [reindex-v3-5b1deb95bdcc.json](eval/results/reindex-v3-5b1deb95bdcc.json).
+With the **shipped prompt wording** (`sha256:e96ec6393c90`, after the
+tool-call upgrade) the same 71 questions, judged the same way by
+`gemini-3.6-flash`, score faithfulness **0.940**, answer relevancy **0.912**,
+context recall **0.859** and `figure_primary` 1.000 (n = 46), with 71 of 71
+answers verified, 0 refused and 0 terminal failures (n = 71, one judge pass
+per file, so no variance of the comparison is measured; the three means differ
+from the previous wording's by -0.008, +0.022 and +0.014, and from the
+first-index numbers above by -0.017, +0.018 and +0.007). Evidence:
+[upgrade-judged-7c50eed7da71.json](eval/results/upgrade-judged-7c50eed7da71.json).
 
 ### Answer quality, schema 2 (contexts scored as observation blobs)
 
@@ -678,7 +692,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
    and `python -m eval.ci_gate retrieval --dry-run` — the last one checks that
    every threshold in `eval/ci_gate.json` sits at or below the committed value
    it was set from, so the gate cannot be edited past what was measured
-4. `pytest` (358 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (362 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Retrieval quality gate (`retrieval-gate`)**
 1. `python -m ingestion.pipeline`: rebuild the index and the fact table from
@@ -798,7 +812,7 @@ financial-research-agent/
 │   ├── rerank.py                   # Cross-encoder reranker
 │   ├── tickers.py                  # Which company a question names (the inferred filter)
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 358 tests; none needs a network or a key (three skip without the index or the fact table)
+├── tests/                          # 362 tests; none needs a network or a key (three skip without the index or the fact table)
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_submission_audit.py    # the EDGAR envelope, 10-K isolation, the audit classifier (6)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
@@ -806,23 +820,23 @@ financial-research-agent/
 │   ├── test_query_stream.py        # SSE streaming contract (2)
 │   ├── test_query_meta.py          # the meter on /query and the meta stream event (2)
 │   ├── test_meter.py               # latency, tokens, cost, tool calls (arguments, overlap, threads), trace id (15)
-│   ├── test_tool_metrics.py        # the tool-call metrics, one edge case at a time, and the committed baseline (29)
+│   ├── test_tool_metrics.py        # the tool-call metrics, one edge case at a time, and the committed baseline (28)
 │   ├── test_tool_labels.py         # the label file covers the 71 ids and names real tools (4)
-│   ├── test_tool_schema_version.py # the tool fingerprint moves when a description or schema does (4)
+│   ├── test_tool_schema_version.py # the tool fingerprint moves when a description or schema does, and is in the cache key (6)
 │   ├── test_batch_rule.py          # AGENT_BATCH_RULE: off leaves the prompt untouched, on appends the rule (6)
 │   ├── test_concurrent_search.py   # first-use races on every lazy singleton; real-index concurrency (8, 2 need the index)
 │   ├── test_thread_memory.py       # bounds, TTL, LRU, refusals not stored, the on|off switch, thread safety (18)
 │   ├── test_query_threads.py       # thread_id on /query and /query/stream: payloads, 422, parity, off switch (38)
 │   ├── test_multi_turn_probe.py    # the probe file against facts.sqlite, the runner against a stub API (16)
 │   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (28)
-│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, the generate / cache / stop loop (13)
+│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, the generate / cache / stop loop, the cache key (15)
 │   ├── test_retriever.py           # fusion, BM25, ticker inference, retrieval switches (13)
 │   ├── test_tool_wiring.py         # tool observations round-trip through the parser; concept stated as required (5)
 │   ├── test_ablation.py            # ablation matrix rendering (2)
 │   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator, segment filter (13)
 │   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
 │   ├── test_ci_gate.py             # gate thresholds and judged checks (15)
-│   ├── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (22)
+│   ├── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (23)
 │   ├── test_api_edges.py           # question bound, one deadline, stream cancellation (4)
 │   └── test_mcp_contract.py        # the MCP server in-process: discovery, schemas, observation format (4)
 ├── web/                            # Next.js chat client (see web/README.md); lib/thread.ts mints the thread id
@@ -851,7 +865,7 @@ financial-research-agent/
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 358 backend tests plus 16 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 362 backend tests plus 16 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
 - **Conversation memory is in process and ephemeral.** It holds the text of up to six served turns per thread in one server process, forgets a thread after 30 idle minutes and everything on a restart, and is not shared between replicas; the UI says it is not saved and clears on a restart (it does not mention the idle expiry). It was measured on eight small conversations (11 follow-up turns), which shows the mechanism works and estimates no rate (EVALUATION.md finding 25). There is no persistent, cross-session or per-user memory.
 - **Batching is the model's choice.** LangGraph already runs the calls of one step concurrently and the model batches 19% of calls on this benchmark; the explicit `AGENT_BATCH_RULE` raised it to 29% and cut agent model calls from 2.49 to 2.37 (cost per query did not fall, latency did not move), but it made one answer wrong that the judge-free metrics could not see, so it ships off (EVALUATION.md finding 24).
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).

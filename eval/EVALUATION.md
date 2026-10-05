@@ -72,12 +72,17 @@ the HTML-escaped XBRL instance — and 74% of the 67,521-chunk index was
 escaped markup, XBRL identifiers or MetaLinks JSON; 23% was prose. It now reads the 10-K document alone: 4,783 chunks, 86% prose,
 built in 72 seconds instead of 26 minutes. **Every retrieval number in this
 document is on the rebuilt index.** The judged runs that built the tools
-(findings 16–21) predate it and are marked as such; the shipped
-configuration was then judged on the rebuilt index (finding 22):
-faithfulness 0.949, answer relevancy 0.890, context recall 0.845
-against 0.957 / 0.894 / 0.852 on the first index — inside the run-to-run
-variance finding 11 measured. The corpus fix changed what retrieval finds,
-not what the model answers.
+(findings 16–21) predate it and are marked as such; the configuration was
+then judged on the rebuilt index (finding 22), under the previous prompt
+wording (`sha256:99d36aed6b9c`, `reindex-v3`): faithfulness 0.949, answer
+relevancy 0.890, context recall 0.845 against 0.957 / 0.894 / 0.852 on the
+first index — inside the run-to-run variance finding 11 measured. The corpus
+fix changed what retrieval finds, not what the model answers. **The shipped
+prompt wording** (`sha256:e96ec6393c90`, after the tool-call upgrade below) was
+judged the same way afterwards, n = 71 (`upgrade-judged`): faithfulness
+**0.940**, answer relevancy **0.912**, context recall **0.859**, 71 of 71
+verified; these are the current numbers, and the `reindex-v3` triple is the
+previous wording's.
 
 **Tool calls, batching and conversation memory (findings 23–25).** The tool
 calls themselves are now measured ([Tool-call quality](#tool-call-quality)): the
@@ -1924,12 +1929,25 @@ The judged rows are against the same configuration judged on the first
 index (`facts-v3`, made before the contract existed; its ten-item subset is
 the one the CI gate was first calibrated on):
 
-| judged by `gemini-3.6-flash`, 71 items | rebuilt index (`reindex-v3`) | first index (`facts-v3`) | change |
-|---|---|---|---|
-| faithfulness | 0.949 | 0.957 | -0.009 |
-| answer relevancy | 0.890 | 0.894 | -0.004 |
-| context recall | 0.845 | 0.852 | -0.007 |
-| faithfulness on the items that used the fact tool | 0.990 (n = 34) | 0.984 (n = 34) | |
+| judged by `gemini-3.6-flash`, 71 items | shipped prompt `e96ec6393c90`, rebuilt index (`upgrade-judged`) | previous prompt `99d36aed6b9c`, rebuilt index (`reindex-v3`) | first index (`facts-v3`) | change, `reindex-v3` against `facts-v3` |
+|---|---|---|---|---|
+| faithfulness | **0.940** | 0.949 | 0.957 | -0.009 |
+| answer relevancy | **0.912** | 0.890 | 0.894 | -0.004 |
+| context recall | **0.859** | 0.845 | 0.852 | -0.007 |
+| faithfulness on the items that used the fact tool | 1.000 (n = 34) | 0.990 (n = 34) | 0.984 (n = 34) | |
+
+The first column was added after the tool-call upgrade changed the prompt
+(rule 7's wording): it is the judge pass over the 71 answers of the shipped
+configuration (`upgrade-judged-7c50eed7da71.json`, 426 judge calls, $1.03;
+71 of 71 verified, 0 terminal failures, `figure_primary` 1.000 on n = 46), and
+it is the current number. The other two columns are the comparison finding 22
+makes, the index and nothing else, and are unchanged. One judge pass per file,
+so the first column against the second is not a measured difference: the
+three means move by -0.008, +0.022 and +0.014. Item by item, the seven items
+whose faithfulness moved by more than 0.2 were read by hand in
+`docs/UPGRADE_RUN.md` ("Post-run"); six are judge variation on a correct
+answer (the same "not disclosed" answer to `qa_0064` scored 1.0 and then 0.0),
+and one, `qa_0024`, is a wrong answer (limitation 27).
 
 50 of 71 drafts are byte-identical to `facts-v3`'s, and the three means
 moved by less than a hundredth, inside the run-to-run variance finding 11
@@ -2393,3 +2411,17 @@ Including the ones that weaken the numbers above.
 26. **Tracing was off for every run of this upgrade** (the owner's LangSmith
     setting was overridden so no run called a non-Gemini API), so the `trace_id`
     recorded in these results files does not open as a LangSmith trace.
+27. **A hedged wrong answer passes both the contract and the judge.** On a hand
+    read of the seven items whose judged faithfulness moved by more than 0.2
+    between the previous and the shipped prompt (`docs/UPGRADE_RUN.md`,
+    "Post-run"), `qa_0024` (Amazon's third-party seller services revenue) is
+    answered wrongly: it says the filings do not list three further sources, while
+    the text the agent itself retrieved lists them (the ground truth). It was
+    verified (it states no figure, and the contract checks figures and citations:
+    limitation 19) and the judge scored it faithfulness 1.000, answer relevancy
+    0.932 and context recall 1.000. It is not new: `contract-v3` and `facts-v3`
+    give the same hedge, and `reindex-v3` and the rule-on run hit the recursion
+    limit on it instead, so the `list` stratum's faithfulness over `reindex-v3`
+    (0.979 against 0.854) is a failed answer replaced by a hedged one, not better
+    answers. Only those seven items were read, not all 71, and no claim is made
+    that the rest are right.
