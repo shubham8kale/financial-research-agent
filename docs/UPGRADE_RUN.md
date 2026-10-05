@@ -31,6 +31,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 2 | 22:50 | `run_eval --generate-only --label a-wording --cache-file eval/cache/a-wording.json --ids <ITEMS_A>` (candidate (a), git `8e3d248`) | 12 | $0.0375 | $0.0231 | $0.0289 | $0.0598 |
 | 3 | 22:45 | `run_eval --generate-only --label b-rule-v1 --cache-file eval/cache/b-rule-v1.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on` (git `3d1f616`) | 17 | $0.0531 | $0.0425 | $0.0531 | $0.1129 |
 | 4 | 22:50 | `run_eval --generate-only --label b-control --cache-file eval/cache/b-control.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=off` (fix kept, git `911f8c5`) | 17 | $0.0531 | $0.0421 | $0.0526 | $0.1656 |
+| 5 | 22:57 | `run_eval --generate-only --label b-rule-v2 --cache-file eval/cache/b-rule-v2.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on`, rule wording v2 (git `7438a47`) | 17 | $0.0531 | $0.0379 | $0.0474 | $0.2130 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -187,3 +188,27 @@ NEXT STEP: run `b-control` (the same 17 items, rule OFF, fix kept) on a quiet ma
 **Multi-turn probe built (Phase 4.3, no spend yet)**: `eval/multi_turn_probe.json` (8 conversations, 19 questions, 11 follow-up turns), `eval/run_multi_turn_probe.py`, 16 tests. Every ground-truth figure was read from `data/facts.sqlite` (fact ids cited) and a test re-checks all of them; one follow-up question was reworded so no two questions in the file are identical. Plan: 30 requests (19 with memory, 11 follow-ups in isolation; the first turns are the same request in both modes so the isolation run reuses them), expected $0.075 actual, $0.0938 counted.
 
 NEXT STEP: rule wording iteration 1 (commit, then run `b-rule-v2` on ITEMS_B with the rule on; expected counted cost $0.0531, ledger $0.1656 + $0.0531 = $0.2187).
+
+### 2026-10-04 23:50 Phase 3.3: rule wording v2 (iteration 1 of 2) moves exactly the items it was written for
+
+`b-rule-v2` (`eval/results/b-rule-v2-2b81f7712548.json`, git `7438a47`, clean tree, `prompt_version sha256:95cd45597bbc`, `agent_batch_rule on`): ITEMS_B, 17 items; actual $0.0379, counted $0.0474, ledger total **$0.2130**. Quiet machine. Comparisons: `eval/tool_metrics/b-rule-v2-vs-b-control-subset.json` (against the rule-off control) and `eval/tool_metrics/b-rule-v2-2b81f7712548-subset.json` (against `contract-v3`).
+
+| ITEMS_B, 17 items | `contract-v3` | `b-control` (fix, rule OFF) | `b-rule-v2` (fix, rule v2 ON) |
+|---|---|---|---|
+| tool calls | 59 | 47 | **39** |
+| model steps that made the calls (t0 windows) | n/a | 35 | **26** |
+| calls issued in a batched step | n/a | 21 of 47 (44.7%) | **23 of 39 (59.0%)** |
+| agent model calls per query | 3.82 | 3.06 | **2.53** |
+| latency p50 / mean (nearest-rank, terminal failure excluded) | 4,586 / 5,283 ms | 3,205 / 4,133 ms | **2,933 / 3,970 ms** |
+| cost per query | $0.00302 | $0.00248 | **$0.00223** |
+| calls rejected | 5 of 59 | 0 of 47 | 0 of 39 |
+| `first_tool_ok` / `tool_set_ok` | 15 of 17 / 15 of 17 | 15 of 17 / 14 of 17 | 17 of 17 / 16 of 17 |
+| `figure_primary` / verified / terminal failures | 16 of 16 / 16 / 1 | 16 of 16 / 17 / 0 | 16 of 16 / 17 / 0 |
+
+- **What moved, item by item (same 17 items, rule off to rule v2):** `qa_0062` (incorporation across five companies) four serial searches to ONE `compare_companies` call listing all five tickers, answer still correct (Apple California, Microsoft Washington; p50 7,458 to 5,961 ms); `qa_0061` (headcount of five) `list_available_companies` plus three serial searches to `list_available_companies` plus ONE `compare_companies` call; `qa_0063` three steps to one step of two parallel lookups; `qa_0068` and `qa_0071` no longer call `list_available_companies` first, one step instead of two. The other 12 items have the same step structure as the control, except `qa_0034` (the control and v2 used no calculator, v1 did: model variation). `qa_0063`, `qa_0068`, `qa_0071` answers are still the ground-truth figures.
+- **Why this is not the same finding as v1:** v1 changed 3 items by one step each and moved nothing in the aggregate; v2 changed the five items whose wording (`compare_companies` once, with a list) addressed them, and agent model calls fell 3.06 to 2.53 against the control, with the answers unchanged on every figure item.
+- **Caveats.** (1) One run per configuration, 17 items, 5 of which moved; the run-to-run variation of one configuration is about 12% on p50 (two committed runs of the shipped configuration) so the latency difference 3,205 to 2,933 ms (8.5%) is within it and is NOT a finding; the model-call and step counts are structural and are the evidence. (2) The wording was written after looking at which of these same items did not batch, so ITEMS_B is the set it was tuned on (R2): the other 54 benchmark items are the regression check in the full run. (3) `qa_0062` has no figure in its ground truth, so the figure check cannot score it; its answer was read by hand against the ground truth.
+
+Decision: one iteration is enough (the second allowed iteration is not needed); the full 71-item confirmation run uses rule v2 ON with the Phase 2 fix, label `upgrade-v1`, and its default-on gate is evaluated against `contract-v3` AND against the rule's own controlled evidence above (the vs-`contract-v3` gate in section 3.4 cannot separate the rule from the wording fix, so the rule ships on only if it also beats the rule-off control, which v2 does and v1 did not).
+
+NEXT STEP: commit these results, then `upgrade-v1`, the full 71-item run (expected counted cost 71 x $0.0025 x 1.25 = $0.2219, ledger $0.2130 + $0.2219 = $0.4349), on a QUIET machine (no tests or builds during the run: the latency gate reads from it).

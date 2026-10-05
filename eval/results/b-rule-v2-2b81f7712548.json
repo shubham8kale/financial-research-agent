@@ -1,0 +1,2590 @@
+{
+  "schema_version": 3,
+  "run_id": "b-rule-v2-7438a47",
+  "label": "b-rule-v2",
+  "timestamp": "2026-10-05T02:59:23+00:00",
+  "git_commit": "7438a47",
+  "git_dirty": false,
+  "config": {
+    "result_kind": "generation",
+    "schema_version": 3,
+    "context_granularity": "chunk",
+    "context_format": "chunk+provenance",
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "judge_model": "gemini-3.6-flash",
+    "judge_provider": "google",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.2,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "retrieval": {
+      "mode": "dense",
+      "k": 5,
+      "fetch_k": 50,
+      "rrf_k": 60,
+      "dense_weight": 1.0,
+      "sparse_weight": 1.0,
+      "rerank": true,
+      "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "ticker_filter": "inferred"
+    },
+    "prompt_version": "sha256:95cd45597bbc",
+    "tool_schema_version": "sha256:88e7a8918c7f",
+    "agent_batch_rule": "on",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 2,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_version": "sha256:b55a114e8c8a",
+    "benchmark_n": 17,
+    "benchmark_item_ids": [
+      "qa_0005",
+      "qa_0007",
+      "qa_0012",
+      "qa_0021",
+      "qa_0034",
+      "qa_0041",
+      "qa_0044",
+      "qa_0053",
+      "qa_0060",
+      "qa_0061",
+      "qa_0062",
+      "qa_0063",
+      "qa_0067",
+      "qa_0068",
+      "qa_0069",
+      "qa_0070",
+      "qa_0071"
+    ],
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ],
+    "deterministic_metrics": [
+      "figure_recall",
+      "figure_exact_rate",
+      "figure_primary_rate",
+      "agent_hit_rate",
+      "agent_recall",
+      "grounded_rate",
+      "verified_rate"
+    ],
+    "figure_match_version": "4",
+    "price_table_date": "2026-09-27",
+    "verify_mode": "strict",
+    "contract_version": "da6f5bea0c8b",
+    "config_hash": "2b81f7712548"
+  },
+  "run_status": {
+    "complete": false,
+    "n_requested": 17,
+    "n_generated": 17,
+    "n_scored": 0,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "judge_diagnostics": {},
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 0,
+      "n_nan": 17,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 17,
+      "coverage": 0.0
+    },
+    "answer_relevancy": {
+      "n_scored": 0,
+      "n_nan": 17,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 17,
+      "coverage": 0.0
+    },
+    "context_recall": {
+      "n_scored": 0,
+      "n_nan": 17,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 17,
+      "coverage": 0.0
+    }
+  },
+  "aggregates": null,
+  "aggregates_withheld_reason": "--generate-only: generation checkpointed, judge pass not run",
+  "results": [
+    {
+      "id": "qa_0005",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales for fiscal 2025, and what was the year-over-year percentage change?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, a 6% increase from $391,035 million in fiscal 2024.",
+      "answer": "Apple's total net sales for fiscal 2025 were $416,161 million. This represents a year-over-year increase of 6.43% compared to fiscal 2024, when total net sales were $391,035 million.",
+      "observations": [
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=9\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=10\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=416,161, b=391,035 = 6.43"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 9] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 10] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=416,161, b=391,035 = 6.43"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:56:58+00:00",
+      "error": null,
+      "latency_ms": 3116.5,
+      "llm_calls": 4,
+      "input_tokens": 7632,
+      "output_tokens": 333,
+      "cost_usd": 0.002407,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 116.8,
+      "trace_id": "01a109fe-2e32-7462-8d04-eb89db33430f",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-2e32-7462-8d04-eb89db33430f",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3116.5,
+        "llm_calls": 4,
+        "input_tokens": 7632,
+        "output_tokens": 333,
+        "total_tokens": 7965,
+        "cost_usd": 0.002407,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 58.1,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "ticker": "AAPL",
+              "concept": "total net sales"
+            },
+            "t0_ms": 708.0
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 58.3,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "ticker": "AAPL",
+              "concept": "total net sales"
+            },
+            "t0_ms": 709.3
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.4,
+            "error": false,
+            "args": {
+              "b": 391035,
+              "operation": "pct_change",
+              "a": 416161
+            },
+            "t0_ms": 1386.9
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 116.8
+      },
+      "draft_answer": "Apple's total net sales for fiscal 2025 were $416,161 million. This represents a year-over-year increase of 6.43% compared to fiscal 2024, when total net sales were $391,035 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_10",
+          "AAPL_10K_fact_9",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 5,
+        "n_found": 5,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$416,161 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0007",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's Services net sales in fiscal 2025, and how did they change versus fiscal 2024?",
+      "ground_truth": "Services net sales were $109,158 million in fiscal 2025, up 14% from $96,169 million in fiscal 2024.",
+      "answer": "Apple's Services net sales were $109,158 million in fiscal 2025. This represents an increase of 13.51% compared to fiscal 2024, when Services net sales were $96,169 million.",
+      "observations": [
+        "XBRL facts for AAPL: 'Services net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=6\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'Services net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=7\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=109,158, b=96,169 = 13.51"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 6] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 7] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=109,158, b=96,169 = 13.51"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:07+00:00",
+      "error": null,
+      "latency_ms": 3581.4,
+      "llm_calls": 4,
+      "input_tokens": 7645,
+      "output_tokens": 321,
+      "cost_usd": 0.002393,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 8.1,
+      "trace_id": "01a109fe-4e0d-7b31-9c28-4cca55fb0de9",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-4e0d-7b31-9c28-4cca55fb0de9",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3581.4,
+        "llm_calls": 4,
+        "input_tokens": 7645,
+        "output_tokens": 321,
+        "total_tokens": 7966,
+        "cost_usd": 0.002393,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.8,
+            "error": false,
+            "args": {
+              "concept": "Services net sales",
+              "fiscal_year": 2025,
+              "ticker": "AAPL"
+            },
+            "t0_ms": 1156.0
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.9,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "fiscal_year": 2024,
+              "concept": "Services net sales"
+            },
+            "t0_ms": 1156.7
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.4,
+            "error": false,
+            "args": {
+              "operation": "pct_change",
+              "b": 96169,
+              "a": 109158
+            },
+            "t0_ms": 1884.9
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 8.1
+      },
+      "draft_answer": "Apple's Services net sales were $109,158 million in fiscal 2025. This represents an increase of 13.51% compared to fiscal 2024, when Services net sales were $96,169 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_6",
+          "AAPL_10K_fact_7",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 5,
+        "n_found": 5,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$109,158 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0012",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Apple's total gross margin percentage for fiscal 2025?",
+      "ground_truth": "46.9%",
+      "answer": "Apple's total gross margin percentage for fiscal year 2025 was 46.91%.",
+      "observations": [
+        "XBRL facts for AAPL: 'gross profit' resolved by synonym to us-gaap:GrossProfit; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=21\n    us-gaap:GrossProfit | FY2025 (2024-09-29 to 2025-09-27) | $195,201 million | consolidated | tagged \"195,201\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=9\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] calc=margin_pct\n    a / b * 100 with a=195,201, b=416,161 = 46.91"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 21] us-gaap:GrossProfit | FY2025 (2024-09-29 to 2025-09-27) | $195,201 million | consolidated | tagged \"195,201\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 9] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[calculator margin_pct] a / b * 100 with a=195,201, b=416,161 = 46.91"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:14+00:00",
+      "error": null,
+      "latency_ms": 2780.9,
+      "llm_calls": 4,
+      "input_tokens": 7497,
+      "output_tokens": 230,
+      "cost_usd": 0.002219,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 6.0,
+      "trace_id": "01a109fe-6fb7-7740-933a-a29ccc5ea16d",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-6fb7-7740-933a-a29ccc5ea16d",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2780.9,
+        "llm_calls": 4,
+        "input_tokens": 7497,
+        "output_tokens": 230,
+        "total_tokens": 7727,
+        "cost_usd": 0.002219,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.9,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "fiscal_year": 2025,
+              "concept": "gross profit"
+            },
+            "t0_ms": 793.0
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.7,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "concept": "total net sales",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 793.8
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.4,
+            "error": false,
+            "args": {
+              "b": 416161,
+              "operation": "margin_pct",
+              "a": 195201
+            },
+            "t0_ms": 1496.4
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 6.0
+      },
+      "draft_answer": "Apple's total gross margin percentage for fiscal year 2025 was 46.91%.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_21",
+          "AAPL_10K_fact_9",
+          "calc_margin_pct"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "46.9%",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0021",
+      "question_type": "numerical",
+      "ticker": "AMZN",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was the year-over-year percentage growth in Amazon's AWS net sales from 2024 to 2025?",
+      "ground_truth": "20%",
+      "answer": "Amazon's AWS net sales grew from $107,556 million in 2024 to $128,725 million in 2025, representing a year-over-year increase of 19.68%.",
+      "observations": [
+        "XBRL facts for AMZN: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AMZN  fact_id=2003\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL\n\n[2] ticker=AMZN  fact_id=2027\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | ProductOrService=AmazonWebServices | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "XBRL facts for AMZN: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AMZN  fact_id=2004\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL\n\n[2] ticker=AMZN  fact_id=2028\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=128,725, b=107,556 = 19.68"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AMZN 10-K, XBRL fact 2003] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2027] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | ProductOrService=AmazonWebServices | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2004] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2028] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=128,725, b=107,556 = 19.68"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:22+00:00",
+      "error": null,
+      "latency_ms": 2933.4,
+      "llm_calls": 4,
+      "input_tokens": 8419,
+      "output_tokens": 316,
+      "cost_usd": 0.002579,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 7.8,
+      "trace_id": "01a109fe-8e42-7a63-94ad-7acc73358395",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-8e42-7a63-94ad-7acc73358395",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2933.4,
+        "llm_calls": 4,
+        "input_tokens": 8419,
+        "output_tokens": 316,
+        "total_tokens": 8735,
+        "cost_usd": 0.002579,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.5,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "concept": "net sales",
+              "ticker": "AMZN",
+              "segment": "AWS"
+            },
+            "t0_ms": 724.1
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.8,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "concept": "net sales",
+              "segment": "AWS",
+              "ticker": "AMZN"
+            },
+            "t0_ms": 724.8
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.5,
+            "error": false,
+            "args": {
+              "a": 128725,
+              "operation": "pct_change",
+              "b": 107556
+            },
+            "t0_ms": 1267.7
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 7.8
+      },
+      "draft_answer": "Amazon's AWS net sales grew from $107,556 million in 2024 to $128,725 million in 2025, representing a year-over-year increase of 19.68%.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "AMZN_10K_fact_2003",
+          "AMZN_10K_fact_2004",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "20%",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0034",
+      "question_type": "numerical",
+      "ticker": "GOOGL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "By how much did Alphabet's Google Search & other revenues increase from 2024 to 2025?",
+      "ground_truth": "$26.4 billion",
+      "answer": "Alphabet's Google Search & other revenues increased by $26.4 billion from 2024 to 2025.",
+      "observations": [
+        "No XBRL concept matches 'Google Search & other revenue' for GOOGL. Try a standard line item (revenue, net income, operating income, gross profit, diluted EPS, total assets, operating cash flow, capital expenditures) or a segment name, or search the filing text.",
+        "No XBRL concept matches 'Google Search & other revenue' for GOOGL. Try a standard line item (revenue, net income, operating income, gross profit, diluted EPS, total assets, operating cash flow, capital expenditures) or a segment name, or search the filing text.",
+        "[1] ticker=GOOGL  chunk_idx=416\n    $ 402,836 Google Services Google Advertising Google Search & other Google Search & other revenues increased $26.4 billion from 2024 to 2025. The overall growth was driven by interrelated factors including increases in search queries resulting from growth in user adoption and usage on mobile devices; growth in advertiser spending; and improvements we have made in ad formats and delivery. 33. Table of Contents Alphabet Inc. YouTube ads\n\n[2] ticker=GOOGL  chunk_idx=417\n    33. Table of Contents Alphabet Inc. YouTube ads YouTube ads revenues increased $4.2 billion from 2024 to 2025. The growth was driven by our direct response advertising products followed by our brand advertising products, both of which benefited from increased spending by our advertisers. Google Network Google Network revenues decreased $567 million from 2024 to 2025, primarily due to a decrease in AdSense revenues, partially offset by an increase in AdMob revenues. Monetization Metrics\n\n[3] ticker=GOOGL  chunk_idx=415\n    Financial Results Revenues The following table presents revenues by type (in millions): Year Ended December 31, 2024 2025 Google Search & other $ 198,084 $ 224,532 YouTube ads 36,147 40,367 Google Network 30,359 29,792 Google advertising 264,590 294,691 Google subscriptions, platforms, and devices 40,340 48,030 Google Services total 304,930 342,721 Google Cloud 43,229 58,705 Other Bets 1,648 1,537 Hedging gains (losses) 211 (127) Total revenues $ 350,018 $ 402,836 Google Services Google Advertis\n\n[4] ticker=GOOGL  chunk_idx=437\n    Year Ended December 31, 2024 2025 Operating income (loss): Google Services $ 121,263 $ 139,404 Google Cloud 6,112 13,910 Other Bets (4,444) (7,515) Alphabet-level activities (1) (10,541) (16,760) Total income from operations $ 112,390 $ 129,039 (1) Alphabet-level activities primarily reflect expenses related to our shared AI research and development. Google Services\n\n[5] ticker=GOOGL  chunk_idx=677\n    Deferred Revenues We record deferred revenues when cash payments are received or due in advance of our performance, including amounts which are refundable. Deferred revenues primarily relate to Google Cloud and Google subscriptions, platforms, and devices. Total deferred revenue as of December 31, 2024 was $ 6.0 billion, of which $ 4.6 billion was 60. Table of Contents Alphabet Inc. recognized as revenues for the year ended December 31, 2025. Total deferred revenue as of December 31, 2025 was $"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[GOOGL 10-K, chunk 416] $ 402,836 Google Services Google Advertising Google Search & other Google Search & other revenues increased $26.4 billion from 2024 to 2025. The overall growth was driven by interrelated factors including increases in search queries resulting from growth in user adoption and usage on mobile devices; growth in advertiser spending; and improvements we have made in ad formats and delivery. 33. Table of Contents Alphabet Inc. YouTube ads",
+        "[GOOGL 10-K, chunk 417] 33. Table of Contents Alphabet Inc. YouTube ads YouTube ads revenues increased $4.2 billion from 2024 to 2025. The growth was driven by our direct response advertising products followed by our brand advertising products, both of which benefited from increased spending by our advertisers. Google Network Google Network revenues decreased $567 million from 2024 to 2025, primarily due to a decrease in AdSense revenues, partially offset by an increase in AdMob revenues. Monetization Metrics",
+        "[GOOGL 10-K, chunk 415] Financial Results Revenues The following table presents revenues by type (in millions): Year Ended December 31, 2024 2025 Google Search & other $ 198,084 $ 224,532 YouTube ads 36,147 40,367 Google Network 30,359 29,792 Google advertising 264,590 294,691 Google subscriptions, platforms, and devices 40,340 48,030 Google Services total 304,930 342,721 Google Cloud 43,229 58,705 Other Bets 1,648 1,537 Hedging gains (losses) 211 (127) Total revenues $ 350,018 $ 402,836 Google Services Google Advertis",
+        "[GOOGL 10-K, chunk 437] Year Ended December 31, 2024 2025 Operating income (loss): Google Services $ 121,263 $ 139,404 Google Cloud 6,112 13,910 Other Bets (4,444) (7,515) Alphabet-level activities (1) (10,541) (16,760) Total income from operations $ 112,390 $ 129,039 (1) Alphabet-level activities primarily reflect expenses related to our shared AI research and development. Google Services",
+        "[GOOGL 10-K, chunk 677] Deferred Revenues We record deferred revenues when cash payments are received or due in advance of our performance, including amounts which are refundable. Deferred revenues primarily relate to Google Cloud and Google subscriptions, platforms, and devices. Total deferred revenue as of December 31, 2024 was $ 6.0 billion, of which $ 4.6 billion was 60. Table of Contents Alphabet Inc. recognized as revenues for the year ended December 31, 2025. Total deferred revenue as of December 31, 2025 was $"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [
+        "GOOGL_10K_chunk_416",
+        "GOOGL_10K_chunk_417",
+        "GOOGL_10K_chunk_415",
+        "GOOGL_10K_chunk_437",
+        "GOOGL_10K_chunk_677"
+      ],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:42+00:00",
+      "error": null,
+      "latency_ms": 14703.3,
+      "llm_calls": 4,
+      "input_tokens": 8456,
+      "output_tokens": 227,
+      "cost_usd": 0.002455,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "search_filings": 1
+      },
+      "tool_ms_total": 11424.9,
+      "trace_id": "01a109fe-ad67-77b2-94ce-b155a0b207a6",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-ad67-77b2-94ce-b155a0b207a6",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 14703.3,
+        "llm_calls": 4,
+        "input_tokens": 8456,
+        "output_tokens": 227,
+        "total_tokens": 8683,
+        "cost_usd": 0.002455,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 6.4,
+            "error": false,
+            "args": {
+              "concept": "Google Search & other revenue",
+              "fiscal_year": 2024,
+              "ticker": "GOOGL"
+            },
+            "t0_ms": 1157.7
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 7.2,
+            "error": false,
+            "args": {
+              "concept": "Google Search & other revenue",
+              "fiscal_year": 2025,
+              "ticker": "GOOGL"
+            },
+            "t0_ms": 1158.8
+          },
+          {
+            "name": "search_filings",
+            "ms": 11411.3,
+            "error": false,
+            "args": {
+              "query": "Alphabet Google Search & other revenue 2024 2025"
+            },
+            "t0_ms": 1774.3
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "search_filings": 1
+        },
+        "tool_ms_total": 11424.9
+      },
+      "draft_answer": "Alphabet's Google Search & other revenues increased by $26.4 billion from 2024 to 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "GOOGL_10K_chunk_416"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$26.4 billion",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": true,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "first_rank": 1
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0041",
+      "question_type": "numerical",
+      "ticker": "META",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "What was Meta's total revenue for the year ended December 31, 2025, and how did it change versus 2024?",
+      "ground_truth": "Total revenue for 2025 was $200.97 billion, an increase of 22% compared to 2024.",
+      "answer": "Meta's total revenue for the year ended December 31, 2025, was $200,966 million. This represents a 22.17% increase compared to the $164,501 million reported for the year ended December 31, 2024.",
+      "observations": [
+        "XBRL facts for META: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=META  fact_id=3701\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $200,966 million | consolidated | tagged \"200,966\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "XBRL facts for META: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=META  fact_id=3702\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $164,501 million | consolidated | tagged \"164,501\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=200,966, b=164,501 = 22.17"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[META 10-K, XBRL fact 3701] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $200,966 million | consolidated | tagged \"200,966\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[META 10-K, XBRL fact 3702] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $164,501 million | consolidated | tagged \"164,501\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=200,966, b=164,501 = 22.17"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:50+00:00",
+      "error": null,
+      "latency_ms": 3215.6,
+      "llm_calls": 4,
+      "input_tokens": 7661,
+      "output_tokens": 348,
+      "cost_usd": 0.002437,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 7.7,
+      "trace_id": "01a109fe-fa88-74f2-a9dc-effe1c909cda",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109fe-fa88-74f2-a9dc-effe1c909cda",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3215.6,
+        "llm_calls": 4,
+        "input_tokens": 7661,
+        "output_tokens": 348,
+        "total_tokens": 8009,
+        "cost_usd": 0.002437,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 4.1,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "ticker": "META",
+              "concept": "total revenue"
+            },
+            "t0_ms": 828.8
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.3,
+            "error": false,
+            "args": {
+              "concept": "total revenue",
+              "ticker": "META",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 830.3
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.3,
+            "error": false,
+            "args": {
+              "operation": "pct_change",
+              "b": 164501,
+              "a": 200966
+            },
+            "t0_ms": 1557.8
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 7.7
+      },
+      "draft_answer": "Meta's total revenue for the year ended December 31, 2025, was $200,966 million. This represents a 22.17% increase compared to the $164,501 million reported for the year ended December 31, 2024.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "META_10K_fact_3701",
+          "META_10K_fact_3702",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 4,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$200.97 billion",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0044",
+      "question_type": "numerical",
+      "ticker": "META",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "How much did Meta spend on capital expenditures (including principal payments on finance leases) in 2025?",
+      "ground_truth": "$72.22 billion",
+      "answer": "Meta spent $72.22 billion on capital expenditures, including principal payments on finance leases, in 2025.",
+      "observations": [
+        "XBRL facts for META: 'capital expenditures' resolved by synonym to us-gaap:PaymentsToAcquirePropertyPlantAndEquipment; fiscal year 2025.\n\n[1] ticker=META  fact_id=3867\n    us-gaap:PaymentsToAcquirePropertyPlantAndEquipment | FY2025 (2025-01-01 to 2025-12-31) | $69,691 million | consolidated | tagged \"69,691\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[1] ticker=META  chunk_idx=793\n    • Net income was $60.46 billion, with diluted earnings per share (EPS) of $23.49 for the year ended December 31, 2025. • Capital expenditures, including principal payments on finance leases, were $72.22 billion for the year ended December 31, 2025. • Share repurchases of our Class A common stock were $26.26 billion and total dividend and dividend equivalent payments were $5.32 billion for the year ended December 31, 2025. •\n\n[2] ticker=META  chunk_idx=931\n    offset by $72.22 billion of capital expenditures, which includes purchases of property and equipment and principal payments on finance leases; $31.57 billion of capital returns for repurchases of our Class A common stock and payments of dividends and dividend equivalents; $18.40 billion of taxes paid related to net share settlement of employee restricted stock unit (RSU) awards; and $18.33 billion of purchases of non-marketable equity investments.\n\n[3] ticker=META  chunk_idx=1042\n    10,432  8,455  Principal payments on finance leases ( 2,524 ) ( 1,969 ) ( 1,058 ) Other financing activities 2,220  ( 277 ) ( 111 ) Net cash used in financing activities ( 20,370 ) ( 40,781 ) ( 19,500 ) Effect of exchange rate changes on cash, cash equivalents, and restricted cash equivalents 235  ( 786 ) 113  Net increase (decrease) in cash, cash equivalents, and restricted cash equivalents ( 6,338 ) 2,611  27,231  Cash, cash equivalents, and restricted cash equivalents at beginning of the peri\n\n[4] ticker=META  chunk_idx=1203\n    108 Table of Contents The table above does not include lease payments that were not fixed at commencement or lease modification. As of December 31, 2025, we have additional operating and finance leases, that have not yet commenced, with total lease obligations of approximately $ 103.77 billion, mostly for data centers, colocations, and network infrastructure. These operating and finance leases will commence between 2026 and 2030 with lease terms of greater than one year to 30 years.\n\n[5] ticker=META  chunk_idx=949\n    Our operating and finance leases include data centers, offices, and certain network infrastructure. In addition to lease liabilities included in our consolidated balance sheets, we have leases that have not yet commenced, with total lease obligations of approximately $103.77 billion, mostly for data centers, colocations, and network infrastructure, as of December 31, 2025. These operating and finance leases will commence between 2026 and 2030 with lease terms of greater than one year to 30 years"
+      ],
+      "n_observations": 2,
+      "contexts": [
+        "[META 10-K, XBRL fact 3867] us-gaap:PaymentsToAcquirePropertyPlantAndEquipment | FY2025 (2025-01-01 to 2025-12-31) | $69,691 million | consolidated | tagged \"69,691\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[META 10-K, chunk 793] • Net income was $60.46 billion, with diluted earnings per share (EPS) of $23.49 for the year ended December 31, 2025. • Capital expenditures, including principal payments on finance leases, were $72.22 billion for the year ended December 31, 2025. • Share repurchases of our Class A common stock were $26.26 billion and total dividend and dividend equivalent payments were $5.32 billion for the year ended December 31, 2025. •",
+        "[META 10-K, chunk 931] offset by $72.22 billion of capital expenditures, which includes purchases of property and equipment and principal payments on finance leases; $31.57 billion of capital returns for repurchases of our Class A common stock and payments of dividends and dividend equivalents; $18.40 billion of taxes paid related to net share settlement of employee restricted stock unit (RSU) awards; and $18.33 billion of purchases of non-marketable equity investments.",
+        "[META 10-K, chunk 1042] 10,432  8,455  Principal payments on finance leases ( 2,524 ) ( 1,969 ) ( 1,058 ) Other financing activities 2,220  ( 277 ) ( 111 ) Net cash used in financing activities ( 20,370 ) ( 40,781 ) ( 19,500 ) Effect of exchange rate changes on cash, cash equivalents, and restricted cash equivalents 235  ( 786 ) 113  Net increase (decrease) in cash, cash equivalents, and restricted cash equivalents ( 6,338 ) 2,611  27,231  Cash, cash equivalents, and restricted cash equivalents at beginning of the peri",
+        "[META 10-K, chunk 1203] 108 Table of Contents The table above does not include lease payments that were not fixed at commencement or lease modification. As of December 31, 2025, we have additional operating and finance leases, that have not yet commenced, with total lease obligations of approximately $ 103.77 billion, mostly for data centers, colocations, and network infrastructure. These operating and finance leases will commence between 2026 and 2030 with lease terms of greater than one year to 30 years.",
+        "[META 10-K, chunk 949] Our operating and finance leases include data centers, offices, and certain network infrastructure. In addition to lease liabilities included in our consolidated balance sheets, we have leases that have not yet commenced, with total lease obligations of approximately $103.77 billion, mostly for data centers, colocations, and network infrastructure, as of December 31, 2025. These operating and finance leases will commence between 2026 and 2030 with lease terms of greater than one year to 30 years"
+      ],
+      "n_contexts": 6,
+      "retrieved_chunk_ids": [
+        "META_10K_chunk_793",
+        "META_10K_chunk_931",
+        "META_10K_chunk_1042",
+        "META_10K_chunk_1203",
+        "META_10K_chunk_949"
+      ],
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:57:59+00:00",
+      "error": null,
+      "latency_ms": 3289.5,
+      "llm_calls": 4,
+      "input_tokens": 8368,
+      "output_tokens": 190,
+      "cost_usd": 0.002377,
+      "tools_used": {
+        "lookup_financial_fact": 1,
+        "search_filings": 1
+      },
+      "tool_ms_total": 697.0,
+      "trace_id": "01a109ff-1ac9-7261-96e1-e36d116a55f8",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-1ac9-7261-96e1-e36d116a55f8",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3289.5,
+        "llm_calls": 4,
+        "input_tokens": 8368,
+        "output_tokens": 190,
+        "total_tokens": 8558,
+        "cost_usd": 0.002377,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.3,
+            "error": false,
+            "args": {
+              "concept": "capital expenditures",
+              "ticker": "META",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 610.6
+          },
+          {
+            "name": "search_filings",
+            "ms": 695.7,
+            "error": false,
+            "args": {
+              "query": "Meta capital expenditures including principal payments on finance leases 2025"
+            },
+            "t0_ms": 1256.4
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1,
+          "search_filings": 1
+        },
+        "tool_ms_total": 697.0
+      },
+      "draft_answer": "Meta spent $72.22 billion on capital expenditures, including principal payments on finance leases, in 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "META_10K_chunk_793",
+          "META_10K_chunk_931"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$72.22 billion",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": true,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "first_rank": 1
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0053",
+      "question_type": "numerical",
+      "ticker": "MSFT",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "By what percentage did Microsoft's total revenue grow from fiscal 2024 to fiscal 2025?",
+      "ground_truth": "15% (an increase of $36.6 billion)",
+      "answer": "Microsoft's total revenue grew by 14.93% from fiscal 2024 to fiscal 2025.",
+      "observations": [
+        "XBRL facts for MSFT: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=MSFT  fact_id=4672\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-07-01 to 2024-06-30) | $245,122 million | consolidated | tagged \"245,122\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "XBRL facts for MSFT: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=MSFT  fact_id=4671\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=281,724, b=245,122 = 14.93"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[MSFT 10-K, XBRL fact 4672] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-07-01 to 2024-06-30) | $245,122 million | consolidated | tagged \"245,122\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[MSFT 10-K, XBRL fact 4671] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=281,724, b=245,122 = 14.93"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:06+00:00",
+      "error": null,
+      "latency_ms": 2650.0,
+      "llm_calls": 4,
+      "input_tokens": 7604,
+      "output_tokens": 249,
+      "cost_usd": 0.002275,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 8.5,
+      "trace_id": "01a109ff-3b53-7052-838f-e13994b3f8bb",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-3b53-7052-838f-e13994b3f8bb",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2650.0,
+        "llm_calls": 4,
+        "input_tokens": 7604,
+        "output_tokens": 249,
+        "total_tokens": 7853,
+        "cost_usd": 0.002275,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.9,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "concept": "total revenue",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 686.6
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 4.1,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "fiscal_year": 2025,
+              "concept": "total revenue"
+            },
+            "t0_ms": 687.6
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.5,
+            "error": false,
+            "args": {
+              "operation": "pct_change",
+              "b": 245122,
+              "a": 281724
+            },
+            "t0_ms": 1179.7
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 8.5
+      },
+      "draft_answer": "Microsoft's total revenue grew by 14.93% from fiscal 2024 to fiscal 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "MSFT_10K_fact_4671",
+          "MSFT_10K_fact_4672",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 2,
+        "n_found": 1,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "15%",
+        "figure_primary": true,
+        "missing": [
+          "$36.6 billion"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0060",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Which company among Apple, Amazon, Alphabet, Meta, and Microsoft reported the highest net income in its most recent fiscal year according to these 10-K filings?",
+      "ground_truth": "Alphabet, with net income of $132,170 million for the year ended December 31, 2025.",
+      "answer": "Alphabet reported the highest net income among the companies listed for their most recent fiscal year, with a net income of $132,170 million.\n\nThe net income figures for the most recent fiscal year for each company are as follows:\n\n*   Alphabet: $132,170 million (fiscal year 2025)\n*   Apple: $112,010 million (fiscal year 2025)\n*   Microsoft: $101,832 million (fiscal year 2025)\n*   Amazon: $77,670 million (fiscal year 2025)\n*   Meta: $60,458 million (fiscal year 2025)",
+      "observations": [
+        "XBRL facts for AAPL: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=AAPL  fact_id=45\n    us-gaap:NetIncomeLoss | FY2025 (2024-09-29 to 2025-09-27) | $112,010 million | consolidated | tagged \"112,010\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AMZN: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=AMZN  fact_id=886\n    us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $77,670 million | consolidated | tagged \"77,670\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "XBRL facts for GOOGL: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=GOOGL  fact_id=2255\n    us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $132,170 million | consolidated | tagged \"132,170\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL",
+        "XBRL facts for META: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=META  fact_id=3731\n    us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $60,458 million | consolidated | tagged \"60,458\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "XBRL facts for MSFT: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=MSFT  fact_id=4707\n    us-gaap:NetIncomeLoss | FY2025 (2024-07-01 to 2025-06-30) | $101,832 million | consolidated | tagged \"101,832\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_observations": 5,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 45] us-gaap:NetIncomeLoss | FY2025 (2024-09-29 to 2025-09-27) | $112,010 million | consolidated | tagged \"112,010\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 886] us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $77,670 million | consolidated | tagged \"77,670\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[GOOGL 10-K, XBRL fact 2255] us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $132,170 million | consolidated | tagged \"132,170\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL",
+        "[META 10-K, XBRL fact 3731] us-gaap:NetIncomeLoss | FY2025 (2025-01-01 to 2025-12-31) | $60,458 million | consolidated | tagged \"60,458\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[MSFT 10-K, XBRL fact 4707] us-gaap:NetIncomeLoss | FY2025 (2024-07-01 to 2025-06-30) | $101,832 million | consolidated | tagged \"101,832\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 8,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:15+00:00",
+      "error": null,
+      "latency_ms": 3515.0,
+      "llm_calls": 3,
+      "input_tokens": 5968,
+      "output_tokens": 708,
+      "cost_usd": 0.002554,
+      "tools_used": {
+        "lookup_financial_fact": 5
+      },
+      "tool_ms_total": 65.8,
+      "trace_id": "01a109ff-595e-7602-bf8b-52fe014319b2",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-595e-7602-bf8b-52fe014319b2",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3515.0,
+        "llm_calls": 3,
+        "input_tokens": 5968,
+        "output_tokens": 708,
+        "total_tokens": 6676,
+        "cost_usd": 0.002554,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 7.7,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "concept": "net income"
+            },
+            "t0_ms": 838.2
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 14.8,
+            "error": false,
+            "args": {
+              "ticker": "AMZN",
+              "concept": "net income"
+            },
+            "t0_ms": 839.4
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 15.7,
+            "error": false,
+            "args": {
+              "ticker": "GOOGL",
+              "concept": "net income"
+            },
+            "t0_ms": 840.8
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 14.0,
+            "error": false,
+            "args": {
+              "ticker": "META",
+              "concept": "net income"
+            },
+            "t0_ms": 843.0
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 13.6,
+            "error": false,
+            "args": {
+              "concept": "net income",
+              "ticker": "MSFT"
+            },
+            "t0_ms": 844.3
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 5
+        },
+        "tool_ms_total": 65.8
+      },
+      "draft_answer": "Alphabet reported the highest net income among the companies listed for their most recent fiscal year, with a net income of $132,170 million.\n\nThe net income figures for the most recent fiscal year for each company are as follows:\n\n*   Alphabet: $132,170 million (fiscal year 2025)\n*   Apple: $112,010 million (fiscal year 2025)\n*   Microsoft: $101,832 million (fiscal year 2025)\n*   Amazon: $77,670 million (fiscal year 2025)\n*   Meta: $60,458 million (fiscal year 2025)",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 7,
+        "n_figures": 6,
+        "n_supported": 6,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_45",
+          "AMZN_10K_fact_886",
+          "GOOGL_10K_fact_2255",
+          "META_10K_fact_3731",
+          "MSFT_10K_fact_4707"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 2,
+        "n_found": 2,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$132,170 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 6,
+        "n_grounded": 6,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 4,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0061",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "human_capital",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Which of the five companies employed the most people as of its most recent fiscal year-end in these 10-Ks?",
+      "ground_truth": "Amazon, with approximately 1,576,000 full-time and part-time employees as of December 31, 2025.",
+      "answer": "Of the five companies, Amazon employed the most people as of its most recent fiscal year-end.\n\nThe employee counts as of the most recent fiscal year-end for each company are as follows:\n\n*   **Amazon:** 1,576,000 (as of December 31, 2025)\n*   **Microsoft:** 228,000 (as of June 30, 2025)\n*   **Alphabet (Google):** 190,820 (as of December 31, 2025)\n*   **Apple:** 166,000 (as of September 27, 2025)\n*   **Meta:** 78,865 (as of December 31, 2025)",
+      "observations": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "=== AAPL ===\n  [1] chunk_idx=377\n      The Company’s fiscal year is the 52- or 53-week period that ends on the last Saturday of September. An additional week is included in the first fiscal quarter every five or six years to realign the Company’s fiscal quarters with calendar quarters, which occurred in the first fiscal quarter of 2023. The Company’s fiscal years 2025 and 2024 spanned 52 weeks each, whereas fiscal year 2023 spanned 53 weeks. Unless otherwise stated, references to particular years, quarters, months and periods refer t\n\n  [2] chunk_idx=65\n      As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n  [3] chunk_idx=299\n      • AirPods Pro 3 Fiscal Period The Company’s fiscal year is the 52- or 53-week period that ends on the last Saturday of September. An additional week is included in the first fiscal quarter every five or six years to realign the Company’s fiscal quarters with calendar quarters, which occurred in the first quarter of 2023. The Company’s fiscal years 2025 and 2024 spanned 52 weeks each, whereas fiscal year 2023 spanned 53 weeks. Macroeconomic Conditions\n\n  [4] chunk_idx=296\n      Operations” in Part II, Item 7 of the Company’s Annual Report on Form 10-K for the fiscal year ended September 28, 2024.\n\n  [5] chunk_idx=378\n      years, quarters, months and periods refer to the Company’s fiscal years ended in September and the associated quarters, months and periods of those fiscal years.\n\n=== MSFT ===\n  [1] chunk_idx=111\n      As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.\n\n  [2] chunk_idx=858\n      65,365  61,575  57,529  Operating Income  $  128,528  $  109,433  $  88,523  No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:  (In millions)  Year Ended June 30,  2025  2024  2023  United States (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171  Total  $  281\n\n  [3] chunk_idx=824\n      Total  $  3.32  $  24,678  Fiscal Year 2024  September 19, 2023  November 16, 2023  December 14, 2023  $  0.75  $  5,574  November 28, 2023  February 15, 2024  March 14, 2024  0.75  5,573  March 12, 2024  May 16, 2024  June 13, 2024  0.75  5,574  June 12, 2024  August 15, 2024  September 12, 2024  0.75  5,574  Total  $  3.00  $  22,295  The dividend declared on June 10, 2025 was included in other current liabilities as of June 30, 2025.\n\n  [4] chunk_idx=822\n      5.4 billion, $ 5.3 billion, and $ 3.8 billion for fiscal years 2025, 2024, and 2023, respectively.\n\n  [5] chunk_idx=535\n      Cash from operations increased $17.6 billion to $136.2 billion for fiscal year 2025, primarily due to an increase in cash received from customers, offset in part by an increase in cash paid to suppliers and employees and cash used to pay income taxes. Cash used in financing increased $13.9 billion to $51.7 billion for fiscal year 2025, primarily due to a $9.5 billion increase in cash used for repayments of debt, net of proceeds. Cash used in investing decreased $24.4 billion to $72.6 billion for\n\n=== GOOGL ===\n  [1] chunk_idx=413\n      • Operating cash flow was $164.7 billion for the year ended December 31, 2025. • Capital expenditures, which primarily reflected investments in technical infrastructure, were $91.4 billion for the year ended December 31, 2025. • As of December 31, 2025, we had 190,820 employees.\n\n  [2] chunk_idx=414\n      December 31, 2025, we had 190,820 employees. We are monitoring ongoing developments surrounding international trade and the macroeconomic environment. As a result of volatility in international trade and financial markets, we may experience direct and indirect effects on our business, operations, and financial results. Our past results may not be indicative of our future performance, and our financial results may differ materially from historical trends. Financial Results Revenues\n\n  [3] chunk_idx=80\n      As of December 31, 2025, Alphabet had 190,820 employees. We have work councils and statutory employee representation obligations in certain countries, and we are committed to supporting protected labor rights, maintaining an open culture, and listening to our employees.\n\n  [4] chunk_idx=17\n      Table of Contents Alphabet Inc. Alphabet Inc. Form 10-K For the Fiscal Year Ended December 31, 2025 TABLE OF CONTENTS\n\n  [5] chunk_idx=930\n      $ 3,115  $ ( 2,737 ) $ 1,591  Year ended December 31, 2024 $ 1,591  $ 2,895  $ ( 2,850 ) $ 1,636  Year ended December 31, 2025 $ 1,636  $ 4,128  $ ( 3,408 ) $ 2,356\n\n=== AMZN ===\n  [1] chunk_idx=630\n      Year Ended December 31, 2026 $ 1,085  2027 962  2028 764  2029 690  2030 593  Thereafter 3,940  $ 8,034\n\n  [2] chunk_idx=38\n      Our employees are critical to our mission of being Earth’s most customer-centric company. As of December 31, 2025, we employed approximately 1,576,000 full-time and part-time employees. Additionally, we use independent contractors and temporary personnel to supplement our workforce. Competition for qualified personnel is intense, particularly for software engineers, computer scientists, and other technical staff (including for artificial intelligence and machine learning technologies), and const\n\n  [3] chunk_idx=377\n      Year Ended December 31, 2024 Year Ended December 31, 2025\n\n  [4] chunk_idx=705\n      Year Ended December 31, 2023 2024 2025 U.S. Federal: Current $ 8,652  $ 9,039  $ 1,220  Deferred ( 5,505 ) ( 4,101 ) 11,134  Total 3,147  4,938  12,354  U.S. State: Current 2,158  2,109  2,067  Deferred ( 498 ) ( 453 ) 984  Total 1,660  1,656  3,051  International: Current 2,186  2,765  4,330  Deferred 127  ( 94 ) ( 648 ) Total 2,313  2,671  3,682  Provision for income taxes, net $ 7,120  $ 9,265  $ 19,087  U.S. and international components of income before income taxes are as follows (in millio\n\n  [5] chunk_idx=350\n      Year Ended December 31, 2024 2025 Operating Income North America $ 24,967 $ 29,619 International 3,792 4,750 AWS 39,834 45,606 Consolidated $ 68,593 $ 79,975\n\n=== META ===\n  [1] chunk_idx=99\n      We had a global workforce of 78,865 employees as of December 31, 2025, and we have offices in more than 90 cities around the world. We are committed to fostering an enriching environment for our workforce and we are focused on supporting our people in doing the best work of their careers. We offer competitive compensation and a wide range of benefits, including many learning and development resources.\n\n  [2] chunk_idx=1403\n      Year Ended December 31,  2025 2024 2023 Family of Apps: Revenue $ 198,759  $ 162,355  $ 133,006  Employee compensation (1) ( 39,943 ) ( 31,116 ) ( 28,878 ) Other costs and expenses (2) ( 56,347 ) ( 44,130 ) ( 41,257 ) Income from operations $ 102,469  $ 87,109  $ 62,871  Reality Labs: Revenue $ 2,207  $ 2,146  $ 1,896\n\n  [3] chunk_idx=1161\n      Year Ended December 31,  2025 2024 2023 United States and Canada (1) $ 78,866  $ 63,207  $ 52,888  Europe (2) 46,569  38,361  31,210  Asia-Pacific 53,817  45,009  36,154  Rest of World (2) 21,714  17,924  14,650  Total revenue $ 200,966  $ 164,501  $ 134,902\n\n  [4] chunk_idx=964\n      and $366 million for the years ended December 31, 2024 and 2023, respectively.\n\n  [5] chunk_idx=1377\n      Year Ended December 31,  2025 2024 2023 Gross unrecognized tax benefits ‑ beginning of period $ 15,131  $ 11,666  $ 10,757  Increases related to prior year tax positions 900  685  168  Decreases related to prior year tax positions ( 1,131 ) ( 6 ) ( 263 ) Increases related to current year tax positions 2,863  2,882  1,204"
+      ],
+      "n_observations": 2,
+      "contexts": [
+        "[AAPL 10-K, chunk 377] The Company’s fiscal year is the 52- or 53-week period that ends on the last Saturday of September. An additional week is included in the first fiscal quarter every five or six years to realign the Company’s fiscal quarters with calendar quarters, which occurred in the first fiscal quarter of 2023. The Company’s fiscal years 2025 and 2024 spanned 52 weeks each, whereas fiscal year 2023 spanned 53 weeks. Unless otherwise stated, references to particular years, quarters, months and periods refer t",
+        "[AAPL 10-K, chunk 65] As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.",
+        "[AAPL 10-K, chunk 299] • AirPods Pro 3 Fiscal Period The Company’s fiscal year is the 52- or 53-week period that ends on the last Saturday of September. An additional week is included in the first fiscal quarter every five or six years to realign the Company’s fiscal quarters with calendar quarters, which occurred in the first quarter of 2023. The Company’s fiscal years 2025 and 2024 spanned 52 weeks each, whereas fiscal year 2023 spanned 53 weeks. Macroeconomic Conditions",
+        "[AAPL 10-K, chunk 296] Operations” in Part II, Item 7 of the Company’s Annual Report on Form 10-K for the fiscal year ended September 28, 2024.",
+        "[AAPL 10-K, chunk 378] years, quarters, months and periods refer to the Company’s fiscal years ended in September and the associated quarters, months and periods of those fiscal years.",
+        "[MSFT 10-K, chunk 111] As of June 30, 2025, we employed approximately 228,000 people on a full-time basis, 125,000 in the U.S. and 103,000 internationally. Of the total employees, 89,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 80,000 were in product research and development; 44,000 were in sales and marketing; and 15,000 were in general and administration. Certain employees are subject to collective bargaining agreements.",
+        "[MSFT 10-K, chunk 858] 65,365  61,575  57,529  Operating Income  $  128,528  $  109,433  $  88,523  No sales to an individual customer or country other than the United States accounted for more than 10% of revenue for fiscal years 2025, 2024, or 2023.  Revenue, classified by the major geographic areas in which our customers were located, was as follows:  (In millions)  Year Ended June 30,  2025  2024  2023  United States (a)  $  144,546  $  124,704  $  106,744  Other countries  137,178  120,418  105,171  Total  $  281",
+        "[MSFT 10-K, chunk 824] Total  $  3.32  $  24,678  Fiscal Year 2024  September 19, 2023  November 16, 2023  December 14, 2023  $  0.75  $  5,574  November 28, 2023  February 15, 2024  March 14, 2024  0.75  5,573  March 12, 2024  May 16, 2024  June 13, 2024  0.75  5,574  June 12, 2024  August 15, 2024  September 12, 2024  0.75  5,574  Total  $  3.00  $  22,295  The dividend declared on June 10, 2025 was included in other current liabilities as of June 30, 2025.",
+        "[MSFT 10-K, chunk 822] 5.4 billion, $ 5.3 billion, and $ 3.8 billion for fiscal years 2025, 2024, and 2023, respectively.",
+        "[MSFT 10-K, chunk 535] Cash from operations increased $17.6 billion to $136.2 billion for fiscal year 2025, primarily due to an increase in cash received from customers, offset in part by an increase in cash paid to suppliers and employees and cash used to pay income taxes. Cash used in financing increased $13.9 billion to $51.7 billion for fiscal year 2025, primarily due to a $9.5 billion increase in cash used for repayments of debt, net of proceeds. Cash used in investing decreased $24.4 billion to $72.6 billion for",
+        "[GOOGL 10-K, chunk 413] • Operating cash flow was $164.7 billion for the year ended December 31, 2025. • Capital expenditures, which primarily reflected investments in technical infrastructure, were $91.4 billion for the year ended December 31, 2025. • As of December 31, 2025, we had 190,820 employees.",
+        "[GOOGL 10-K, chunk 414] December 31, 2025, we had 190,820 employees. We are monitoring ongoing developments surrounding international trade and the macroeconomic environment. As a result of volatility in international trade and financial markets, we may experience direct and indirect effects on our business, operations, and financial results. Our past results may not be indicative of our future performance, and our financial results may differ materially from historical trends. Financial Results Revenues",
+        "[GOOGL 10-K, chunk 80] As of December 31, 2025, Alphabet had 190,820 employees. We have work councils and statutory employee representation obligations in certain countries, and we are committed to supporting protected labor rights, maintaining an open culture, and listening to our employees.",
+        "[GOOGL 10-K, chunk 17] Table of Contents Alphabet Inc. Alphabet Inc. Form 10-K For the Fiscal Year Ended December 31, 2025 TABLE OF CONTENTS",
+        "[GOOGL 10-K, chunk 930] $ 3,115  $ ( 2,737 ) $ 1,591  Year ended December 31, 2024 $ 1,591  $ 2,895  $ ( 2,850 ) $ 1,636  Year ended December 31, 2025 $ 1,636  $ 4,128  $ ( 3,408 ) $ 2,356",
+        "[AMZN 10-K, chunk 630] Year Ended December 31, 2026 $ 1,085  2027 962  2028 764  2029 690  2030 593  Thereafter 3,940  $ 8,034",
+        "[AMZN 10-K, chunk 38] Our employees are critical to our mission of being Earth’s most customer-centric company. As of December 31, 2025, we employed approximately 1,576,000 full-time and part-time employees. Additionally, we use independent contractors and temporary personnel to supplement our workforce. Competition for qualified personnel is intense, particularly for software engineers, computer scientists, and other technical staff (including for artificial intelligence and machine learning technologies), and const",
+        "[AMZN 10-K, chunk 377] Year Ended December 31, 2024 Year Ended December 31, 2025",
+        "[AMZN 10-K, chunk 705] Year Ended December 31, 2023 2024 2025 U.S. Federal: Current $ 8,652  $ 9,039  $ 1,220  Deferred ( 5,505 ) ( 4,101 ) 11,134  Total 3,147  4,938  12,354  U.S. State: Current 2,158  2,109  2,067  Deferred ( 498 ) ( 453 ) 984  Total 1,660  1,656  3,051  International: Current 2,186  2,765  4,330  Deferred 127  ( 94 ) ( 648 ) Total 2,313  2,671  3,682  Provision for income taxes, net $ 7,120  $ 9,265  $ 19,087  U.S. and international components of income before income taxes are as follows (in millio",
+        "[AMZN 10-K, chunk 350] Year Ended December 31, 2024 2025 Operating Income North America $ 24,967 $ 29,619 International 3,792 4,750 AWS 39,834 45,606 Consolidated $ 68,593 $ 79,975",
+        "[META 10-K, chunk 99] We had a global workforce of 78,865 employees as of December 31, 2025, and we have offices in more than 90 cities around the world. We are committed to fostering an enriching environment for our workforce and we are focused on supporting our people in doing the best work of their careers. We offer competitive compensation and a wide range of benefits, including many learning and development resources.",
+        "[META 10-K, chunk 1403] Year Ended December 31,  2025 2024 2023 Family of Apps: Revenue $ 198,759  $ 162,355  $ 133,006  Employee compensation (1) ( 39,943 ) ( 31,116 ) ( 28,878 ) Other costs and expenses (2) ( 56,347 ) ( 44,130 ) ( 41,257 ) Income from operations $ 102,469  $ 87,109  $ 62,871  Reality Labs: Revenue $ 2,207  $ 2,146  $ 1,896",
+        "[META 10-K, chunk 1161] Year Ended December 31,  2025 2024 2023 United States and Canada (1) $ 78,866  $ 63,207  $ 52,888  Europe (2) 46,569  38,361  31,210  Asia-Pacific 53,817  45,009  36,154  Rest of World (2) 21,714  17,924  14,650  Total revenue $ 200,966  $ 164,501  $ 134,902",
+        "[META 10-K, chunk 964] and $366 million for the years ended December 31, 2024 and 2023, respectively.",
+        "[META 10-K, chunk 1377] Year Ended December 31,  2025 2024 2023 Gross unrecognized tax benefits ‑ beginning of period $ 15,131  $ 11,666  $ 10,757  Increases related to prior year tax positions 900  685  168  Decreases related to prior year tax positions ( 1,131 ) ( 6 ) ( 263 ) Increases related to current year tax positions 2,863  2,882  1,204"
+      ],
+      "n_contexts": 25,
+      "retrieved_chunk_ids": [
+        "AAPL_10K_chunk_377",
+        "AAPL_10K_chunk_65",
+        "AAPL_10K_chunk_299",
+        "AAPL_10K_chunk_296",
+        "AAPL_10K_chunk_378",
+        "MSFT_10K_chunk_111",
+        "MSFT_10K_chunk_858",
+        "MSFT_10K_chunk_824",
+        "MSFT_10K_chunk_822",
+        "MSFT_10K_chunk_535",
+        "GOOGL_10K_chunk_413",
+        "GOOGL_10K_chunk_414",
+        "GOOGL_10K_chunk_80",
+        "GOOGL_10K_chunk_17",
+        "GOOGL_10K_chunk_930",
+        "AMZN_10K_chunk_630",
+        "AMZN_10K_chunk_38",
+        "AMZN_10K_chunk_377",
+        "AMZN_10K_chunk_705",
+        "AMZN_10K_chunk_350",
+        "META_10K_chunk_99",
+        "META_10K_chunk_1403",
+        "META_10K_chunk_1161",
+        "META_10K_chunk_964",
+        "META_10K_chunk_1377"
+      ],
+      "n_agent_messages": 6,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:27+00:00",
+      "error": null,
+      "latency_ms": 7468.3,
+      "llm_calls": 4,
+      "input_tokens": 12779,
+      "output_tokens": 728,
+      "cost_usd": 0.004287,
+      "tools_used": {
+        "list_available_companies": 1,
+        "compare_companies": 1
+      },
+      "tool_ms_total": 3665.6,
+      "trace_id": "01a109ff-7acc-71b2-8d63-9a08a49426b3",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-7acc-71b2-8d63-9a08a49426b3",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 7468.3,
+        "llm_calls": 4,
+        "input_tokens": 12779,
+        "output_tokens": 728,
+        "total_tokens": 13507,
+        "cost_usd": 0.004287,
+        "tool_calls": [
+          {
+            "name": "list_available_companies",
+            "ms": 0.3,
+            "error": false,
+            "args": {},
+            "t0_ms": 522.7
+          },
+          {
+            "name": "compare_companies",
+            "ms": 3665.3,
+            "error": false,
+            "args": {
+              "question": "number of employees as of fiscal year-end",
+              "tickers": "AAPL, MSFT, GOOGL, AMZN, META"
+            },
+            "t0_ms": 1205.5
+          }
+        ],
+        "tools": {
+          "list_available_companies": 1,
+          "compare_companies": 1
+        },
+        "tool_ms_total": 3665.6
+      },
+      "draft_answer": "Of the five companies, Amazon employed the most people as of its most recent fiscal year-end.\n\nThe employee counts as of the most recent fiscal year-end for each company are as follows:\n\n*   **Amazon:** 1,576,000 (as of December 31, 2025)\n*   **Microsoft:** 228,000 (as of June 30, 2025)\n*   **Alphabet (Google):** 190,820 (as of December 31, 2025)\n*   **Apple:** 166,000 (as of September 27, 2025)\n*   **Meta:** 78,865 (as of December 31, 2025)",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 7,
+        "n_figures": 5,
+        "n_supported": 5,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_chunk_65",
+          "AMZN_10K_chunk_38",
+          "GOOGL_10K_chunk_413",
+          "META_10K_chunk_99",
+          "MSFT_10K_chunk_111"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 2,
+        "n_found": 2,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "1,576,000",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 5,
+        "n_grounded": 5,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 4,
+        "hit": true,
+        "recall": 1.0,
+        "mrr": 0.5,
+        "first_rank": 2
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0062",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "cover",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Among Apple, Amazon, Alphabet, Meta, and Microsoft, which two are incorporated outside Delaware according to these 10-Ks?",
+      "ground_truth": "Apple (incorporated in California) and Microsoft (incorporated in Washington). Amazon, Alphabet, and Meta are all incorporated in Delaware.",
+      "answer": "Based on the provided 10-K filings, Amazon, Alphabet, and Meta are all incorporated in Delaware. Apple and Microsoft are the two companies among those listed that are not incorporated in Delaware; Apple is incorporated in California, and Microsoft is incorporated in Washington.",
+      "observations": [
+        "=== AAPL ===\n  [1] chunk_idx=551\n      Exhibit Description Form Exhibit Filing Date/ Period End Date 3.1 Restated Articles of Incorporation of the Registrant filed on August 3, 2020. 8-K 3.1 8/7/20 3.2 Amended and Restated Bylaws of the Registrant effective as of August 20, 2024. 8-K 3.2 8/23/24 4.1** Description of Securities of the Registrant. 4.2 Indenture, dated as of April 29, 2013, between the Registrant and The Bank of New York Mellon Trust Company, N.A., as Trustee. S-3 4.1 4/29/13 4.3\n\n  [2] chunk_idx=12\n      DOCUMENTS INCORPORATED BY REFERENCE Portions of the Registrant’s definitive proxy statement relating to its 2026 annual meeting of shareholders are incorporated by reference into Part III of this Annual Report on Form 10-K where indicated. The Registrant’s definitive proxy statement will be filed with the U.S. Securities and Exchange Commission within 120 days after the end of the fiscal year to which this report relates. Apple Inc. Form 10-K For the Fiscal Year Ended September 27, 2025 TABLE OF\n\n  [3] chunk_idx=556\n      8-K 4.1 7/31/15 Apple Inc. | 2025 Form 10-K | 54 Incorporated by Reference Exhibit Number Exhibit Description Form Exhibit Filing Date/ Period End Date 4.9 Officer’s Certificate of the Registrant, dated as of September 17, 2015, including forms of global notes representing the 1.375% Notes due 2024 and 2.000% Notes due 2027. 8-K 4.1 9/17/15 4.10\n\n  [4] chunk_idx=545\n      The information required by this Item will be included in the Company’s definitive proxy statement to be filed with the SEC within 120 days after September 27, 2025, in connection with the solicitation of proxies for the Company’s 2026 annual meeting of shareholders (“2026 Proxy Statement”), and is incorporated herein by reference. Item 11.    Executive Compensation The information required by this Item will be included in the 2026 Proxy Statement, and is incorporated herein by reference.\n\n  [5] chunk_idx=11\n      3,253,431,000,000 . Solely for purposes of this disclosure, shares of common stock held by executive officers and directors of the Registrant as of such date have been excluded because such persons may be deemed to be affiliates. This determination of executive officers and directors as affiliates is not necessarily a conclusive determination for any other purposes. 14,776,353,000 shares of common stock were issued and outstanding as of October 17, 2025. DOCUMENTS INCORPORATED BY REFERENCE\n\n=== AMZN ===\n  [1] chunk_idx=1\n      ____________________________________ AMAZON.COM, INC.  (Exact name of registrant as specified in its charter) Delaware  91-1646860 (State or other jurisdiction of incorporation or organization)  (I.R.S. Employer Identification No.) 410 Terry Avenue North  Seattle , Washington  98109-5210 ( 206 ) 266-1000\n\n  [2] chunk_idx=169\n      • the difficulty of incorporating acquired operations, technology, and rights into our offerings, and unanticipated expenses related to such integration; • the difficulty of integrating a new company’s accounting, financial and sustainability reporting, management, information and data security, human resource, and other administrative systems to permit effective management, and the lack of control if such integration is delayed or not successfully implemented; •\n\n  [3] chunk_idx=792\n      (2) Index to Financial Statement Schedules: All schedules have been omitted because the required information is included in the consolidated financial statements or the notes thereto, or because it is not required. (3) Index to Exhibits See exhibits listed under Part (b) below. (b) Exhibits: Exhibit Number Description 3.1 Amended and Restated Certificate of Incorporation of Amazon.com, Inc. (incorporated by reference to the Company’s Current Report on Form 8-K, filed May 27, 2022). 3.2\n\n  [4] chunk_idx=793\n      3.2 Amended and Restated Bylaws of Amazon.com, Inc. (incorporated by reference to the Company’s Current Report on Form 8-K, filed May 3, 2024). 4.1 Indenture, dated as of November 29, 2012, between Amazon.com, Inc. and Wells Fargo Bank, National Association, as trustee (incorporated by reference to the Company’s Current Report on Form 8-K, filed November 29, 2012). 4.2\n\n  [5] chunk_idx=13\n      ____________________________________ DOCUMENTS INCORPORATED BY REFERENCE The information required by Part III of this Report, to the extent not set forth herein, is incorporated herein by reference from the registrant’s definitive proxy statement relating to the Annual Meeting of Shareholders to be held in 2026, which definitive proxy statement shall be filed with the Securities and Exchange Commission within 120 days after the end of the fiscal year to which this Report relates. Table of Conten\n\n=== GOOGL ===\n  [1] chunk_idx=843\n      C stock. Specifically, Delaware law provides that amendments to our certificate of incorporation which would have the effect of adversely altering the rights, powers, or preferences of a given class of stock must be approved by the class of stock adversely affected by the proposed amendment. In addition, our certificate of incorporation provides that before any such amendment may be put to a stockholder vote, it must be approved by the unanimous consent of our Board of Directors.\n\n  [2] chunk_idx=842\n      In accordance with our certificate of incorporation, the rights, including the liquidation and dividend rights, of the holders of our Class A, Class B, and Class C stock are identical, except with respect to voting. Furthermore, there are a number of safeguards built into our certificate of incorporation, as well as Delaware law, which preclude our Board of Directors from declaring or paying unequal per share dividends on our Class A, Class B, and Class C stock. Specifically, Delaware law provid\n\n  [3] chunk_idx=1\n      to  . Commission file number: 001-37580  ___________________________________________ Alphabet Inc.  (Exact name of registrant as specified in its charter) ___________________________________________ Delaware 61-1767919 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) 1600 Amphitheatre Parkway  Mountain View , CA  94043  (Address of principal executive offices, including zip code) ( 650 ) 253-0000\n\n  [4] chunk_idx=306\n      Provisions in our charter documents and under Delaware law could discourage a takeover that stockholders may consider favorable. Provisions in Alphabet's certificate of incorporation and bylaws may have the effect of delaying or preventing a change of control or changes in our management. These provisions include the following: • Our Board of Directors has the right to elect directors to fill a vacancy created by the expansion of the Board of Directors or the resignation, death, or removal of a\n\n  [5] chunk_idx=932\n      Current Report on Form 8-K (File No. 001-37580) October 2, 2015 3.01 Amended and Restated Certificate of Incorporation of the Registrant Current Report on Form 8-K (File No. 001-37580) June 3, 2022 3.02 Amended and Restated Bylaws of the Registrant, dated October 19, 2022 Current Report on Form 8-K (File No. 001-37580) October 25, 2022 4.01 Specimen Class A Common Stock certificate Current Report on Form 8-K (File No. 001-37580) October 2, 2015 4.02 Specimen Class C Capital Stock certificate\n\n=== META ===\n  [1] chunk_idx=629\n      47 Table of Contents Delaware law and provisions in our certificate of incorporation and bylaws could make a merger, tender offer, or proxy contest difficult, thereby depressing the trading price of our Class A common stock.\n\n  [2] chunk_idx=1\n      __________________________ Meta Platforms, Inc.  (Exact name of registrant as specified in its charter) __________________________ Delaware 20-1665019 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification Number) 1 Meta Way , Menlo Park , California  94025  (Address of principal executive offices and Zip Code) ( 650 ) 543-4800\n\n  [3] chunk_idx=630\n      Our status as a Delaware corporation and the anti-takeover provisions of the Delaware General Corporation Law may discourage, delay, or prevent a change in control by prohibiting us from engaging in a business combination with an interested stockholder for a period of three years after the person becomes an interested stockholder, even if a change of control would be beneficial to our existing stockholders. In addition, our current certificate of incorporation and bylaws contain provisions that\n\n  [4] chunk_idx=638\n      • advance notice procedures apply for stockholders to nominate candidates for election as directors or to bring matters before an annual meeting of stockholders; • our certificate of incorporation authorizes undesignated preferred stock, the terms of which may be established, and shares of which may be issued, without stockholder approval; and • certain litigation against us can only be brought in Delaware. Item 1B. Unresolved Staff Comments None. Item 1C. Cybersecurity\n\n  [5] chunk_idx=1431\n      Form File No. Exhibit Filing Date 3.1 Amended and Restated Certificate of Incorporation (including all amendments thereto). 10-Q 001-35551 3.1 August 1, 2024 3.2 Amended and Restated Bylaws. 8-K 001-35551 3.1 September 10, 2024 4.1 Form of Class A Common Stock Certificate. 10-K 001-35551 4.1 February 3, 2022 4.2 Form of Class B Common Stock Certificate. 10-K 001-35551 4.2 February 3, 2022 4.3\n\n=== MSFT ===\n  [1] chunk_idx=0\n      SECURITIES AND EXCHANGE COMMISSION Washington, D.C. 20549  FORM 10-K  ☒  ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934  For the Fiscal Year Ended June 30 , 2025  OR  ☐  TRANSITION REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934  For the Transition Period From                  to  Commission File Number 001-37845  MICROSOFT CORPORATION  Washington  91-1144442  (STATE OF INCORPORATION)  (I.R.S. ID)  ONE MICROSOFT WAY , REDMOND ,\n\n  [2] chunk_idx=929\n      Balance Sheets  52  Cash Flows Statements  53  Stockholders’ Equity Statements  54  Notes to Financial Statements  55  Report of Independent Registered Public Accounting Firm  86  (b) Exhibit Listing  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  3.1  Amended and Restated Articles of Incorporation of Microsoft Corporation  8-K  3.1  12/1/2016  3.2  Bylaws of Microsoft Corporation  8-K  3.2  7/1/2025  4.1\n\n  [3] chunk_idx=942\n      8-K  4.1  8/5/2016  95  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  4.15\n\n  [4] chunk_idx=932\n      93  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  4.6\n\n  [5] chunk_idx=937\n      8-K  4.2  5/1/2013  4.10  Seventh Supplemental Indenture for 2.125% Notes due 2021 and 3.125% Notes due 2028, dated as of December 6, 2013, between Microsoft Corporation and The Bank of New York Mellon Trust Company, N.A., as Trustee, to the Indenture, dated as of May 18, 2009, between Microsoft Corporation and The Bank of New York Mellon Trust Company, N.A., as Trustee  8-K  4.1  12/6/2013  94  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, chunk 551] Exhibit Description Form Exhibit Filing Date/ Period End Date 3.1 Restated Articles of Incorporation of the Registrant filed on August 3, 2020. 8-K 3.1 8/7/20 3.2 Amended and Restated Bylaws of the Registrant effective as of August 20, 2024. 8-K 3.2 8/23/24 4.1** Description of Securities of the Registrant. 4.2 Indenture, dated as of April 29, 2013, between the Registrant and The Bank of New York Mellon Trust Company, N.A., as Trustee. S-3 4.1 4/29/13 4.3",
+        "[AAPL 10-K, chunk 12] DOCUMENTS INCORPORATED BY REFERENCE Portions of the Registrant’s definitive proxy statement relating to its 2026 annual meeting of shareholders are incorporated by reference into Part III of this Annual Report on Form 10-K where indicated. The Registrant’s definitive proxy statement will be filed with the U.S. Securities and Exchange Commission within 120 days after the end of the fiscal year to which this report relates. Apple Inc. Form 10-K For the Fiscal Year Ended September 27, 2025 TABLE OF",
+        "[AAPL 10-K, chunk 556] 8-K 4.1 7/31/15 Apple Inc. | 2025 Form 10-K | 54 Incorporated by Reference Exhibit Number Exhibit Description Form Exhibit Filing Date/ Period End Date 4.9 Officer’s Certificate of the Registrant, dated as of September 17, 2015, including forms of global notes representing the 1.375% Notes due 2024 and 2.000% Notes due 2027. 8-K 4.1 9/17/15 4.10",
+        "[AAPL 10-K, chunk 545] The information required by this Item will be included in the Company’s definitive proxy statement to be filed with the SEC within 120 days after September 27, 2025, in connection with the solicitation of proxies for the Company’s 2026 annual meeting of shareholders (“2026 Proxy Statement”), and is incorporated herein by reference. Item 11.    Executive Compensation The information required by this Item will be included in the 2026 Proxy Statement, and is incorporated herein by reference.",
+        "[AAPL 10-K, chunk 11] 3,253,431,000,000 . Solely for purposes of this disclosure, shares of common stock held by executive officers and directors of the Registrant as of such date have been excluded because such persons may be deemed to be affiliates. This determination of executive officers and directors as affiliates is not necessarily a conclusive determination for any other purposes. 14,776,353,000 shares of common stock were issued and outstanding as of October 17, 2025. DOCUMENTS INCORPORATED BY REFERENCE",
+        "[AMZN 10-K, chunk 1] ____________________________________ AMAZON.COM, INC.  (Exact name of registrant as specified in its charter) Delaware  91-1646860 (State or other jurisdiction of incorporation or organization)  (I.R.S. Employer Identification No.) 410 Terry Avenue North  Seattle , Washington  98109-5210 ( 206 ) 266-1000",
+        "[AMZN 10-K, chunk 169] • the difficulty of incorporating acquired operations, technology, and rights into our offerings, and unanticipated expenses related to such integration; • the difficulty of integrating a new company’s accounting, financial and sustainability reporting, management, information and data security, human resource, and other administrative systems to permit effective management, and the lack of control if such integration is delayed or not successfully implemented; •",
+        "[AMZN 10-K, chunk 792] (2) Index to Financial Statement Schedules: All schedules have been omitted because the required information is included in the consolidated financial statements or the notes thereto, or because it is not required. (3) Index to Exhibits See exhibits listed under Part (b) below. (b) Exhibits: Exhibit Number Description 3.1 Amended and Restated Certificate of Incorporation of Amazon.com, Inc. (incorporated by reference to the Company’s Current Report on Form 8-K, filed May 27, 2022). 3.2",
+        "[AMZN 10-K, chunk 793] 3.2 Amended and Restated Bylaws of Amazon.com, Inc. (incorporated by reference to the Company’s Current Report on Form 8-K, filed May 3, 2024). 4.1 Indenture, dated as of November 29, 2012, between Amazon.com, Inc. and Wells Fargo Bank, National Association, as trustee (incorporated by reference to the Company’s Current Report on Form 8-K, filed November 29, 2012). 4.2",
+        "[AMZN 10-K, chunk 13] ____________________________________ DOCUMENTS INCORPORATED BY REFERENCE The information required by Part III of this Report, to the extent not set forth herein, is incorporated herein by reference from the registrant’s definitive proxy statement relating to the Annual Meeting of Shareholders to be held in 2026, which definitive proxy statement shall be filed with the Securities and Exchange Commission within 120 days after the end of the fiscal year to which this Report relates. Table of Conten",
+        "[GOOGL 10-K, chunk 843] C stock. Specifically, Delaware law provides that amendments to our certificate of incorporation which would have the effect of adversely altering the rights, powers, or preferences of a given class of stock must be approved by the class of stock adversely affected by the proposed amendment. In addition, our certificate of incorporation provides that before any such amendment may be put to a stockholder vote, it must be approved by the unanimous consent of our Board of Directors.",
+        "[GOOGL 10-K, chunk 842] In accordance with our certificate of incorporation, the rights, including the liquidation and dividend rights, of the holders of our Class A, Class B, and Class C stock are identical, except with respect to voting. Furthermore, there are a number of safeguards built into our certificate of incorporation, as well as Delaware law, which preclude our Board of Directors from declaring or paying unequal per share dividends on our Class A, Class B, and Class C stock. Specifically, Delaware law provid",
+        "[GOOGL 10-K, chunk 1] to  . Commission file number: 001-37580  ___________________________________________ Alphabet Inc.  (Exact name of registrant as specified in its charter) ___________________________________________ Delaware 61-1767919 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) 1600 Amphitheatre Parkway  Mountain View , CA  94043  (Address of principal executive offices, including zip code) ( 650 ) 253-0000",
+        "[GOOGL 10-K, chunk 306] Provisions in our charter documents and under Delaware law could discourage a takeover that stockholders may consider favorable. Provisions in Alphabet's certificate of incorporation and bylaws may have the effect of delaying or preventing a change of control or changes in our management. These provisions include the following: • Our Board of Directors has the right to elect directors to fill a vacancy created by the expansion of the Board of Directors or the resignation, death, or removal of a",
+        "[GOOGL 10-K, chunk 932] Current Report on Form 8-K (File No. 001-37580) October 2, 2015 3.01 Amended and Restated Certificate of Incorporation of the Registrant Current Report on Form 8-K (File No. 001-37580) June 3, 2022 3.02 Amended and Restated Bylaws of the Registrant, dated October 19, 2022 Current Report on Form 8-K (File No. 001-37580) October 25, 2022 4.01 Specimen Class A Common Stock certificate Current Report on Form 8-K (File No. 001-37580) October 2, 2015 4.02 Specimen Class C Capital Stock certificate",
+        "[META 10-K, chunk 629] 47 Table of Contents Delaware law and provisions in our certificate of incorporation and bylaws could make a merger, tender offer, or proxy contest difficult, thereby depressing the trading price of our Class A common stock.",
+        "[META 10-K, chunk 1] __________________________ Meta Platforms, Inc.  (Exact name of registrant as specified in its charter) __________________________ Delaware 20-1665019 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification Number) 1 Meta Way , Menlo Park , California  94025  (Address of principal executive offices and Zip Code) ( 650 ) 543-4800",
+        "[META 10-K, chunk 630] Our status as a Delaware corporation and the anti-takeover provisions of the Delaware General Corporation Law may discourage, delay, or prevent a change in control by prohibiting us from engaging in a business combination with an interested stockholder for a period of three years after the person becomes an interested stockholder, even if a change of control would be beneficial to our existing stockholders. In addition, our current certificate of incorporation and bylaws contain provisions that",
+        "[META 10-K, chunk 638] • advance notice procedures apply for stockholders to nominate candidates for election as directors or to bring matters before an annual meeting of stockholders; • our certificate of incorporation authorizes undesignated preferred stock, the terms of which may be established, and shares of which may be issued, without stockholder approval; and • certain litigation against us can only be brought in Delaware. Item 1B. Unresolved Staff Comments None. Item 1C. Cybersecurity",
+        "[META 10-K, chunk 1431] Form File No. Exhibit Filing Date 3.1 Amended and Restated Certificate of Incorporation (including all amendments thereto). 10-Q 001-35551 3.1 August 1, 2024 3.2 Amended and Restated Bylaws. 8-K 001-35551 3.1 September 10, 2024 4.1 Form of Class A Common Stock Certificate. 10-K 001-35551 4.1 February 3, 2022 4.2 Form of Class B Common Stock Certificate. 10-K 001-35551 4.2 February 3, 2022 4.3",
+        "[MSFT 10-K, chunk 0] SECURITIES AND EXCHANGE COMMISSION Washington, D.C. 20549  FORM 10-K  ☒  ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934  For the Fiscal Year Ended June 30 , 2025  OR  ☐  TRANSITION REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934  For the Transition Period From                  to  Commission File Number 001-37845  MICROSOFT CORPORATION  Washington  91-1144442  (STATE OF INCORPORATION)  (I.R.S. ID)  ONE MICROSOFT WAY , REDMOND ,",
+        "[MSFT 10-K, chunk 929] Balance Sheets  52  Cash Flows Statements  53  Stockholders’ Equity Statements  54  Notes to Financial Statements  55  Report of Independent Registered Public Accounting Firm  86  (b) Exhibit Listing  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  3.1  Amended and Restated Articles of Incorporation of Microsoft Corporation  8-K  3.1  12/1/2016  3.2  Bylaws of Microsoft Corporation  8-K  3.2  7/1/2025  4.1",
+        "[MSFT 10-K, chunk 942] 8-K  4.1  8/5/2016  95  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  4.15",
+        "[MSFT 10-K, chunk 932] 93  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form  Period Ending  Exhibit  Filing Date  4.6",
+        "[MSFT 10-K, chunk 937] 8-K  4.2  5/1/2013  4.10  Seventh Supplemental Indenture for 2.125% Notes due 2021 and 3.125% Notes due 2028, dated as of December 6, 2013, between Microsoft Corporation and The Bank of New York Mellon Trust Company, N.A., as Trustee, to the Indenture, dated as of May 18, 2009, between Microsoft Corporation and The Bank of New York Mellon Trust Company, N.A., as Trustee  8-K  4.1  12/6/2013  94  PART IV Item 15  Incorporated by Reference  Exhibit Number  Exhibit Description  Filed Herewith  Form"
+      ],
+      "n_contexts": 25,
+      "retrieved_chunk_ids": [
+        "AAPL_10K_chunk_551",
+        "AAPL_10K_chunk_12",
+        "AAPL_10K_chunk_556",
+        "AAPL_10K_chunk_545",
+        "AAPL_10K_chunk_11",
+        "AMZN_10K_chunk_1",
+        "AMZN_10K_chunk_169",
+        "AMZN_10K_chunk_792",
+        "AMZN_10K_chunk_793",
+        "AMZN_10K_chunk_13",
+        "GOOGL_10K_chunk_843",
+        "GOOGL_10K_chunk_842",
+        "GOOGL_10K_chunk_1",
+        "GOOGL_10K_chunk_306",
+        "GOOGL_10K_chunk_932",
+        "META_10K_chunk_629",
+        "META_10K_chunk_1",
+        "META_10K_chunk_630",
+        "META_10K_chunk_638",
+        "META_10K_chunk_1431",
+        "MSFT_10K_chunk_0",
+        "MSFT_10K_chunk_929",
+        "MSFT_10K_chunk_942",
+        "MSFT_10K_chunk_932",
+        "MSFT_10K_chunk_937"
+      ],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:38+00:00",
+      "error": null,
+      "latency_ms": 5961.0,
+      "llm_calls": 3,
+      "input_tokens": 10753,
+      "output_tokens": 261,
+      "cost_usd": 0.00308,
+      "tools_used": {
+        "compare_companies": 1
+      },
+      "tool_ms_total": 3297.0,
+      "trace_id": "01a109ff-abaf-7642-bee2-5851cb845979",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-abaf-7642-bee2-5851cb845979",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 5961.0,
+        "llm_calls": 3,
+        "input_tokens": 10753,
+        "output_tokens": 261,
+        "total_tokens": 11014,
+        "cost_usd": 0.00308,
+        "tool_calls": [
+          {
+            "name": "compare_companies",
+            "ms": 3297.0,
+            "error": false,
+            "args": {
+              "tickers": "AAPL,AMZN,GOOGL,META,MSFT",
+              "question": "state of incorporation"
+            },
+            "t0_ms": 845.1
+          }
+        ],
+        "tools": {
+          "compare_companies": 1
+        },
+        "tool_ms_total": 3297.0
+      },
+      "draft_answer": "Based on the provided 10-K filings, Amazon, Alphabet, and Meta are all incorporated in Delaware. Apple and Microsoft are the two companies among those listed that are not incorporated in Delaware; Apple is incorporated in California, and Microsoft is incorporated in Washington.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 0,
+        "n_supported": 0,
+        "failures": [],
+        "cited": [
+          "AMZN_10K_chunk_1",
+          "GOOGL_10K_chunk_1",
+          "META_10K_chunk_1",
+          "MSFT_10K_chunk_0"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": false,
+        "n_figures": 0,
+        "n_grounded": 0,
+        "grounded": null,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 4,
+        "hit": true,
+        "recall": 0.75,
+        "mrr": 0.1667,
+        "first_rank": 6
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0063",
+      "question_type": "comparative",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "False",
+      "question": "Comparing the most recent fiscal years in these 10-Ks, which company had higher total revenue: Alphabet or Microsoft?",
+      "ground_truth": "Alphabet, with total revenues of $402,836 million for the year ended December 31, 2025, versus Microsoft's $281,724 million for the fiscal year ended June 30, 2025.",
+      "answer": "Alphabet had higher total revenue than Microsoft in their most recent fiscal years. Alphabet reported total revenue of $402,836 million for fiscal year 2025, while Microsoft reported total revenue of $281,724 million for fiscal year 2025.",
+      "observations": [
+        "XBRL facts for GOOGL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, us-gaap:Revenues; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=GOOGL  fact_id=2225\n    us-gaap:Revenues | FY2025 (2025-01-01 to 2025-12-31) | $402,836 million | consolidated | tagged \"402,836\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL",
+        "XBRL facts for MSFT: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=MSFT  fact_id=4671\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_observations": 2,
+      "contexts": [
+        "[GOOGL 10-K, XBRL fact 2225] us-gaap:Revenues | FY2025 (2025-01-01 to 2025-12-31) | $402,836 million | consolidated | tagged \"402,836\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL",
+        "[MSFT 10-K, XBRL fact 4671] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_contexts": 2,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 5,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:46+00:00",
+      "error": null,
+      "latency_ms": 2833.1,
+      "llm_calls": 3,
+      "input_tokens": 5018,
+      "output_tokens": 311,
+      "cost_usd": 0.001721,
+      "tools_used": {
+        "lookup_financial_fact": 2
+      },
+      "tool_ms_total": 6.8,
+      "trace_id": "01a109ff-d6ad-7660-bd61-47824544519d",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-d6ad-7660-bd61-47824544519d",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2833.1,
+        "llm_calls": 3,
+        "input_tokens": 5018,
+        "output_tokens": 311,
+        "total_tokens": 5329,
+        "cost_usd": 0.001721,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.5,
+            "error": false,
+            "args": {
+              "concept": "total net sales",
+              "ticker": "GOOGL"
+            },
+            "t0_ms": 722.1
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.3,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "concept": "total net sales"
+            },
+            "t0_ms": 723.6
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2
+        },
+        "tool_ms_total": 6.8
+      },
+      "draft_answer": "Alphabet had higher total revenue than Microsoft in their most recent fiscal years. Alphabet reported total revenue of $402,836 million for fiscal year 2025, while Microsoft reported total revenue of $281,724 million for fiscal year 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 2,
+        "n_supported": 2,
+        "failures": [],
+        "cited": [
+          "GOOGL_10K_fact_2225",
+          "MSFT_10K_fact_4671"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 3,
+        "n_found": 3,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$402,836 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 2,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0067",
+      "question_type": "temporal",
+      "ticker": "MSFT",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Microsoft's Intelligent Cloud segment revenue?",
+      "ground_truth": "Intelligent Cloud revenue was $106,265 million for fiscal year 2025, the most recent year in the filing (fiscal 2024: $87,464 million).",
+      "answer": "Microsoft's Intelligent Cloud segment revenue for fiscal year 2025 was $106,265 million.",
+      "observations": [
+        "XBRL facts for MSFT: 'Intelligent Cloud revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=MSFT  fact_id=6015\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $106,265 million | StatementBusinessSegments=IntelligentCloud | tagged \"106,265\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[MSFT 10-K, XBRL fact 6015] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $106,265 million | StatementBusinessSegments=IntelligentCloud | tagged \"106,265\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:58:54+00:00",
+      "error": null,
+      "latency_ms": 2748.2,
+      "llm_calls": 3,
+      "input_tokens": 4637,
+      "output_tokens": 139,
+      "cost_usd": 0.001368,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 2.4,
+      "trace_id": "01a109ff-f573-78b3-a66d-230e4ebf4adc",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109ff-f573-78b3-a66d-230e4ebf4adc",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2748.2,
+        "llm_calls": 3,
+        "input_tokens": 4637,
+        "output_tokens": 139,
+        "total_tokens": 4776,
+        "cost_usd": 0.001368,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.4,
+            "error": false,
+            "args": {
+              "concept": "Intelligent Cloud revenue",
+              "ticker": "MSFT"
+            },
+            "t0_ms": 561.5
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 2.4
+      },
+      "draft_answer": "Microsoft's Intelligent Cloud segment revenue for fiscal year 2025 was $106,265 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "MSFT_10K_fact_6015"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 2,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "$106,265 million",
+        "figure_primary": true,
+        "missing": [
+          "2024",
+          "$87,464 million"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0068",
+      "question_type": "temporal",
+      "ticker": "GOOGL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Google Cloud revenues?",
+      "ground_truth": "Google Cloud revenues were $58,705 million for the year ended December 31, 2025, the most recent year in the filing (2024: $43,229 million).",
+      "answer": "Google Cloud revenues for fiscal year 2025 were $58,705 million.",
+      "observations": [
+        "XBRL facts for GOOGL: 'Google Cloud revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, us-gaap:Revenues; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=GOOGL  fact_id=2487\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $58,705 million | StatementBusinessSegments=GoogleCloud | tagged \"58,705\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[GOOGL 10-K, XBRL fact 2487] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $58,705 million | StatementBusinessSegments=GoogleCloud | tagged \"58,705\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:59:01+00:00",
+      "error": null,
+      "latency_ms": 2304.4,
+      "llm_calls": 3,
+      "input_tokens": 4626,
+      "output_tokens": 130,
+      "cost_usd": 0.001352,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.9,
+      "trace_id": "01a10a00-13e3-71f1-a0cc-162aa865b18a",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a10a00-13e3-71f1-a0cc-162aa865b18a",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2304.4,
+        "llm_calls": 3,
+        "input_tokens": 4626,
+        "output_tokens": 130,
+        "total_tokens": 4756,
+        "cost_usd": 0.001352,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.9,
+            "error": false,
+            "args": {
+              "concept": "Google Cloud revenue",
+              "ticker": "GOOGL"
+            },
+            "t0_ms": 676.2
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.9
+      },
+      "draft_answer": "Google Cloud revenues for fiscal year 2025 were $58,705 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "GOOGL_10K_fact_2487"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 2,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "$58,705 million",
+        "figure_primary": true,
+        "missing": [
+          "2024",
+          "$43,229 million"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0069",
+      "question_type": "temporal",
+      "ticker": "",
+      "section": "financials",
+      "difficulty": "hard",
+      "requires_table": "True",
+      "question": "Compare Microsoft's Intelligent Cloud revenue with Alphabet's Google Cloud revenue.",
+      "ground_truth": "For their most recent fiscal years, Microsoft's Intelligent Cloud revenue was $106,265 million (fiscal 2025) and Alphabet's Google Cloud revenue was $58,705 million (year ended December 31, 2025).",
+      "answer": "For the 2025 fiscal year, Microsoft's Intelligent Cloud segment reported revenue of $106,265 million. During the same period, Alphabet's Google Cloud segment reported revenue of $58,705 million.",
+      "observations": [
+        "XBRL facts for MSFT: 'Intelligent Cloud revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=MSFT  fact_id=6015\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $106,265 million | StatementBusinessSegments=IntelligentCloud | tagged \"106,265\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "XBRL facts for GOOGL: 'Google Cloud revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, us-gaap:Revenues; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=GOOGL  fact_id=2487\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $58,705 million | StatementBusinessSegments=GoogleCloud | tagged \"58,705\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL"
+      ],
+      "n_observations": 2,
+      "contexts": [
+        "[MSFT 10-K, XBRL fact 6015] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $106,265 million | StatementBusinessSegments=IntelligentCloud | tagged \"106,265\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[GOOGL 10-K, XBRL fact 2487] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $58,705 million | StatementBusinessSegments=GoogleCloud | tagged \"58,705\" x10^6 iso4217:USD | source: GOOGL 10-K inline XBRL"
+      ],
+      "n_contexts": 2,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 5,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:59:09+00:00",
+      "error": null,
+      "latency_ms": 2389.9,
+      "llm_calls": 3,
+      "input_tokens": 5015,
+      "output_tokens": 258,
+      "cost_usd": 0.001641,
+      "tools_used": {
+        "lookup_financial_fact": 2
+      },
+      "tool_ms_total": 10.0,
+      "trace_id": "01a10a00-3096-79c1-8361-9c87c30bc46d",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a10a00-3096-79c1-8361-9c87c30bc46d",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2389.9,
+        "llm_calls": 3,
+        "input_tokens": 5015,
+        "output_tokens": 258,
+        "total_tokens": 5273,
+        "cost_usd": 0.001641,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 4.8,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "concept": "Intelligent Cloud revenue"
+            },
+            "t0_ms": 649.0
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 5.2,
+            "error": false,
+            "args": {
+              "concept": "Google Cloud revenue",
+              "ticker": "GOOGL"
+            },
+            "t0_ms": 650.2
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2
+        },
+        "tool_ms_total": 10.0
+      },
+      "draft_answer": "For the 2025 fiscal year, Microsoft's Intelligent Cloud segment reported revenue of $106,265 million. During the same period, Alphabet's Google Cloud segment reported revenue of $58,705 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 2,
+        "n_supported": 2,
+        "failures": [],
+        "cited": [
+          "GOOGL_10K_fact_2487",
+          "MSFT_10K_fact_6015"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 3,
+        "n_found": 3,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$106,265 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 2,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0070",
+      "question_type": "temporal",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, the most recent year in the filing (fiscal 2024: $391,035 million).",
+      "answer": "Apple's total net sales for fiscal year 2025 were $416,161 million.",
+      "observations": [
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=AAPL  fact_id=9\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 9] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:59:16+00:00",
+      "error": null,
+      "latency_ms": 1944.4,
+      "llm_calls": 3,
+      "input_tokens": 4610,
+      "output_tokens": 131,
+      "cost_usd": 0.001349,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.3,
+      "trace_id": "01a10a00-4d9c-7d11-a65f-b214827fb766",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a10a00-4d9c-7d11-a65f-b214827fb766",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 1944.4,
+        "llm_calls": 3,
+        "input_tokens": 4610,
+        "output_tokens": 131,
+        "total_tokens": 4741,
+        "cost_usd": 0.001349,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.3,
+            "error": false,
+            "args": {
+              "concept": "total net sales",
+              "ticker": "AAPL"
+            },
+            "t0_ms": 549.6
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.3
+      },
+      "draft_answer": "Apple's total net sales for fiscal year 2025 were $416,161 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_9"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 2,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "$416,161 million",
+        "figure_primary": true,
+        "missing": [
+          "2024",
+          "$391,035 million"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0071",
+      "question_type": "temporal",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were AWS's net sales?",
+      "ground_truth": "AWS net sales were $128,725 million in 2025, the most recent year in the filing (2024: $107,556 million).",
+      "answer": "For fiscal year 2025, AWS net sales were $128,725 million.",
+      "observations": [
+        "XBRL facts for AMZN: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025 (the most recent fiscal year in the filing; pass fiscal_year for another).\n\n[1] ticker=AMZN  fact_id=2004\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL\n\n[2] ticker=AMZN  fact_id=2028\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AMZN 10-K, XBRL fact 2004] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2028] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL"
+      ],
+      "n_contexts": 2,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T02:59:23+00:00",
+      "error": null,
+      "latency_ms": 2052.2,
+      "llm_calls": 3,
+      "input_tokens": 4865,
+      "output_tokens": 154,
+      "cost_usd": 0.001447,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.7,
+      "trace_id": "01a10a00-68e8-7933-9ece-9ad7307392fa",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a10a00-68e8-7933-9ece-9ad7307392fa",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2052.2,
+        "llm_calls": 3,
+        "input_tokens": 4865,
+        "output_tokens": 154,
+        "total_tokens": 5019,
+        "cost_usd": 0.001447,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.7,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "segment": "AWS",
+              "ticker": "AMZN"
+            },
+            "t0_ms": 672.6
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.7
+      },
+      "draft_answer": "For fiscal year 2025, AWS net sales were $128,725 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AMZN_10K_fact_2004",
+          "AMZN_10K_fact_2028"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 2,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "$128,725 million",
+        "figure_primary": true,
+        "missing": [
+          "2024",
+          "$107,556 million"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    }
+  ]
+}
