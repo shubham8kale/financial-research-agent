@@ -1,0 +1,361 @@
+{
+  "schema_version": 3,
+  "run_id": "q8-rule-on-1-7fd642d",
+  "label": "q8-rule-on-1",
+  "timestamp": "2026-10-05T03:25:50+00:00",
+  "git_commit": "7fd642d",
+  "git_dirty": false,
+  "config": {
+    "result_kind": "generation",
+    "schema_version": 3,
+    "context_granularity": "chunk",
+    "context_format": "chunk+provenance",
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "judge_model": "gemini-3.6-flash",
+    "judge_provider": "google",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.2,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "retrieval": {
+      "mode": "dense",
+      "k": 5,
+      "fetch_k": 50,
+      "rrf_k": 60,
+      "dense_weight": 1.0,
+      "sparse_weight": 1.0,
+      "rerank": true,
+      "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "ticker_filter": "inferred"
+    },
+    "prompt_version": "sha256:95cd45597bbc",
+    "tool_schema_version": "sha256:88e7a8918c7f",
+    "agent_batch_rule": "on",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 2,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_version": "sha256:b55a114e8c8a",
+    "benchmark_n": 1,
+    "benchmark_item_ids": [
+      "qa_0008"
+    ],
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ],
+    "deterministic_metrics": [
+      "figure_recall",
+      "figure_exact_rate",
+      "figure_primary_rate",
+      "agent_hit_rate",
+      "agent_recall",
+      "grounded_rate",
+      "verified_rate"
+    ],
+    "figure_match_version": "4",
+    "price_table_date": "2026-09-27",
+    "verify_mode": "strict",
+    "contract_version": "da6f5bea0c8b",
+    "config_hash": "88ad3e4f5d61"
+  },
+  "run_status": {
+    "complete": false,
+    "n_requested": 1,
+    "n_generated": 1,
+    "n_scored": 0,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "judge_diagnostics": {},
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 0,
+      "n_nan": 1,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 1,
+      "coverage": 0.0
+    },
+    "answer_relevancy": {
+      "n_scored": 0,
+      "n_nan": 1,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 1,
+      "coverage": 0.0
+    },
+    "context_recall": {
+      "n_scored": 0,
+      "n_nan": 1,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 1,
+      "coverage": 0.0
+    }
+  },
+  "aggregates": null,
+  "aggregates_withheld_reason": "--generate-only: generation checkpointed, judge pass not run",
+  "results": [
+    {
+      "id": "qa_0008",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "Which of Apple's reportable segments saw a decrease in net sales in fiscal 2025 compared with fiscal 2024?",
+      "ground_truth": "Greater China",
+      "answer": "Based on the financial data for fiscal years 2024 and 2025, the Wearables, Home and Accessories segment was the only reportable segment to see a decrease in net sales.\n\nThe net sales for the segments were as follows:\n\n*   **iPhone:** Increased from $201,183 million in fiscal 2024 to $209,586 million in fiscal 2025.\n*   **Mac:** Increased from $29,984 million in fiscal 2024 to $33,708 million in fiscal 2025.\n*   **iPad:** Increased from $26,694 million in fiscal 2024 to $28,023 million in fiscal 2025.\n*   **Wearables, Home and Accessories:** Decreased from $37,005 million in fiscal 2024 to $35,686 million in fiscal 2025.\n*   **Services:** Increased from $96,169 million in fiscal 2024 to $109,158 million in fiscal 2025.",
+      "observations": [
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=273\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $201,183 million | ProductOrService=IPhone | tagged \"201,183\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=272\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $209,586 million | ProductOrService=IPhone | tagged \"209,586\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=276\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $29,984 million | ProductOrService=Mac | tagged \"29,984\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=275\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $33,708 million | ProductOrService=Mac | tagged \"33,708\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=279\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $26,694 million | ProductOrService=IPad | tagged \"26,694\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=278\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $28,023 million | ProductOrService=IPad | tagged \"28,023\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=282\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $37,005 million | ProductOrService=WearablesHomeandAccessories | tagged \"37,005\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=281\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $35,686 million | ProductOrService=WearablesHomeandAccessories | tagged \"35,686\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=7\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=6\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_observations": 10,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 273] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $201,183 million | ProductOrService=IPhone | tagged \"201,183\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 272] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $209,586 million | ProductOrService=IPhone | tagged \"209,586\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 276] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $29,984 million | ProductOrService=Mac | tagged \"29,984\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 275] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $33,708 million | ProductOrService=Mac | tagged \"33,708\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 279] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $26,694 million | ProductOrService=IPad | tagged \"26,694\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 278] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $28,023 million | ProductOrService=IPad | tagged \"28,023\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 282] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $37,005 million | ProductOrService=WearablesHomeandAccessories | tagged \"37,005\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 281] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $35,686 million | ProductOrService=WearablesHomeandAccessories | tagged \"35,686\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 7] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 6] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_contexts": 10,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 13,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:95cd45597bbc",
+      "generated_at": "2026-10-05T03:25:50+00:00",
+      "error": null,
+      "latency_ms": 5078.7,
+      "llm_calls": 3,
+      "input_tokens": 7770,
+      "output_tokens": 1380,
+      "cost_usd": 0.004012,
+      "tools_used": {
+        "lookup_financial_fact": 10
+      },
+      "tool_ms_total": 770.2,
+      "trace_id": "01a10a18-93d1-7ab3-bab5-5b33c977421c",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a10a18-93d1-7ab3-bab5-5b33c977421c",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 5078.7,
+        "llm_calls": 3,
+        "input_tokens": 7770,
+        "output_tokens": 1380,
+        "total_tokens": 9150,
+        "cost_usd": 0.004012,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 76.6,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "segment": "Mac",
+              "ticker": "AAPL",
+              "concept": "net sales"
+            },
+            "t0_ms": 1421.3
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 73.1,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "segment": "iPad",
+              "ticker": "AAPL",
+              "concept": "net sales"
+            },
+            "t0_ms": 1427.3
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 73.1,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "concept": "net sales",
+              "ticker": "AAPL",
+              "segment": "Wearables, Home and Accessories"
+            },
+            "t0_ms": 1429.6
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 73.3,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "ticker": "AAPL",
+              "concept": "net sales",
+              "segment": "Wearables, Home and Accessories"
+            },
+            "t0_ms": 1430.6
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 72.7,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "concept": "net sales",
+              "fiscal_year": 2024,
+              "segment": "Services"
+            },
+            "t0_ms": 1431.7
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 84.6,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "fiscal_year": 2024,
+              "ticker": "AAPL",
+              "segment": "iPhone"
+            },
+            "t0_ms": 1420.5
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 83.7,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "ticker": "AAPL",
+              "concept": "net sales",
+              "segment": "iPhone"
+            },
+            "t0_ms": 1421.9
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 72.4,
+            "error": false,
+            "args": {
+              "segment": "Services",
+              "concept": "net sales",
+              "ticker": "AAPL",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 1433.3
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 77.4,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "segment": "iPad",
+              "ticker": "AAPL",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 1428.5
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 83.3,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "segment": "Mac",
+              "ticker": "AAPL",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 1422.8
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 10
+        },
+        "tool_ms_total": 770.2
+      },
+      "draft_answer": "Based on the financial data for fiscal years 2024 and 2025, the Wearables, Home and Accessories segment was the only reportable segment to see a decrease in net sales.\n\nThe net sales for the segments were as follows:\n\n*   **iPhone:** Increased from $201,183 million in fiscal 2024 to $209,586 million in fiscal 2025.\n*   **Mac:** Increased from $29,984 million in fiscal 2024 to $33,708 million in fiscal 2025.\n*   **iPad:** Increased from $26,694 million in fiscal 2024 to $28,023 million in fiscal 2025.\n*   **Wearables, Home and Accessories:** Decreased from $37,005 million in fiscal 2024 to $35,686 million in fiscal 2025.\n*   **Services:** Increased from $96,169 million in fiscal 2024 to $109,158 million in fiscal 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 7,
+        "n_figures": 10,
+        "n_supported": 10,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_272",
+          "AAPL_10K_fact_273",
+          "AAPL_10K_fact_275",
+          "AAPL_10K_fact_276",
+          "AAPL_10K_fact_278",
+          "AAPL_10K_fact_279",
+          "AAPL_10K_fact_281",
+          "AAPL_10K_fact_282",
+          "AAPL_10K_fact_6",
+          "AAPL_10K_fact_7"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 10,
+        "n_grounded": 10,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    }
+  ]
+}
