@@ -33,6 +33,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 4 | 22:50 | `run_eval --generate-only --label b-control --cache-file eval/cache/b-control.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=off` (fix kept, git `911f8c5`) | 17 | $0.0531 | $0.0421 | $0.0526 | $0.1656 |
 | 5 | 22:57 | `run_eval --generate-only --label b-rule-v2 --cache-file eval/cache/b-rule-v2.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on`, rule wording v2 (git `7438a47`) | 17 | $0.0531 | $0.0379 | $0.0474 | $0.2130 |
 | 6 | 23:01 | `run_eval --generate-only --label upgrade-v1 --cache-file eval/cache/upgrade-v1.json` with `AGENT_BATCH_RULE=on`, rule v2 (git `cc21568`), all 71 items | 71 | $0.2219 | $0.1465 | $0.1831 | $0.3961 |
+| 7 | 23:13 | `run_eval --generate-only --label upgrade-control --cache-file eval/cache/upgrade-control.json` with `AGENT_BATCH_RULE=off` (the shipped configuration: fix on, rule off; git `a143cfd`), all 71 items | 71 | $0.2219 | $0.1411 | $0.1764 | $0.5725 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -241,3 +242,29 @@ NEXT STEP: commit these results, then `upgrade-v1`, the full 71-item run (expect
 **What is still missing for the default I am shipping.** Nothing has run the SHIPPED configuration (fix on, rule off) over all 71 items: `upgrade-v1` had the rule on. So the second full run is the same configuration with the rule OFF (the optional "second full run": ledger $0.3961 is under the $0.60 limit for it; counted cost expected $0.2219). It gives the full-benchmark numbers for what ships, a read of the answers for any regression of the wording fix, and, set against `upgrade-v1`, the rule's effect at full scale. I chose it over a pure repeat of `upgrade-v1` as the noise sample because noise is already measured twice (12% p50 between two committed runs, the 16% same-tools drift above).
 
 NEXT STEP: commit these results; run `upgrade-v1-off` (label `upgrade-control`): all 71 items, `AGENT_BATCH_RULE=off`, quiet machine; then the multi-turn probe.
+
+### 2026-10-04 23:35 CORRECTION to two earlier entries (22:33 and 22:55): the rejected calls are not a batching phenomenon
+
+The 22:33 entry said that in 5 of the 6 failing `cost-v3` items the omission "happens inside a batch", and the 22:55 entry repeated that "the model omits `concept` inside a batched step". That was an inference from the order of the stored error messages, and it was wrong. Measured with start offsets (`a-before`, the unchanged code, 5 rejected calls): 3 were single-call steps (`qa_0005`, `qa_0018`, `qa_0041`) and 2 were inside one 2-call step (both in `qa_0053`). For the committed `cost-v3` run, 5 of the 6 failing items had no more calls than model steps (`qa_0005`, `qa_0008`, `qa_0018`, `qa_0021`, `qa_0041`), so they were not batched; only `qa_0053` was. The omission occurs on single calls too. Consequences: (1) the sentence in the rule's code comment and in `tests/test_batch_rule.py` that says the rejected lookups "happened inside batched steps" is corrected in the next commit (the rule still repeats the required-arguments reminder, now on the weaker ground that a batch must not make the omission more likely); (2) the commit message of `3d1f616` carries the same wrong sentence and is left as it is (not rewritten); (3) the Phase 3 reading "a batching rule could raise the rejection rate" stays a hypothesis that was tested and not borne out (0 of 47, 0 of 39 and 0 of 121 calls rejected with the rule on or off after the Phase 2 wording).
+
+### 2026-10-04 23:45 Phase 3.4, second full run: the SHIPPED configuration (fix on, rule off), `upgrade-control`
+
+`upgrade-control` (`eval/results/upgrade-control-7c50eed7da71.json`, git `a143cfd`, clean tree, `prompt_version sha256:e96ec6393c90`, `agent_batch_rule off`): all 71 items, quiet machine; actual $0.1411, counted $0.1764, ledger total **$0.5725** (under the $0.60 limit the prompt sets for a second full run, which it was started under: $0.3961 at the time). Tool metrics: `eval/tool_metrics/upgrade-control-7c50eed7da71.json` (against `contract-v3`) and `eval/tool_metrics/upgrade-v1-vs-upgrade-control.json` (rule on against rule off).
+
+| 71 items | `contract-v3` | **`upgrade-control` (what ships: fix on, rule off)** | `upgrade-v1` (fix + rule v2 on) |
+|---|---|---|---|
+| tool calls / rejected | 131 / 7 | **119 / 0** | 121 / 0 |
+| calls issued in a batched step | n/a | 23 of 119 (19.3%), 10 items | 35 of 121 (28.9%), 12 items |
+| agent model calls per query | 2.68 | **2.49** | 2.37 |
+| `figure_primary` | 45 of 45 | **46 of 46** (45 of 45 on the original 45) | 46 of 46 |
+| verified / refused / terminal failures | 70 / 0 / 1 (`qa_0062`) | **71 / 0 / 0** | 70 / 0 / 1 (`qa_0024`) |
+| `first_tool_ok` / `tool_set_ok` (labels as written, not revised) | 67 of 71 / 67 of 71 | 65 of 71 / 64 of 71 | 70 of 71 / 69 of 71 |
+| latency p50 / p95 (nearest-rank) | 3,684 / 9,077 ms (70 answered) | 2,839 / 6,940 ms (71) | 2,831 / 5,572 ms (70) |
+| cost per query | $0.002067 | $0.001987 | $0.002063 |
+| answers that became wrong (hand read of every changed answer) | n/a | **0** (35 changed, 36 identical to `contract-v3`) | **1** (`qa_0008`, of 30 changed) |
+
+- **Every answer that changed was read against its ground truth.** In the shipped configuration `qa_0008` is correct again (Greater China, $64,377 million against $66,952 million), `qa_0024` gives a partial answer (it says the filing does not list three sources; the ground truth lists four; the committed run also fell short and this is the item that hit the recursion limit with the rule on), and the other 33 are the same answer in other words or the same figures. Nothing became wrong.
+- **Noise.** `qa_0024` hit the recursion limit in `reindex-v3` and in `upgrade-v1`, answered in `upgrade-control` and in `contract-v3`; `qa_0062` hit it in `contract-v3` and `cost-v3`, answered in all three runs of this upgrade. The terminal-failure count of this configuration is 0 to 1 per run and the failing item moves: not evidence for or against any change.
+- **Rule on against rule off at full scale** (`upgrade-v1` against `upgrade-control`): agent model calls 2.37 against 2.49, batched calls 28.9% against 19.3%, `first_tool_ok` 70 against 65 of 71 (the rule makes the model skip a `list_available_companies` call it did not need), comparative stratum model calls 2.25 against 4.00 (n = 4), p50 latency identical (2,831 against 2,839 ms); and one wrong answer against none. So: a real, structural, small efficiency gain and one regression a judge-free metric cannot see; the default stays off, and one more cheap measurement is made below to see whether the `qa_0008` failure repeats.
+
+NEXT STEP: re-run `qa_0008` alone with the rule ON three times (distinct labels and caches, `--force`; expected counted cost 3 x $0.0031 = $0.0094, ledger $0.5725 + $0.0094) to tell a systematic regression from a one-off; then the multi-turn probe (expected counted $0.0938); then Phase 5.

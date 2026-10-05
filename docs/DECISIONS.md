@@ -87,6 +87,44 @@ when to stop.
 recursion-limit placeholder is refused at every layer and counted as a
 failure in every mean, never excluded (finding 1).
 
+**The fact lookup says `concept` is required in every place the model reads
+it, and the tool never guesses.** 7 of 131 tool calls in the committed
+cost run were rejected for a missing `concept`, on six items. With start
+offsets recorded, the 5 rejections of an unchanged re-run were 3 single calls
+and 2 inside one batched step, so the omission is not a property of batching.
+The fix is wording: the first sentence of the tool
+description, its parameter text and rule 7 of the system prompt say `concept`
+is REQUIRED on every call and one call returns one concept for one year, with
+an example call; the MCP server's description mirrors it and the contract test
+pins it (finding 23). A tolerant tool (accept a missing concept and return an
+observation that names the missing argument) was specified as the fallback and
+not built, because the wording was enough; a default `concept` was ruled out
+before any measurement, since a wrong default silently returns the wrong kind of
+figure, which is worse than a rejected call. The marker such a tool would
+return and the metric that counts it as a failure stay in the code, so the
+instrument is ready if a tool ever needs it.
+
+**Batching is a prompt rule behind `AGENT_BATCH_RULE`, off by default.** The
+tool node already runs the calls of one step concurrently and the model
+already batches some questions. A rule that asks for more of it changed what
+it was written to change (a five-company question from four serial searches to
+one `compare_companies` call; agent model calls 3.06 to 2.53 per query on the
+17 items it targets, against a control with the rule off) and, on the full
+benchmark, produced one wrong answer that the figure check and the contract
+verified (finding 24). Because nothing judge-free reads an answer to a question
+with no figure, the default is decided by a measured gate that includes reading
+the changed answers, and the rule did not pass it. It stays available behind
+the switch; the wording fix above is on unconditionally.
+
+**Every lazily built singleton is built once, under a lock.** A tool node runs
+one step's tool calls on worker threads, and the first batched step of a cold
+process raced to build the Chroma client: six of eight threads failed. The
+vectorstore, the process-wide retriever, its reranker and sparse index, the
+cross-encoder model and the fact store now build under a double-checked lock,
+taken only while the resource is unbuilt, so a warm call never queues (39 ns)
+and steady-state searches stay concurrent. The alternative, serialising every
+search, would have given up the wall time batching exists to save.
+
 ## Verification
 
 **Every answer becomes cited claims and is checked before it is served.** A
@@ -98,6 +136,31 @@ one repair attempt with the failures shown to the structuring model, then
 in strict mode a refusal that names what could not be verified; `VERIFY_MODE`
 selects strict, warn or off. The price is a second model call: about +22% in
 dollars and a doubled median latency (finding 21).
+
+## Conversation memory
+
+**Follow-ups are answered from the text of earlier turns, kept in the server's
+memory, and handed to the model as one human message.** The API is stateless,
+so "and Microsoft?" failed. `agent/memory.py` keeps, per client-minted thread
+id, the question and answer text of up to six served turns (500 and 1,200
+characters each), and a request that carries the id sends the model a labelled
+history block followed by the current question. The reasons it is a text window
+and not a LangGraph checkpointer: it behaves identically on the direct and the
+MCP agent, because it only builds the text the agent is given; the history stays
+small (a few hundred characters a turn instead of thousands of tokens of tool
+output a turn); the output contract stays turn-scoped, since it checks figures
+against this turn's observations, and the history block tells the model to reuse
+no figure and call the tools again for every one it states, so no figure can be
+served from an earlier turn without being re-checked this turn; and a request
+with no thread id is byte for byte what it was before. Only an answer that
+passed verification (or ran with it skipped) is remembered, never a refusal,
+an unverified draft or a terminal failure (finding 25).
+
+**The memory is in process and ephemeral, on purpose.** The Space's disk is
+ephemeral and the free-tier rule forbids a paid store; the memory is bounded in
+turns, threads and idle time, and it forgets on restart, which the UI says. A
+persistent store, an account system or cross-session memory is a separate
+decision with its own privacy questions; none was started here.
 
 ## Evaluation
 
@@ -129,6 +192,40 @@ until it is recalibrated, so the contract cannot drift unmeasured.
 minute, CI builds the same index the docs measure from the committed filings
 and caches it on their hash; an earlier committed slice was retired when the
 rebuild became cheap.
+
+**Tool labels live in a sidecar file, not a column of the benchmark.**
+`benchmark_version` hashes the benchmark CSV and the chunk labels, and a results
+file's identity includes it, so a new column would have orphaned every committed
+results file. `eval/benchmark_tools.json` is outside that hash and each
+tool-metrics output records its sha256 instead. It was written before any
+results file's tool fields were opened, from the question, ground truth,
+`question_type`, `section`, the prompt rules and the tool docstrings only,
+audited by three independent labellers and widened where a defensible
+alternative existed. It was not revised after the first results (R2), including
+the four first-tool misses, two of which are arguable. The labels are blind but
+not independent of the author: the labellers are language models reading the same
+rules (the "Tool-call quality" section's limits).
+
+**An experiment gets its own cache file, a distinct label and a recorded tool
+schema fingerprint.** The prompt version hashes the system prompt only, so a
+tool docstring or argument schema change leaves it, and every cache key built
+from it, unchanged; the harness would serve answers generated before the change.
+`tool_schema_version` is recorded and hashed into each results file's config
+(not into the cache key), and every experiment names its own cache.
+
+**A subset run is paired with a control that changes one thing.** The first
+measurement of the batching rule changed two things at once (the Phase 2
+wording and the rule) and moved everything; the same items with the rule off
+moved almost as much, which showed the wording, not the rule, had done it. The
+control cost $0.05 and is the reason the rule is not credited with the wording's
+effect.
+
+**Judge-free metrics do not see answer correctness on a question with no
+figure, so a change to the agent's behaviour is checked by reading the answers
+that changed.** The full run with the batching rule passed every judge-free
+gate and one answer was wrong; reading the 30 answers whose text changed found
+it (finding 24). A judge would have scored it too, at about $1.10; reading 30
+answers cost nothing.
 
 ## Deployment
 
