@@ -597,3 +597,18 @@ Ledger rows of this run: row 10 above ($1.0339 actual, $1.2924 counted, this run
 7. The `contract-v3` baseline is on the first index: untouched (informational).
 
 NEXT STEP: closeout: Resume-safe numbers rows, gates once more, the commit count, a clean `git status`, then stop (no push).
+
+### 2026-10-05 09:05 Post-run step 5: closeout
+
+- **Gates, all green at `6d547ae`:** `pytest --tb=short --strict-markers -p no:cacheprovider` **362 passed**; `flake8 . --max-line-length 120 --ignore E501,W503` exit 0; `eval.run_eval --dry-run`, `eval.run_retrieval_eval --dry-run` (71 items, 71 labelled, 4,783-chunk index), `eval.ci_gate retrieval --dry-run` exit 0; `web`: `npm run lint` exit 0, `npm test` 3 files and 16 tests passed, `npm run build` exit 0.
+- `git log --oneline eda988e..HEAD | wc -l` = **41** at `6d547ae` (the 35 commits of the upgrade run plus 6 of this post-run: `1c3a876`, `d395612`, `ab727c1`, `fc5cba8`, `6e9881c`, `6d547ae`), **42** with the commit that carries this entry. `origin/main` is still `eda988e`: nothing was pushed (PUSH = false).
+- Files under `eval/results/`, `eval/cache/`, `eval/tool_metrics/`, `eval/probes/` changed since the upgrade run's last commit (`b27d3d9`): one new file (`eval/results/upgrade-judged-7c50eed7da71.json`) and the regenerated `eval/results/LEADERBOARD.md` (one row and the timestamp). No existing results, cache, tool-metrics or probe file was edited. The key-pattern scan of the post-run diff found nothing. No branch was created or switched. Nothing outside this repo was touched except the one 0-byte `../hf-space/.git/index.lock` deleted in step 0; neither stale lock has reappeared.
+- Counted spend of this run: **$1.2924 of the $1.60 cap** (actual $1.0339; ledger row 10); cumulative counted with the upgrade run **$1.9442**, about $3.06 of the roughly $5 of credit by the counted ledger. The Google billing page, not this ledger, is the authority.
+
+What the owner does next, in this order:
+
+1. **Sync the Space from this tree** (DEPLOY.md step 1.3 procedure; the Space's own `README.md` with its front matter must not be overwritten, and only real changes staged: the hf-space clone shows line-ending noise in `git status` that `git diff --ignore-cr-at-eol --stat` removes). Wait for the build, then verify memory is live with two `POST /query` calls that share a `thread_id` (the second must return `meta.thread_turns: 1`).
+2. **`git push`** from this repo, which runs CI and deploys the web.
+3. The manual judged workflow does **not** need clicking for the numbers (step 1 ran); click it once (about $0.20) only if the GitHub path itself should be exercised, and compare with `eval/ci_gate.json`.
+4. **Review the 71 labels** in `eval/benchmark_tools.json`.
+5. **Check Google billing** against the cumulative counted ledger ($1.9442).
