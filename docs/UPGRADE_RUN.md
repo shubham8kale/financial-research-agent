@@ -70,6 +70,8 @@ Python **224 to 358** (collected; three skip without the index or the fact table
 
 ### Needs the owner
 
+*Status, 2026-10-05 evening: items 1, 2 and 5 are closed (Post-run and Deployed sections below; the judge pass is upgrade-judged-7c50eed7da71.json); 4 stands at off; 7 is carried in every table; 3 (the 71 labels) and 6 (billing) remain the owner's.*
+
 1. **Review the commits** (`git log --oneline eda988e..HEAD`) and push them yourself. **Order matters: sync the Space first, then push**, because the web change tells users their follow-ups are remembered and the deployed backend does not do that until it is synced; a push to `main` also runs CI and probably auto-deploys the Vercel frontend. The Space sync and the Vercel deploy are manual and were not touched.
 2. Decide whether to **click the manual judged workflow** once (the prompt wording changed; JUDGED_RUNS_ALLOWED was 0).
 3. **Review the 71 labels** in `eval/benchmark_tools.json` (and the four first-tool misses of `contract-v3`).
