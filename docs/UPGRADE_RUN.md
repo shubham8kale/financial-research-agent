@@ -80,3 +80,15 @@ NEXT STEP: Phase 1.3: write `eval/tool_metrics.py` and `tests/test_tool_metrics.
 - Test count after this: 269 (224 + 4 labels + 8 meter + 29 metrics + 4 schema version).
 
 NEXT STEP: commit `tool_schema_version`; then Phase 2.1: fix ITEMS_A (the six error items plus the first six figure-applicable items in benchmark order that did not error), list them here, check the spend ledger (SPEND_CAP_USD 1.00), and run the unchanged shipped configuration on ITEMS_A once as a same-day "before" (12 items, expected counted cost 12 x $0.0025 x 1.25 = $0.0375) so any candidate is compared with today's model, not only the 09-28 files.
+
+### 2026-10-04 22:40 Phase 2.1: ITEMS_A fixed
+
+ITEMS_A (never changes), 12 items: the six items whose `cost-v3` calls were rejected, `qa_0005, qa_0008, qa_0018, qa_0021, qa_0041, qa_0053`, plus the first six figure-applicable items in benchmark order with no failed call, `qa_0002, qa_0004, qa_0006, qa_0007, qa_0009, qa_0010` (figure-applicable includes the address of `qa_0002` and the headcount of `qa_0004`, because the figure check v4 counts any non-year figure in the ground truth).
+
+`--ids qa_0002,qa_0004,qa_0005,qa_0006,qa_0007,qa_0008,qa_0009,qa_0010,qa_0018,qa_0021,qa_0041,qa_0053`
+
+Live-run rules I apply to every paid command: shipped configuration (`VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred`), `--generate-only`, its own `--cache-file eval/cache/<label>.json`, a distinct `--label`, a clean tree at the start (so `git_dirty` is false), and **LangSmith tracing forced off** (`LANGSMITH_TRACING=false`, `LANGCHAIN_TRACING_V2=false`): the owner's `.env` turns LangSmith on with a key, and a trace upload is a call to a non-Gemini API, which this run may not make. `trace_id` is still recorded (it is the root run id the meter takes) but will not open as a LangSmith trace. After each run: restore `eval/results/LEADERBOARD.md` (the harness regenerates it; Phase 5 regenerates it once on purpose), run `eval.tool_metrics` on the new file, commit the results and metrics.
+
+Plan for this phase: (0) run the UNCHANGED code on ITEMS_A once, label `a-before`, so any candidate is compared with today's model and not only with the 09-28 files (12 items, expected counted cost 12 x $0.0025 x 1.25 = $0.0375; ledger total before: $0.0000; cap $1.00); (a) wording; (b) schema; (c) tolerant tool, stopping at the first that passes the section 2.4 rule.
+
+NEXT STEP: run `a-before` (see the ledger row), then write the candidate (a).
