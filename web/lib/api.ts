@@ -38,6 +38,10 @@ export interface AnswerMeta {
   tool_ms_total: number | null;
   trace_id: string | null;
   backend?: string;
+  /** Present when the request carried a thread id and the server's memory is on. */
+  thread_id?: string;
+  /** How many earlier turns of the thread the model was shown for this answer. */
+  thread_turns?: number;
 }
 
 export interface MetaEvent extends AnswerMeta {
@@ -97,6 +101,12 @@ export type StreamEvent =
 export interface StreamQueryOptions {
   question: string;
   ticker: string | null;
+  /**
+   * Optional conversation thread (see lib/thread.ts). When set it goes in the
+   * request body as `thread_id` so the server can answer a follow-up; when
+   * absent the body is exactly {question, ticker}, as it always was.
+   */
+  threadId?: string | null;
   onToken: (text: string) => void;
   onSources: (items: Citation[]) => void;
   /** Optional: the output contract's verdict, after the sources. */
@@ -118,6 +128,7 @@ export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
   const {
     question,
     ticker,
+    threadId,
     onToken,
     onSources,
     onVerification,
@@ -132,7 +143,9 @@ export async function streamQuery(opts: StreamQueryOptions): Promise<void> {
     res = await fetch(`${API_BASE_URL}/query/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, ticker }),
+      body: JSON.stringify(
+        threadId ? { question, ticker, thread_id: threadId } : { question, ticker },
+      ),
       signal,
     });
   } catch (err) {

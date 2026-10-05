@@ -6,6 +6,7 @@ import ChatInput from "@/components/ChatInput";
 import MessageList from "@/components/MessageList";
 import type { ChatMessage } from "@/components/Message";
 import { streamQuery, type Citation } from "@/lib/api";
+import { newThreadId } from "@/lib/thread";
 
 // Each suggestion is verified against the live backend before shipping, twice,
 // because retrieval varies run to run (eval/EVALUATION.md finding 3). A prompt
@@ -67,6 +68,15 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [ticker, setTicker] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  // One conversation thread per page load, in React state only: the server
+  // keeps the earlier turns of a thread in memory (agent/memory.py) so a
+  // follow-up like "and Microsoft?" can be answered. "New chat" mints another.
+  const [threadId, setThreadId] = useState<string>(() => newThreadId());
+
+  const newChat = useCallback(() => {
+    setMessages([]);
+    setThreadId(newThreadId());
+  }, []);
 
   const send = useCallback(
     (text: string) => {
@@ -99,6 +109,7 @@ export default function Home() {
       void streamQuery({
         question: text,
         ticker,
+        threadId,
         onToken: (t) => patch((m) => ({ ...m, content: m.content + t })),
         onSources: (items: Citation[]) =>
           patch((m) => ({ ...m, citations: items })),
@@ -121,7 +132,7 @@ export default function Home() {
         },
       });
     },
-    [isStreaming, ticker],
+    [isStreaming, ticker, threadId],
   );
 
   return (
@@ -134,11 +145,21 @@ export default function Home() {
             </h1>
             <p className="text-xs text-muted">SEC 10-K research, streamed</p>
           </div>
-          <CompanySelect
-            value={ticker}
-            onChange={setTicker}
-            disabled={isStreaming}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={newChat}
+              disabled={isStreaming}
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-muted shadow-sm transition-colors hover:border-accent hover:text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              New chat
+            </button>
+            <CompanySelect
+              value={ticker}
+              onChange={setTicker}
+              disabled={isStreaming}
+            />
+          </div>
         </div>
       </header>
 
@@ -156,6 +177,10 @@ export default function Home() {
         <div className="mx-auto w-full max-w-3xl px-4 py-3">
           <ChatInput onSend={send} disabled={isStreaming} />
           <p className="mt-1.5 text-center text-xs text-muted">
+            Follow-up questions are remembered for this session. Memory is not
+            saved and clears when the server restarts.
+          </p>
+          <p className="mt-0.5 text-center text-xs text-muted">
             Answers are grounded in the filing text. Enter to send, Shift+Enter
             for a newline.
           </p>
