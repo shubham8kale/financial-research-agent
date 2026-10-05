@@ -34,6 +34,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 5 | 22:57 | `run_eval --generate-only --label b-rule-v2 --cache-file eval/cache/b-rule-v2.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on`, rule wording v2 (git `7438a47`) | 17 | $0.0531 | $0.0379 | $0.0474 | $0.2130 |
 | 6 | 23:01 | `run_eval --generate-only --label upgrade-v1 --cache-file eval/cache/upgrade-v1.json` with `AGENT_BATCH_RULE=on`, rule v2 (git `cc21568`), all 71 items | 71 | $0.2219 | $0.1465 | $0.1831 | $0.3961 |
 | 7 | 23:13 | `run_eval --generate-only --label upgrade-control --cache-file eval/cache/upgrade-control.json` with `AGENT_BATCH_RULE=off` (the shipped configuration: fix on, rule off; git `a143cfd`), all 71 items | 71 | $0.2219 | $0.1411 | $0.1764 | $0.5725 |
+| 8 | 23:55 | three runs of `run_eval --generate-only --label q8-rule-on-{1,2,3} --ids qa_0008 --force` with `AGENT_BATCH_RULE=on` (git `7fd642d`, `546e6bd`, `5a79ed2`) | 3 | $0.0094 | $0.0120 | $0.0150 | $0.5875 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -268,3 +269,11 @@ The 22:33 entry said that in 5 of the 6 failing `cost-v3` items the omission "ha
 - **Rule on against rule off at full scale** (`upgrade-v1` against `upgrade-control`): agent model calls 2.37 against 2.49, batched calls 28.9% against 19.3%, `first_tool_ok` 70 against 65 of 71 (the rule makes the model skip a `list_available_companies` call it did not need), comparative stratum model calls 2.25 against 4.00 (n = 4), p50 latency identical (2,831 against 2,839 ms); and one wrong answer against none. So: a real, structural, small efficiency gain and one regression a judge-free metric cannot see; the default stays off, and one more cheap measurement is made below to see whether the `qa_0008` failure repeats.
 
 NEXT STEP: re-run `qa_0008` alone with the rule ON three times (distinct labels and caches, `--force`; expected counted cost 3 x $0.0031 = $0.0094, ledger $0.5725 + $0.0094) to tell a systematic regression from a one-off; then the multi-turn probe (expected counted $0.0938); then Phase 5.
+
+### 2026-10-04 23:57 The `qa_0008` regression is systematic: wrong 4 of 4 with the rule on, correct 6 of 6 with it off
+
+Three more runs of `qa_0008` alone with the rule ON (`eval/results/q8-rule-on-{1,2,3}-88ad3e4f5d61.json`, each on a clean tree): the same ten parallel `lookup_financial_fact` calls, one per Apple product category and year, and the same wrong answer ("the Wearables, Home and Accessories segment was the only reportable segment to see a decrease") every time. With the rule ON `qa_0008` is therefore wrong 4 of 4 (the three repeats and `upgrade-v1`); with the rule OFF it is correct in all 6 runs that include it (`cost-v3`, `contract-v3`, `reindex-v3`, `a-before`, `a-wording`, `upgrade-control`). It is a deterministic consequence of the rule on this item, not noise. Cost: the ten-call fan-out is token-heavy (about $0.0040 per run against $0.0031 for the average query), so the three runs cost $0.0120 actual, $0.0150 counted (more than the $0.0094 I had estimated); ledger **$0.5875**.
+
+Decision unchanged and now firmly supported: `AGENT_BATCH_RULE` ships **off**. (The hand read of the full run found it; this repeat establishes it. Judge-free metrics, verification and a $1.10 judge pass would not necessarily have: the answer's figures are all in the observations.)
+
+NEXT STEP: run the multi-turn probe (`python -m eval.run_multi_turn_probe --label memory-v1`; 30 requests, expected counted $0.0938; ledger $0.5875 + $0.0938 = $0.6813 against the $1.00 cap; the unit and API tests pass: 356). Then Phase 5 documentation.
