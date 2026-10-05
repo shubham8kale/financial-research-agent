@@ -185,7 +185,13 @@ ragas==0.4.3
 #                     one in run_eval.py via `Dataset.from_dict(...)`.  Pinned
 #                     explicitly because newer ragas versions no longer list it
 #                     as a hard dependency, and we need a deterministic import.
-datasets==4.8.4
+# SECURITY: CVE-2026-66007 (GHSA-379c-qx7v-6h59), path traversal through
+#           file_name metadata in the folder-based dataset builders, is fixed in
+#           5.0.1 (taken 2026-10-05; the pin was 4.8.4). This repository never
+#           calls a folder builder or load_dataset: it only builds an in-memory
+#           Dataset.from_dict in eval/run_eval.py, and datasets runs only in
+#           evaluation, never in the API.
+datasets==5.0.1
 
 # ── Lint / CI ─────────────────────────────────────────────────────────────────
 # flake8            : style and syntax linter, run from .github/workflows/ci.yml
