@@ -6,7 +6,7 @@ the API emits, in order:
 
 | event | rendered as |
 |---|---|
-| `token` (repeated) | the answer, appended word by word |
+| `token` (repeated) | the answer, appended word by word and rendered as markdown (headings, bold, lists, tables) |
 | `sources` | a list of cited chunks and tagged facts; those with `cited: true` carry a check mark |
 | `verification` | one line above the sources: verified, unverified, or withheld (see `agent/contract.py`) |
 | `meta` | one line under the answer: seconds, tokens, dollars, tools called, trace id |
@@ -14,6 +14,17 @@ the API emits, in order:
 
 The event contract is typed in [`lib/api.ts`](lib/api.ts) and mirrors
 `api/main.py`; the message component is [`components/Message.tsx`](components/Message.tsx).
+
+Assistant answers are rendered as markdown with `react-markdown` and `remark-gfm`
+(pinned to exact versions). Headings, paragraphs, bold, lists, tables and links
+are styled to chat-bubble scale; code blocks, quotes and rules are not mapped
+and keep the page's reset styling. Nothing the model writes is rendered as HTML:
+there is deliberately no `rehype-raw`, so a tag in an answer is shown as text;
+a `javascript:` link is shown as plain text; an image written in markdown syntax
+is replaced by its alt text instead of being fetched; and a single `~` is not
+strikethrough, so "about $5B" is never struck out. Links open in a new tab with
+`rel="noopener noreferrer"`. The user's own messages and the error copy stay
+plain text.
 
 ## Run it
 
@@ -31,7 +42,7 @@ the backend is controlled by its `FRONTEND_ORIGINS` variable.
 
 ```bash
 npm run lint
-npm test           # 16 Vitest tests: streamed tokens + citations + verdict + meter, a withheld answer, an error, the conversation thread and New chat
+npm test           # 30 Vitest tests: streamed tokens + citations + verdict + meter, a withheld answer, an error, the conversation thread and New chat, markdown rendering and no raw HTML
 npm run build
 ```
 

@@ -1,4 +1,56 @@
+import ReactMarkdown, { type Components, type Options } from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import type { AnswerMeta, AnswerVerification, Citation } from "@/lib/api";
+
+/**
+ * Chat-bubble scale for rendered markdown: the model writes headings, bold,
+ * lists and tables, and none of it may look page-sized inside a bubble.
+ * Preflight resets list and table styling, so those are put back here.
+ * Raw HTML in the model's output is never rendered: there is deliberately no
+ * rehype-raw, so react-markdown shows such text as text.
+ */
+// singleTilde is off: with it on, "~$5B to (~$7B)" strikes a real figure through, and "~" means "about" here.
+const remarkPlugins: Options["remarkPlugins"] = [[remarkGfm, { singleTilde: false }]];
+
+const markdownComponents: Components = {
+  h1: ({ children }) => <h1 className="mt-3 text-sm font-bold first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="mt-3 text-sm font-bold first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="mt-3 text-sm font-bold first:mt-0">{children}</h3>,
+  h4: ({ children }) => <h4 className="mt-3 text-sm font-bold first:mt-0">{children}</h4>,
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-2 list-disc space-y-0.5 pl-5 last:mb-0">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-2 list-decimal space-y-0.5 pl-5 last:mb-0">{children}</ol>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  // Markdown image syntax would make the browser fetch whatever URL the model wrote (a prompt-injected filing could
+  // use that to leak the conversation); show the alt text instead and never load an image.
+  img: ({ alt }) => <span>{alt}</span>,
+  // react-markdown blanks an unsafe URL (javascript:, data:) to "", and an <a href=""> is still a live link, so an
+  // empty href renders as plain text instead.
+  a: ({ href, children }) =>
+    href ? (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="underline">
+        {children}
+      </a>
+    ) : (
+      <span>{children}</span>
+    ),
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto">
+      <table className="w-full border-collapse text-xs">{children}</table>
+    </div>
+  ),
+  th: ({ children, style }) => (
+    <th style={style} className="border border-border px-2 py-1 text-left font-semibold">
+      {children}
+    </th>
+  ),
+  td: ({ children, style }) => (
+    <td style={style} className="border border-border px-2 py-1">
+      {children}
+    </td>
+  ),
+};
 
 /** UI model for one turn in the conversation (session-only, never persisted). */
 export interface ChatMessage {
@@ -132,13 +184,17 @@ export default function Message({ message }: { message: ChatMessage }) {
           <p className="text-red-600">{message.error}</p>
         ) : isPending ? (
           <TypingDots />
+        ) : isUser ? (
+          <p className="whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
-          <p className="whitespace-pre-wrap break-words">
-            {message.content}
+          <div className="break-words">
+            <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+              {message.content}
+            </ReactMarkdown>
             {message.streaming && (
               <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-current align-middle" />
             )}
-          </p>
+          </div>
         )}
 
         {!isUser && !message.streaming && message.verification && (
