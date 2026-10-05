@@ -162,3 +162,14 @@ def test_the_off_switch(monkeypatch):
         assert memory_enabled() is False and ThreadMemory.from_env().enabled is False
     monkeypatch.setenv("THREAD_MEMORY", "on")
     assert memory_enabled() is True
+
+
+def test_an_unknown_value_is_an_error_not_a_silent_on(monkeypatch):
+    for on in ("on", "ON", "true", "1", "yes", ""):
+        monkeypatch.setenv("THREAD_MEMORY", on)
+        assert memory_enabled() is True
+    monkeypatch.setenv("THREAD_MEMORY", "disabled")           # a typo must not leave user text being stored
+    with pytest.raises(ValueError, match="THREAD_MEMORY"):
+        memory_enabled()
+    with pytest.raises(ValueError, match="THREAD_MEMORY"):
+        ThreadMemory.from_env()

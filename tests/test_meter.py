@@ -226,3 +226,9 @@ def test_a_real_toolnode_reports_arguments_overlap_and_the_missing_argument_fail
     assert ok_a["args"] == {"ticker": "AAPL", "concept": "revenue", "fiscal_year": 2025} and not ok_a["error"]
     assert bad["error"] is True and "concept" in bad["error_message"] and "Field required" in bad["error_message"]
     assert ok_a["t0_ms"] < ok_b["t0_ms"] + ok_b["ms"] and ok_b["t0_ms"] < ok_a["t0_ms"] + ok_a["ms"]   # one step, overlapping
+
+
+def test_safe_args_never_raises_on_a_text_that_is_not_a_literal_dict():
+    assert safe_args(None, "{[1]: 2}") == {}                  # an unhashable key: literal_eval raises TypeError
+    assert safe_args(None, "(" * 5000) == {}                  # too deep to parse
+    assert safe_args(None, "{'a': 1") == {}                   # unterminated

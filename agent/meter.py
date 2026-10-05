@@ -61,8 +61,8 @@ def safe_args(inputs: Any, input_str: str | None = None) -> dict:
             try:
                 inputs = parse(input_str)
                 break
-            except (ValueError, SyntaxError):
-                continue
+            except (ValueError, SyntaxError, TypeError, RecursionError, MemoryError):
+                continue            # not a literal dict (or too deep to parse): the record keeps no arguments, never raises
     if not isinstance(inputs, dict):
         return {}
     args = {str(k): _safe_value(v) for k, v in inputs.items()}

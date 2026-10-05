@@ -1,8 +1,8 @@
 # tests/test_batch_rule.py
 #
 # AGENT_BATCH_RULE=on|off: the batching rule appended to the system prompt.
-# Off (the default until a measured gate decides) the prompt is the one it has
-# always been, byte for byte, and so is its recorded version; on, the rule is
+# Off (the default: the measured gate did not pass) the prompt is _SYSTEM_PROMPT
+# byte for byte, and its recorded version is that text's hash; on, the rule is
 # appended, the version changes, and both the direct and the MCP agent are
 # built with the composed prompt.
 

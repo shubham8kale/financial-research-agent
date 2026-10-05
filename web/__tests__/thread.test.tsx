@@ -101,6 +101,6 @@ describe("conversation thread", () => {
     fireEvent.click(screen.getByRole("button", { name: "New chat" }));
     expect(window.localStorage.length).toBe(0);
     expect(window.sessionStorage.length).toBe(0);
-    expect(document.cookie).not.toContain(String(lastStreamOptions().threadId));
+    expect(document.cookie).toBe("");
   });
 });

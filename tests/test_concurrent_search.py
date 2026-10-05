@@ -110,8 +110,14 @@ def test_a_warm_singleton_does_not_touch_the_lock(monkeypatch):
     # the lock is for the first build only: a warm process must never queue behind it
     sentinel = object()
     monkeypatch.setattr(fa, "_vectorstore", sentinel)
+    got = []
+    caller = threading.Thread(target=lambda: got.append(fa._get_vectorstore()))
     with fa._vectorstore_lock:                       # held by "someone else"; a warm call must not wait for it
-        assert fa._get_vectorstore() is sentinel
+        caller.start()
+        caller.join(timeout=2)                       # a regression fails here instead of hanging the suite
+        queued = caller.is_alive()
+    caller.join(timeout=2)
+    assert not queued and got == [sentinel], "a warm call queued behind the lock"
 
 
 # ── the real index ──────────────────────────────────────────────────────────────

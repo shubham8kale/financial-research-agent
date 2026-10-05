@@ -94,8 +94,17 @@ def _env_float(name: str, default: float) -> float:
 
 
 def memory_enabled() -> bool:
-    """THREAD_MEMORY=on|off (default on).  Memory only ever acts on a request that carries a thread id."""
-    return (os.getenv("THREAD_MEMORY") or "on").strip().lower() not in ("off", "0", "false", "no")
+    """THREAD_MEMORY=on|off (default on).  Memory only ever acts on a request that carries a thread id.
+
+    Anything but on or off is an error rather than a silent on: a typo ("disabled") that left memory storing user
+    text would be the wrong way round to fail.
+    """
+    raw = (os.getenv("THREAD_MEMORY") or "on").strip().lower()
+    if raw in ("on", "true", "1", "yes"):
+        return True
+    if raw in ("off", "false", "0", "no"):
+        return False
+    raise ValueError(f"THREAD_MEMORY must be on or off, got {raw!r}")
 
 
 class ThreadMemory:

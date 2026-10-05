@@ -59,4 +59,3 @@ def test_the_sidecar_is_not_part_of_the_benchmark_version():
     source = inspect.getsource(experiment.benchmark_version)
     assert "benchmark_tools" not in source and "TOOLS_FILE" not in source
     assert TOOLS_FILE.name not in (BENCHMARK_FILE.name, LABELS_FILE.name)
-    assert experiment.benchmark_version(BENCHMARK_FILE, LABELS_FILE) == experiment.benchmark_version(BENCHMARK_FILE, LABELS_FILE)

@@ -532,7 +532,8 @@ def batch_rule_enabled() -> bool:
 def system_prompt() -> str:
     """The system prompt the agent runs with: _SYSTEM_PROMPT, plus the batching rule when AGENT_BATCH_RULE is on.
 
-    With the switch off this is _SYSTEM_PROMPT itself, so a run's recorded prompt version is the one it always was.
+    With the switch off this is _SYSTEM_PROMPT itself (rule 7 carries the concept-is-REQUIRED wording of finding 23),
+    so the recorded prompt version is the hash of that text alone; the rule only ever appends to it.
     """
     return _SYSTEM_PROMPT + (_BATCH_RULE if batch_rule_enabled() else "")
 
