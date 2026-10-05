@@ -505,10 +505,13 @@ _SYSTEM_PROMPT = (
 _BATCH_RULE = (
     "\n9. When a question needs the same lookup for several companies, years or "
     "concepts, issue all of those calls together in ONE step rather than one per "
-    "step; every call in that step still needs all of its required arguments (for "
-    "lookup_financial_fact that includes concept). Prefer one lookup_financial_fact "
-    "or compare_companies call per company over repeated searches. Answer from what "
-    "you have before the step budget runs out."
+    "step, and give every call all of its required arguments (for "
+    "lookup_financial_fact that includes concept). For a figure the filings tag, "
+    "make one lookup_financial_fact call per company or year in that step. For "
+    "anything else about several companies (headcount, state of incorporation, a "
+    "policy), make ONE compare_companies call that lists every ticker instead of "
+    "searching one company at a time. Answer from what you have before the step "
+    "budget runs out."
 )
 
 _ON = ("on", "true", "1", "yes")

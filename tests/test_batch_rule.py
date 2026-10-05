@@ -48,7 +48,8 @@ def test_the_rule_says_what_it_is_meant_to_say(monkeypatch):
     rule = financial_agent._BATCH_RULE
     assert rule.startswith("\n9. ")                               # a numbered rule after rule 8
     assert "ONE step" in rule and "several companies, years or concepts" in rule
-    assert "compare_companies" in rule and "step budget" in rule
+    assert "ONE compare_companies call that lists every ticker" in rule and "step budget" in rule
+    assert "one lookup_financial_fact call per company or year" in rule
     # the rejected lookups of the committed runs happened inside batched steps, so the rule repeats the requirement
     assert "required arguments" in rule and "concept" in rule
     assert "\n9." not in financial_agent._SYSTEM_PROMPT
