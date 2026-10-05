@@ -30,6 +30,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 1 | 22:25 | `run_eval --generate-only --label a-before --cache-file eval/cache/a-before.json --ids <ITEMS_A>` (shipped configuration, unchanged code at `bf271f0`) | 12 | $0.0375 | $0.0247 | $0.0309 | $0.0309 |
 | 2 | 22:50 | `run_eval --generate-only --label a-wording --cache-file eval/cache/a-wording.json --ids <ITEMS_A>` (candidate (a), git `8e3d248`) | 12 | $0.0375 | $0.0231 | $0.0289 | $0.0598 |
 | 3 | 22:45 | `run_eval --generate-only --label b-rule-v1 --cache-file eval/cache/b-rule-v1.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on` (git `3d1f616`) | 17 | $0.0531 | $0.0425 | $0.0531 | $0.1129 |
+| 4 | 22:50 | `run_eval --generate-only --label b-control --cache-file eval/cache/b-control.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=off` (fix kept, git `911f8c5`) | 17 | $0.0531 | $0.0421 | $0.0526 | $0.1656 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -162,3 +163,27 @@ By stratum (anecdotal, n = 4, 5 and 8): comparative p50 4,003 ms (3 answered) to
 **Read this with care.** (1) This compares a run made today with a run made on 09-28, and it changes two things at once (candidate (a) and the rule), so by itself it attributes nothing to the rule; the same items are being re-run with the rule OFF (`b-control`) to separate them. (2) The latency numbers were taken with my own CPU work (tests, a web build) running in the same minutes, which is noise of unknown size on top of the 12% run-to-run difference already measured between two committed runs of the same configuration. (3) `qa_0062` answering is one item; it has hit the recursion limit on every earlier run of this configuration, so it is a notable observation, not a statistic.
 
 NEXT STEP: run `b-control` (the same 17 items, rule OFF, fix kept) on a quiet machine (expected counted cost $0.0531; ledger $0.1129 + $0.0531 = $0.1660); then decide whether to iterate the rule's wording (at most twice) or go to the full run.
+
+### 2026-10-04 23:30 Phase 3.3: the control (`b-control`, rule OFF) says the rule adds almost nothing beyond the Phase 2 wording; the multi-turn probe is built
+
+`b-control` (`eval/results/b-control-e8f826600800.json`, git `911f8c5`, clean tree, `prompt_version sha256:e96ec6393c90`, `agent_batch_rule off`): the same 17 ITEMS_B items with the Phase 2 fix kept and the rule OFF; actual $0.0421, counted $0.0526, ledger total **$0.1656**. Run on a quiet machine. Comparisons: `eval/tool_metrics/b-control-e8f826600800-subset.json` (against `contract-v3`) and `eval/tool_metrics/b-rule-v1-vs-b-control-subset.json` (rule on against rule off).
+
+| ITEMS_B, 17 items | `contract-v3` (09-28) | `b-control` (fix, rule OFF) | `b-rule-v1` (fix, rule ON) |
+|---|---|---|---|
+| calls rejected | 5 of 59 | 0 of 47 | 0 of 47 |
+| calls issued in a batched step | n/a (7 of 17 items had more calls than steps) | 21 of 47 (44.7%), 9 of 17 items | 23 of 47 (48.9%), 10 of 17 items |
+| agent model calls per query | 3.82 | 3.06 | 3.00 |
+| latency p50 / mean (nearest-rank, terminal failure excluded) | 4,586 / 5,283 ms (n=16) | 3,205 / 4,133 ms | 3,199 / 4,172 ms |
+| recursion-limit failures | 1 (`qa_0062`) | 0 | 0 |
+| `figure_primary` / verified | 16 of 16 / 16 | 16 of 16 / 17 | 16 of 16 / 17 |
+| cost per query | $0.00302 | $0.00248 | $0.00250 |
+| `tool_set_ok` | 15 of 17 | 14 of 17 | 15 of 17 |
+
+- **The rule's own effect is not distinguishable from noise.** Step structure is identical in 14 of 17 items with the rule on and off. It differs on three: `qa_0062` (3 search steps instead of 4, p50 7,458 to 5,939 ms), `qa_0063` ([1, 2] instead of [1, 1, 1] call steps) and `qa_0034` (the rule-on run used the calculator, the control did not, which is why `tool_set_ok` reads 14 against 15). On everything else, agent model calls (3.06 against 3.00), batched share (44.7% against 48.9%) and latency (3,205 against 3,199 ms) the two runs agree within what one stochastic re-run moves.
+- **What changed the trajectories is the Phase 2 wording, not the rule.** Against `contract-v3` the control already shows 0 rejected calls, agent model calls 3.82 to 3.06, `qa_0062` answering, and 44.7% of calls issued in batched steps. The Phase 2 text tells the model to "make one call per figure and year ... repeat the concept", which is itself an instruction to batch the two-year lookups. This is the reason the control mattered: the first run alone, with the fix and the rule both on, would have credited the rule with all of it.
+- **Where batching is still not happening:** `qa_0061` (headcount of the five companies) and `qa_0062` (incorporation across five companies) issue 3 to 4 SERIAL `search_filings` calls (one step each) in both runs; `qa_0063`, `qa_0068`, `qa_0071` call `list_available_companies` as a separate first step. The multi-ticker tool `compare_companies` takes a comma-separated ticker list and was never used on these items. The rule's sentence "prefer one lookup_financial_fact or compare_companies call per company over repeated searches" is ambiguous (compare_companies is already one call for several companies), which is likely why it did not move `qa_0061`/`qa_0062`. This is the one targeted wording change worth a measured iteration (iteration 1 of the at most two allowed): say that for untagged facts about several companies the model should make ONE `compare_companies` call listing every ticker, and that tagged figures get one `lookup_financial_fact` per company in the same step.
+- Caveat for every wording iteration: ITEMS_B is both where the rule is tuned and where it is evaluated (R2). The full 71-item run in Phase 3.4 is the regression check on the other 54 items.
+
+**Multi-turn probe built (Phase 4.3, no spend yet)**: `eval/multi_turn_probe.json` (8 conversations, 19 questions, 11 follow-up turns), `eval/run_multi_turn_probe.py`, 16 tests. Every ground-truth figure was read from `data/facts.sqlite` (fact ids cited) and a test re-checks all of them; one follow-up question was reworded so no two questions in the file are identical. Plan: 30 requests (19 with memory, 11 follow-ups in isolation; the first turns are the same request in both modes so the isolation run reuses them), expected $0.075 actual, $0.0938 counted.
+
+NEXT STEP: rule wording iteration 1 (commit, then run `b-rule-v2` on ITEMS_B with the rule on; expected counted cost $0.0531, ledger $0.1656 + $0.0531 = $0.2187).
