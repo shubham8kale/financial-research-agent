@@ -19,7 +19,7 @@ An agentic RAG system that answers natural-language questions about SEC 10-K fil
 - **The deployed backend is a separate repository, redeployed deliberately.** It lives in
   its own Hugging Face Space repo rather than being built from this one on every push, so
   the two can drift. Its application code is **synced by hand from `main`**; the last sync
-  is commit `3f0fa5b` (2026-10-05), which carries everything described below — the rebuilt
+  is commit `7d44f21` (2026-10-05), which carries everything described below — the rebuilt
   10-K-only index, fact tools, retrieval switches, meter and answer verification, tool-call metrics and per-thread conversation memory. A later commit on `main` reaches the
   Space only at the next sync (see Deploy). What deliberately differs is the
   deployment machinery: the Space ships a **prebuilt Chroma index via Git LFS**, because
