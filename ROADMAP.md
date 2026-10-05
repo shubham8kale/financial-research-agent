@@ -191,6 +191,79 @@ incident, not by benchmark traffic (limitation 17).
 
 ---
 
+## Done: tool calls measured, and the dropped argument fixed
+
+**Was.** The model sometimes called `lookup_financial_fact` with a ticker and a
+fiscal year and no `concept`: 7 of 131 calls on 6 items in the committed cost
+run, each a wasted model round trip. Nothing measured tool use at all: no
+arguments, no start times, no notion of the right tool for a question.
+
+**Now.** The meter records each call's arguments, start offset and error;
+[`eval/tool_metrics.py`](eval/tool_metrics.py) scores validity, first tool, tool
+set, batching, redundant calls and lookup arguments against a label file
+written before any results were read
+([`eval/benchmark_tools.json`](eval/benchmark_tools.json)); and `concept` is
+stated as required in the tool's description, its parameter text, rule 7 and
+the MCP description. On the 12 items chosen for failing, 5 of 20 lookups were
+rejected unchanged and 0 of 15 after (Fisher p = 0.057); on the shipped
+configuration over all 71 items, **0 of 119 calls were rejected**
+([eval/EVALUATION.md](eval/EVALUATION.md), "Tool-call quality", finding 23).
+
+**Left open.** The labels are blind but written by the author and audited by
+models, not by a person, and two of the four baseline first-tool misses are
+arguable. A tolerant tool (accept a missing concept, return an observation that
+names it) was specified and not built because the wording was enough.
+
+---
+
+## Done: batching measured, a race fixed, a rule left off
+
+**Was.** LangGraph runs the calls of one model step concurrently and the model
+sometimes issued several, but nothing counted it, and `search_filings` had never
+run in parallel in any committed run.
+
+**Now.** Start offsets make batching measurable: 19% of calls in the shipped run
+were issued in a batched step. Running searches concurrently on the real index
+found a real defect, a race on the first use of a cold process (6 of 8 threads
+failed building the Chroma client), now fixed with a lock taken only on the first
+build; steady-state concurrent calls were byte-identical to sequential ones. A
+prompt rule asking for more batching was measured against a rule-off control:
+over the whole benchmark it cut agent model calls from 2.49 to 2.37 per query
+and took a five-company question from four serial searches to one
+`compare_companies` call (finding 24).
+
+**Left open.** The rule is **off**. It made one answer wrong, deterministically
+(`qa_0008`, 4 of 4 runs: ten lookups fanned out over Apple's product
+categories, taken for its reportable segments), and nothing judge-free reads an
+answer to a question with no figure; reading the changed answers found it. The
+next step is a rule that does not fan out over entities the question did not
+name, or a check that reads non-figure answers. The wording fix above already
+does most of the batching, and a latency gain is not claimed: the day moved the
+p50 by about as much as the whole difference.
+
+---
+
+## Done: conversation memory
+
+**Was.** The API was stateless, so a follow-up such as "and Microsoft?" had no
+company, year or metric to resolve.
+
+**Now.** An optional `thread_id` on `/query` and `/query/stream` gives the model
+the text of the thread's earlier served turns ([agent/memory.py](agent/memory.py)),
+in front of the question, with an instruction to reuse no figure and re-retrieve
+every one, so the verification contract still checks every figure against this
+turn. The web UI mints one id per page load, has a "New chat" control and says
+that follow-ups are remembered for the session. On eight small conversations,
+11 of 11 follow-up turns were answered with memory and 3 of 11 without (the 3
+were lucky defaults); N is 11 (finding 25).
+
+**Left open.** The memory is in process: a restart or a second replica forgets
+it, and nothing persists across sessions or users, a decision with its own
+privacy questions that was not started. The probe is eight conversations written
+by the author who built the memory.
+
+---
+
 ## 1. Table-aware chunking, then re-label
 
 **Now.** 26 of 71 items depend on a table and they are the stratum nothing

@@ -292,6 +292,19 @@ that says what could not be verified, never the draft.
 Optional `ticker` field appends the company to the question (`… (company: AAPL)`); with
 `RETRIEVAL_TICKER_FILTER=inferred` the retriever then restricts every search to it.
 
+Optional `thread_id` (`^[A-Za-z0-9_-]{8,64}$`; anything else is a 422) makes a follow-up
+such as "and Microsoft?" answerable: the server keeps the text of up to six served
+question and answer turns per thread in memory and, when a request carries the id,
+gives the model those turns, labelled as reference only, in front of the new question
+(`agent/memory.py`; `THREAD_MEMORY`, `THREAD_MEMORY_MAX_TURNS`, `THREAD_MEMORY_TTL_SECONDS`
+and `THREAD_MEMORY_MAX_THREADS` in `.env.example`). `meta` then also carries
+`thread_id` and `thread_turns` (how many earlier turns the model was shown). Only an
+answer that passed verification is remembered, every figure is still re-retrieved and
+checked this turn, and the memory is in process: it clears when the server restarts.
+A request without a `thread_id` is exactly what it was before. On the eight-conversation
+probe in [eval/EVALUATION.md](eval/EVALUATION.md) (finding 25) 11 of 11 follow-up turns
+were answered with it and 3 of 11 without; N is 11.
+
 `meta` is the request's own meter, present on every successful answer:
 
 ```json
@@ -356,7 +369,8 @@ be inspected (the cost run below used a dedicated project).
 **Numbers: our own meter.** [agent/meter.py](agent/meter.py) is a callback
 attached to every run, in the API and in the eval harness alike. It records
 wall-clock latency, model calls, tokens in and out, cost at a dated price
-table the repo owns, each tool call with its duration, and the root run id.
+table the repo owns, each tool call with its arguments, start time, duration and
+any error, and the root run id.
 Those numbers go into every results record and every API response, so a
 figure in [eval/EVALUATION.md](eval/EVALUATION.md) can be recomputed from
 the committed file and does not move when a vendor changes its cost table.
@@ -367,6 +381,17 @@ Measured on the shipped configuration over the 71-item benchmark
 6,199 tokens in and 94 out per query; **$0.0017 per query**,
 $0.12 for the whole benchmark. A judge pass over the same answers costs about
 $1.10, which is why evaluation spend is gated on the judge-free metrics first.
+
+**Tool calls are measured too.** `python -m eval.tool_metrics <results.json>` reports,
+from the stored per-call record and a label file written before any results were
+read (`eval/benchmark_tools.json`), how many calls were valid, whether the first
+tool and the tool set were the ones the prompt's rules call for, how many calls were
+issued in a batched step and whether a lookup's arguments were right, each as a
+count over its denominator. On the shipped configuration over all 71 items: **0 of
+119 calls rejected** (the committed run had 7 of 131, a required `concept` the model
+omitted), 2.49 agent model calls per query against 2.68 (EVALUATION.md, "Tool-call
+quality"). An optional `AGENT_BATCH_RULE` asks the model to batch more; it is off
+because it made one answer wrong that no judge-free metric could see.
 
 ---
 
@@ -717,7 +742,8 @@ financial-research-agent/
 │   ├── observations.py             # Tool-output parser + canonical chunk id, shared by API and eval
 │   ├── contract.py                 # Output contract: claims + cited ids, deterministic checks, repair, refuse
 │   ├── figures.py                  # What a figure is and when two match, shared by the verifier and the eval
-│   ├── meter.py                    # Per-run latency, tokens, cost, tool timings, trace id
+│   ├── memory.py                   # Per-thread conversation memory: served turns as text, bounded, in process
+│   ├── meter.py                    # Per-run latency, tokens, cost, tool calls (arguments, start, error), trace id
 │   └── pricing.py                  # Dated price table behind every cost figure
 ├── api/
 │   └── main.py                     # FastAPI app, MCP-first + direct fallback
@@ -729,10 +755,14 @@ financial-research-agent/
 │   ├── benchmark.csv               # 71 labelled Q&A rows (full benchmark)
 │   ├── benchmark_smoke.csv         # 5 of those rows, for --dry-run and CI
 │   ├── benchmark_chunks.json       # Which index chunks hold each item's reference passage
+│   ├── benchmark_tools.json        # Which tools each item should use (blind labels; a sidecar, not in the benchmark hash)
+│   ├── multi_turn_probe.json       # Eight conversations for the memory probe (ground truth cited by fact id)
 │   ├── chunk_labels.py             # Builds benchmark_chunks.json from the index (+ overrides)
 │   ├── chunk_labels_overrides.json # The 3 hand-resolved labels, with reasons
 │   ├── run_eval.py                 # RAGAS harness (resumable, checkpointed, schema 3)
 │   ├── run_retrieval_eval.py       # Retriever-only metrics, no LLM calls
+│   ├── tool_metrics.py             # Tool-call validity, selection, batching, arguments from a results file (no LLM)
+│   ├── run_multi_turn_probe.py     # The memory probe through the real /query path, with and without memory
 │   ├── retrieval_metrics.py        # hit/recall@k, MRR, nDCG over relevance groups
 │   ├── figure_match.py             # Ground-truth figures reproduced in the answer
 │   ├── experiment.py               # Config hash, benchmark version, prior-run lookup
@@ -743,6 +773,8 @@ financial-research-agent/
 │   ├── recompute_deterministic.py  # Re-derives the judge-free metrics on any results file
 │   ├── EVALUATION.md               # Method, findings, limitations
 │   ├── results/                    # Committed per-item evidence + LEADERBOARD.md (tracked)
+│   ├── tool_metrics/               # Tool-call metrics computed from results files (tracked)
+│   ├── probes/                     # Multi-turn memory probe results (tracked)
 │   └── cache/                      # Agent-output cache (gitignored)
 ├── ingestion/
 │   ├── downloader.py               # SEC EDGAR fetcher
@@ -762,33 +794,41 @@ financial-research-agent/
 │   ├── rerank.py                   # Cross-encoder reranker
 │   ├── tickers.py                  # Which company a question names (the inferred filter)
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 222 tests; no network, key or index needed
+├── tests/                          # 356 tests; none needs a network or a key (three skip without the index or the fact table)
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_submission_audit.py    # the EDGAR envelope, 10-K isolation, the audit classifier (6)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   ├── test_query_stream.py        # SSE streaming contract (2)
 │   ├── test_query_meta.py          # the meter on /query and the meta stream event (2)
-│   ├── test_meter.py               # latency, tokens, cost, tool timings, trace id (6)
-│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (27)
-│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, the generate / cache / stop loop (12)
+│   ├── test_meter.py               # latency, tokens, cost, tool calls (arguments, overlap, threads), trace id (14)
+│   ├── test_tool_metrics.py        # the tool-call metrics, one edge case at a time, and the committed baseline (29)
+│   ├── test_tool_labels.py         # the label file covers the 71 ids and names real tools (4)
+│   ├── test_tool_schema_version.py # the tool fingerprint moves when a description or schema does (4)
+│   ├── test_batch_rule.py          # AGENT_BATCH_RULE: off leaves the prompt untouched, on appends the rule (6)
+│   ├── test_concurrent_search.py   # first-use races on every lazy singleton; real-index concurrency (8, 2 need the index)
+│   ├── test_thread_memory.py       # bounds, TTL, LRU, refusals not stored, thread safety (17)
+│   ├── test_query_threads.py       # thread_id on /query and /query/stream: payloads, 422, parity, off switch (38)
+│   ├── test_multi_turn_probe.py    # the probe file against facts.sqlite, the runner against a stub API (16)
+│   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (28)
+│   ├── test_eval_harness.py        # per-chunk contexts, cache upgrade, the generate / cache / stop loop (13)
 │   ├── test_retriever.py           # fusion, BM25, ticker inference, retrieval switches (13)
-│   ├── test_tool_wiring.py         # tool observations round-trip through the parser (4)
+│   ├── test_tool_wiring.py         # tool observations round-trip through the parser; concept stated as required (5)
 │   ├── test_ablation.py            # ablation matrix rendering (2)
 │   ├── test_facts.py               # inline XBRL parser, fact store, resolver, calculator, segment filter (13)
 │   ├── test_facts_wiring.py        # fact/calc observations, API citations, the two tools (8)
-│   ├── test_ci_gate.py             # gate thresholds and judged checks (14)
+│   ├── test_ci_gate.py             # gate thresholds and judged checks (15)
 │   ├── test_contract.py            # the checks by name, repair then refuse, API verdict, harness scoring (22)
 │   ├── test_api_edges.py           # question bound, one deadline, stream cancellation (4)
 │   └── test_mcp_contract.py        # the MCP server in-process: discovery, schemas, observation format (4)
-├── web/                            # Next.js chat client (see web/README.md)
+├── web/                            # Next.js chat client (see web/README.md); lib/thread.ts mints the thread id
 ├── docs/
 │   ├── DECISIONS.md                # Every design decision with its evidence
 │   └── adr/                        # Architecture decision records
 ├── LICENSE                         # MIT
 ├── conftest.py                     # Test setup: tracing and verification forced off
 ├── SECURITY.md
-├── ROADMAP.md                      # Seven upgrades done, three next steps, each from a finding
+├── ROADMAP.md                      # Ten upgrades done, three next steps, each from a finding
 ├── docker-compose.yml              # api-server + mcp-server
 ├── Dockerfile
 ├── requirements.txt
@@ -807,7 +847,9 @@ financial-research-agent/
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 222 backend tests plus 3 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Test coverage is real but not complete.** 356 backend tests plus 16 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Conversation memory is in process and ephemeral.** It holds the text of up to six served turns per thread in one server process, forgets a thread after 30 idle minutes and everything on a restart, and is not shared between replicas; the UI says so. It was measured on eight small conversations (11 follow-up turns), which shows the mechanism works and estimates no rate (EVALUATION.md finding 25). There is no persistent, cross-session or per-user memory.
+- **Batching is the model's choice.** LangGraph already runs the calls of one step concurrently and the model batches 19% of calls on this benchmark; the explicit `AGENT_BATCH_RULE` raised it to 29% and saved model calls, but it made one answer wrong that the judge-free metrics could not see, so it ships off (EVALUATION.md finding 24).
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).
 
 ---

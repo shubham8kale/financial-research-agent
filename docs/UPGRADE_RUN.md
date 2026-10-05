@@ -288,3 +288,45 @@ NEXT STEP: run the multi-turn probe (`python -m eval.run_multi_turn_probe --labe
 - **N is 11 follow-up turns in 8 conversations.** That is enough to show the mechanism works end to end (the history reaches the model, the contract still verifies every answer against this turn's observations, no figure was served from an earlier turn: every answer is `verified`) and not enough to estimate a rate or compare two systems. It was written by the author, who also built the memory.
 
 NEXT STEP: commit the probe results; Phase 5 documentation (EVALUATION.md "Tool-call quality", findings 23 to 25, limitations 20 onward, "Reproducing this"; README minimal edits; ROADMAP three Done entries; leaderboard regenerated; this file's "Resume-safe numbers" and "Do not quote"); then an adversarial review of the whole diff and every documented number, then Phase 6.
+
+### 2026-10-04 23:50 Phase 5: documentation written; one more correction
+
+Written: `eval/EVALUATION.md` ("Tool-call quality", findings 23 to 25, limitations 20 to 26, a summary paragraph, "Reproducing this"), `README.md` (API `thread_id`, observability, project structure, test counts, two known limitations), `ROADMAP.md` (three Done entries), `docs/DECISIONS.md` (eight entries), `.env.example` (the five new variables appended; I never read the file, but the `tail` I printed to check my append showed four lines of the existing block, which holds placeholders only), `eval/results/LEADERBOARD.md` regenerated once with `python -m eval.leaderboard` (the ten new generate-only runs appear under "Incomplete runs", like `cost-v3` and `contract-v3`).
+
+Correction to the 23:10 entry: it says "48 concurrent `search_filings` calls (12 workers, 3 rounds)". The measured counts are 48 calls with 8 workers before the fix (three rounds of 16) and 72 calls with 12 workers after it (three rounds of 24), and 16 and 24 concurrent `compare_companies` calls (two rounds of 8 and of 12). The documents use the corrected counts.
+
+## Resume-safe numbers
+
+Each number, its n, its definition and the file it comes from. `tm/` is `eval/tool_metrics/`, `res/` is `eval/results/`.
+
+| number | n | definition | source |
+|---|---|---|---|
+| 7 of 131 tool calls rejected (6 items); 8 items with more calls than model steps | 71 items | calls with `error` true over all calls; steps = agent model calls - 1 | `tm/contract-v3-76b8f532c332.json`, `res/cost-v3-2d69cde009fc.json` |
+| **0 of 119 tool calls rejected** (lookups 0 of 51) | 71 items | the shipped configuration (fix on, rule off) | `tm/upgrade-control-7c50eed7da71.json` |
+| 5 of 20 lookups rejected unchanged, 0 of 15 after the wording | 12 items chosen for failing | `a-before` against `a-wording`; Fisher p = 0.057; a subset, selected on failures | `res/a-before-dfa6f50193ab.json`, `res/a-wording-5512347a3b12.json` |
+| 3 of 5 rejected calls were single calls, 2 inside one batched step | 5 calls | start-offset windows, unchanged code | `tm/a-before-dfa6f50193ab.json` |
+| agent model calls per query 2.68 to 2.49 (rule on: 2.37) | 71 items | agent model calls = `llm_calls` minus the structuring attempts | `tm/upgrade-control-7c50eed7da71.json`, `tm/upgrade-v1-0c01c6017b31.json` |
+| 23 of 119 calls issued in a batched step (19.3%), 10 of 71 items; rule on 35 of 121 (28.9%), 12 items | 71 items | windows overlap, ends padded 50 ms | same files |
+| shipped run: 71 verified, 0 refused, 0 terminal failures, `figure_primary` 46 of 46 (45 of 45 on the original 45) | 71 items | the harness's own definitions; 46 because `qa_0066` was corrected on 09-28 | `res/upgrade-control-7c50eed7da71.json` |
+| `qa_0008` wrong 4 of 4 with the rule on, correct 6 of 6 with it off | 1 item, 10 runs | the answer names the wrong segment (Wearables) against Greater China; read by hand | `res/upgrade-v1-0c01c6017b31.json`, `res/q8-rule-on-{1,2,3}-88ad3e4f5d61.json` and the six rule-off runs |
+| agent model calls 3.06 to 2.53 with rule v2; 47 to 39 calls; `qa_0062` four serial searches to one `compare_companies` call | 17 items (`ITEMS_B`, where the rule was tuned) | rule off against rule v2 | `tm/b-rule-v2-vs-b-control-subset.json`, `res/b-control-e8f826600800.json`, `res/b-rule-v2-2b81f7712548.json` |
+| 6 of 8 racing threads failed on the first use of a cold process; 12 of 12 fine after the lock; a warm call 39 ns | 8 and 12 threads, real index | `Could not connect to tenant default_tenant`; results identical to sequential | journal entry 23:10; `tests/test_concurrent_search.py` |
+| **11 of 11 follow-up turns correct with memory, 3 of 11 without** | **N = 11 follow-ups in 8 conversations** | `figure_match` primary figure; the 3 are lucky defaults | `eval/probes/multiturn-memory-v1-3b4d5b73e61d.json` |
+| label audit: first-tool agreement 65, 64, 61 of 71; allowed set 61, 56, 62 | 71 items, 3 labellers | exact set equality with the author's first labels | `eval/benchmark_tools.json` (`audit`) |
+| contract-v3 latency over 70 answered items: p50 3,684 ms, p95 9,077 ms (nearest-rank); 3,690 and 8,972 (interpolated) | 70 | the two percentile conventions | `tm/contract-v3-76b8f532c332.json` |
+| same configuration, two committed runs: p50 3,684 ms and 3,230 ms (12%) | 70 and 70 | nearest-rank p50 without the terminal failure | `tm/contract-v3-76b8f532c332.json`, `tm/reindex-v3-5b1deb95bdcc.json` |
+| spend: $0.5214 meter cost, $0.6518 counted of $1.00 | 9 ledger rows | the repo meter x 1.25 | the ledger above |
+| tests: 224 to 356 Python, 3 to 16 web | | `pytest --collect-only`, `vitest run` | `pytest`, `npm test` |
+
+## Do not quote
+
+* **Any latency difference between two runs on different days.** p50 3,684 ms to 2,839 ms between `contract-v3` and the shipped run is not a result: 55 items that did the same work got 21% faster. The same configuration moves 12% between two committed runs. Latency is quoted only as "not claimed".
+* **The ITEMS_A improvement as a rate** (5 of 20 to 0 of 15): the items were chosen because they failed, so it is overstated by regression to the mean, and p = 0.057. The full-benchmark 0 of 119 is the number.
+* **ITEMS_B numbers as a general effect of the rule**: the second wording was written after looking at those 17 items; one run per configuration.
+* **`b-rule-v1` against `contract-v3` as the rule's effect**: it changes the wording fix and the rule together; the rule-off control is the comparison.
+* **The batching rule as "safe" or "unsafe"**, and the rule on the full run as an improvement: it passed every gate and made one answer wrong.
+* **The 3 of 11 isolation successes as understanding**, and 11 of 11 as a rate: they are lucky defaults and a probe of eleven follow-ups written by the author.
+* **Anything within the measured noise**: p50 differences under about 12%, cost per query ($0.002067 to $0.001987), terminal failures of 0 or 1 (the failing item moves from run to run), `first_tool_ok` 65 or 67 or 70 of 71 (a handful of `list_available_companies` calls under labels that were not revised).
+* **`tool_set_ok` or `first_tool_ok` as answer quality**: they measure conformity to the prompt's tool rules.
+* **`figure_primary` 46 of 46 against 45 of 45 as a gain**: the extra item is `qa_0066`, whose ground truth was corrected after `contract-v3` was generated.
+* **The `trace_id` in these results files**: tracing was off, so none opens in LangSmith.

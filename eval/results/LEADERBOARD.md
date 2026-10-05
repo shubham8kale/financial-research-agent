@@ -1,6 +1,6 @@
 # Leaderboard
 
-Regenerated 2026-09-29T03:03:59+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-10-05T03:34:22+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
@@ -77,7 +77,17 @@ Kept for the record. `context_recall` here scored each tool observation as one b
 
 ## Incomplete runs (no aggregates)
 
+- `a-before-dfa6f50193ab.json` — --generate-only: generation checkpointed, judge pass not run
+- `a-wording-5512347a3b12.json` — --generate-only: generation checkpointed, judge pass not run
+- `b-control-e8f826600800.json` — --generate-only: generation checkpointed, judge pass not run
+- `b-rule-v1-8a8b2d430b78.json` — --generate-only: generation checkpointed, judge pass not run
+- `b-rule-v2-2b81f7712548.json` — --generate-only: generation checkpointed, judge pass not run
 - `contract-v3-76b8f532c332.json` — --generate-only: generation checkpointed, judge pass not run
 - `cost-v3-2d69cde009fc.json` — --generate-only: generation checkpointed, judge pass not run
 - `empty-probe-gemini-3.1-flash-lite-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run
 - `empty-probe-gemini-3.6-flash-af83fa6.json` — --generate-only: generation checkpointed, judge pass not run
+- `q8-rule-on-1-88ad3e4f5d61.json` — --generate-only: generation checkpointed, judge pass not run
+- `q8-rule-on-2-88ad3e4f5d61.json` — --generate-only: generation checkpointed, judge pass not run
+- `q8-rule-on-3-88ad3e4f5d61.json` — --generate-only: generation checkpointed, judge pass not run
+- `upgrade-control-7c50eed7da71.json` — --generate-only: generation checkpointed, judge pass not run
+- `upgrade-v1-0c01c6017b31.json` — --generate-only: generation checkpointed, judge pass not run

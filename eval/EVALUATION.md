@@ -79,6 +79,19 @@ against 0.957 / 0.894 / 0.852 on the first index — inside the run-to-run
 variance finding 11 measured. The corpus fix changed what retrieval finds,
 not what the model answers.
 
+**Tool calls, batching and conversation memory (findings 23–25).** The tool
+calls themselves are now measured ([Tool-call quality](#tool-call-quality)): the
+meter records each call's arguments and start time, and a label file written
+blind scores which tools were chosen. 7 of 131 calls had been rejected for a
+missing argument; a wording change took that to **0 of 119** on the benchmark.
+A rule asking the model to batch more cut model calls (2.49 to 2.37 per query)
+and was left **off** because it made one answer wrong that no judge-free metric
+could see (found by reading the changed answers). The API gained per-thread
+memory so a follow-up like "and Microsoft?" works: **11 of 11** follow-up turns
+answered with it against 3 of 11 without, on eight small conversations (N is
+11). A race on the first concurrent use of the search index was found and fixed on
+the way.
+
 ---
 
 ## Results
@@ -746,6 +759,243 @@ of the agent's own turns. The drafts themselves did not move: 68 of 71
 byte-identical to the previous run, the noise floor measured under "Cost
 and latency". `VERIFY_MODE=off` restores the previous cost and latency, and
 is how runs from before the contract are re-scored from cache.
+
+---
+
+## Tool-call quality
+
+Findings 1–22 ask whether the answer was right. This section asks how the agent
+got there: which tools it called, whether the calls were valid, how many model
+round trips they took, and what moved when the tool descriptions, the system
+prompt and the server's threading changed. Every number is computed from the
+per-call record results files now carry and from a label file written before
+any results file's tool fields were opened; none needed a judge. All runs:
+`gemini-3.1-flash-lite`, the rebuilt 4,783-chunk index, reranked retrieval with
+the inferred ticker filter, `VERIFY_MODE=strict`, generation only, tracing off;
+costs are the repo meter's, and the ledger in
+[`docs/UPGRADE_RUN.md`](../docs/UPGRADE_RUN.md) counts them at 1.25 times that.
+The whole upgrade cost $0.65 counted ($0.52 of meter cost) of the $1.00 ceiling.
+
+### The instrument
+
+**The record.** [`agent/meter.py`](../agent/meter.py) stores, for each tool call,
+its arguments (values cut to 200 characters, the object to 500), its start
+offset `t0_ms` and, for a failed call, the first 300 characters of the error;
+appends are under a lock, because a tool node runs the calls of one model step
+on worker threads. `name`, `ms` and `error` are as they were and `public_meta`
+never carries arguments. Only `cost-v3`, `contract-v3` and `reindex-v3` carry
+any per-call record from before; none has arguments or start offsets.
+
+**The labels.** [`benchmark_tools.json`](benchmark_tools.json) holds, for each
+of the 71 items, the tools acceptable as the first call, the tools that are
+allowed at all, the tools that are required, the companies it concerns and the
+fiscal year the question names. It is a sidecar, deliberately not part of
+`benchmark_version` (which hashes the CSV and the chunk labels, so a new column
+would have orphaned every committed results file); the tool-metrics output
+records its sha256 (`0dd9b822…`). It was written from the question, ground
+truth, `question_type`, `section`, the prompt's rules and the tool docstrings
+alone, **before any results file's tool fields were opened**, and committed on
+its own. Three independent labellers (language models handed only those same
+fields) then labelled all 71 items from scratch: they matched the author's
+first-tool set on 65, 64 and 61 of 71 items and the allowed set on 61, 56 and
+62; the author widened where they named a defensible alternative and narrowed
+where all three found a fact lookup indefensible (eleven items changed). Six
+items require `compute_metric` (a growth rate, change or difference: rule 8).
+The labels were **not revised after the first results** (R2), including the
+four first-tool misses below, two of which the author finds arguable.
+
+**The metrics** ([`eval/tool_metrics.py`](tool_metrics.py), output in
+[`tool_metrics/`](tool_metrics/)), each a count over its denominator, overall
+and by `question_type`:
+
+| metric | definition |
+|---|---|
+| `call_validity` | calls that did not fail over all calls, by tool; a call fails when the framework rejected it or a tolerant tool answered it with the argument-error marker |
+| `first_tool_ok` | the first call's tool is in the item's first-tool set (earliest start when the file has `t0_ms`; otherwise the first recorded call, which is completion order, and the output says so) |
+| `tool_set_ok` | every tool used is allowed and every required tool was used; `allowed_only_ok` drops the second half |
+| `batched` | calls issued in a model step that made two or more; with `t0_ms` a step is a set of calls whose start-to-end windows overlap, each end padded by 50 ms because a 2 ms lookup can finish before its sibling's worker thread has started; older files get the per-item heuristic "tool calls greater than model calls minus 1", marked `heuristic` |
+| `redundant_calls` | the same tool with identical arguments again |
+| `arg_validity` | lookups only: ticker is one of the item's, fiscal year is the labelled one when the question names one, concept resolves to a row through the existing resolver |
+
+`first_tool_ok` and `tool_set_ok` measure conformity to the prompt's tool rules,
+not whether the answer was right; `figure_primary` does that. Latency blocks
+carry both the harness's nearest-rank percentiles (the ones quoted in this
+document) and linearly interpolated ones, with and without the terminal-failure
+item: `contract-v3` over its 70 answered items is p50 3,684 ms and p95 9,077 ms
+nearest-rank, 3,690 and 8,972 interpolated.
+
+### The baseline: what the committed runs did
+
+`cost-v3` and `contract-v3` made the same 131 calls in the same per-item
+pattern ([`tool_metrics/contract-v3-…`](tool_metrics/contract-v3-76b8f532c332.json)):
+
+| 71 items | |
+|---|---|
+| calls by tool | `search_filings` 59, `lookup_financial_fact` 58, `compute_metric` 8, `list_available_companies` 6 |
+| calls per item | 1: 46 items, 2: 8, 3: 7, 4: 6, 5: 3, 9: 1 |
+| valid calls | 124 of 131 (94.7%); lookups 51 of 58 (87.9%) |
+| the 7 failed calls | all `lookup_financial_fact`, all "concept: Field required", on 6 items (`qa_0005`, `qa_0008`, `qa_0018`, `qa_0021`, `qa_0041`, `qa_0053`) |
+| items with more calls than model steps | 8 (`qa_0007`, `0012`, `0034`, `0043`, `0053`, `0060`, `0062`, `0069`) |
+| `first_tool_ok` / `tool_set_ok` | 67 of 71 / 67 of 71 |
+
+The four items that miss are `qa_0008`, `qa_0065`, `qa_0068`, `qa_0071`, all because
+the first call was `list_available_companies`; `qa_0068` ("What were Google Cloud
+revenues?") and `qa_0071` ("What were AWS's net sales?") name no company, where
+a ticker-list call is defensible. `reindex-v3`, a third run of the same
+configuration made a day later, has 129 calls, 122 valid and `tool_set_ok` 66 of
+71, and its p50 latency is 3,230 ms against 3,684 ms (both without the terminal
+failure): **the same configuration moves 12% on p50 between two runs**, which
+is the noise every latency comparison below is read against.
+
+### Workstream A: the rejected lookups (finding 23)
+
+The model sometimes called `lookup_financial_fact` with `ticker` and
+`fiscal_year` and no `concept`. The fix tried first, and kept, is wording: the
+tool description's first sentence, its parameter text and rule 7 now say that
+`concept` is REQUIRED on every call and that one call returns one concept for
+one fiscal year, with an example call; `mcp_server/server.py` mirrors it and
+`tests/test_mcp_contract.py` pins it. Candidates (b) an explicit argument schema
+and (c) a tolerant tool were specified and not built, because (a) passed its
+gate. The 12 items below are the six whose calls were rejected plus the first
+six figure-applicable items that were not (never changed after being fixed):
+
+| 12 items | committed runs | `a-before`, today, unchanged | `a-wording` |
+|---|---|---|---|
+| lookups rejected | 7 | 5 of 20 | **0 of 15** |
+| agent model calls per query | | 3.00 | 2.58 |
+| `figure_primary` / verified | 11 of 11 / 12 | 11 of 11 / 12 | 11 of 11 / 12 |
+| cost per query | | $0.00206 | $0.00193 |
+
+Of today's 5 rejected calls, **3 were single calls and 2 were inside one
+batched step**, so the omission is not a property of batching (an earlier note
+that it was came from reading error messages and was wrong; the committed
+`cost-v3` has 5 of its 6 failing items with no more calls than model steps).
+The gate was "strictly fewer on these items and no control item changes its
+figure or its verification": met. It is a **subset result chosen on failures**:
+the committed full-run rate is 7 of 58 lookups (12%), the unchanged re-run
+reproduced 5 of 20 on the failing items, and 0 of 15 against 5 of 20 is
+Fisher exact p = 0.057 two-sided. The full benchmark re-measures it: the
+shipped configuration made **0 rejected calls of 119** (lookups 0 of 51), and
+every other run made after the wording changed (0 of 47, 0 of 39, 0 of 121) had
+none either.
+
+### Workstream B: batched calls (finding 24)
+
+**Can the calls run in parallel safely?** Nothing in a committed run had ever
+run `search_filings` in parallel. On the real index with the shipped retrieval
+configuration, concurrent `search_filings` calls (48 with 8 workers before the
+fix, 72 with 12 workers after it, three rounds each) and concurrent
+`compare_companies` calls (16 and 24, two rounds each) were byte-identical to
+the sequential results, with no exception: steady state is safe. **The first use of a
+cold process was not**: with eight threads racing, six failed with
+"Could not connect to tenant default_tenant", because the vectorstore is a lazy
+singleton and every thread built its own Chroma client; the process-wide
+retriever, its reranker and sparse index, the cross-encoder load and the fact
+store had the same unguarded pattern. The API builds the vectorstore on the first
+search, so a batched first request would have hit it. Each is now built once
+under a double-checked lock taken only while the resource is unbuilt: a warm
+call costs 39 ns and never queues, and steady-state searches are not serialised.
+After the fix, 12 racing threads built the vectorstore once and all 12 results
+were identical to sequential. Five race tests fail on the old code. A
+thread pool bought about 1.4x wall-clock over sequential searches on this
+12-logical-core machine; on the 2-vCPU Space it will buy less, and what batching
+saves reliably is model round trips.
+
+**The rule.** `AGENT_BATCH_RULE=on` appends a ninth rule to the system prompt
+(`off` is the default and leaves the prompt, and its recorded version, byte for
+byte unchanged). Measured on the 17 items it targets (`ITEMS_B`: the eight
+`compute_metric` items, the four comparative and the five temporal):
+
+| 17 items | `contract-v3` | `b-control` (fix, rule off) | `b-rule-v1` (rule v1 on) | `b-rule-v2` (rule v2 on) |
+|---|---|---|---|---|
+| tool calls | 59 | 47 | 47 | 39 |
+| model steps that made them | | 35 | 34 | 26 |
+| calls issued in a batched step | n/a | 21 of 47 (44.7%) | 23 of 47 (48.9%) | 23 of 39 (59.0%) |
+| agent model calls per query | 3.82 | 3.06 | 3.00 | **2.53** |
+| calls rejected | 5 | 0 | 0 | 0 |
+| terminal failures | 1 | 0 | 0 | 0 |
+| `figure_primary` / verified | 16 of 16 / 16 | 16 of 16 / 17 | 16 of 16 / 17 | 16 of 16 / 17 |
+| `first_tool_ok` / `tool_set_ok` | 15 / 15 of 17 | 15 / 14 of 17 | 15 / 15 of 17 | 17 / 16 of 17 |
+
+The control row is the point of the table. The first run (`b-rule-v1`, fix plus
+the rule) moved everything against `contract-v3` (59 calls to 47, 3.82 model calls
+to 3.00, `qa_0062` answering), and the same items with the rule **off** moved
+nearly as much: the Phase 2 wording, which tells the model to "make one call per
+figure and year", is itself an instruction to batch. Rule v1 changed the step
+structure of 3 of 17 items. Rule v2 was written after seeing which items still
+did not batch (`qa_0061`, `qa_0062`: three or four serial `search_filings` calls
+for a question about all five companies, with `compare_companies`, which takes a
+ticker list, never used); it changed exactly the items its wording addresses:
+`qa_0062` four serial searches to **one** `compare_companies` call listing five
+tickers (answer still correct), `qa_0061` three searches to one compare call,
+`qa_0063` three steps to one, and `qa_0068`/`qa_0071` no longer start with an
+unneeded `list_available_companies`. The wording was written after looking at
+these 17 items, so they are the set it was tuned on.
+
+**The full benchmark.** The same rule v2 over all 71 items, and the shipped
+configuration (fix on, rule off) over all 71 items, against `contract-v3`:
+
+| 71 items | `contract-v3` | **shipped: fix on, rule off** (`upgrade-control`) | fix + rule v2 on (`upgrade-v1`) |
+|---|---|---|---|
+| tool calls / rejected | 131 / 7 | **119 / 0** | 121 / 0 |
+| calls issued in a batched step | n/a | 23 of 119 (19.3%), 10 items | 35 of 121 (28.9%), 12 items |
+| agent model calls per query | 2.68 | **2.49** | 2.37 |
+| `figure_primary` | 45 of 45 | **46 of 46** (45 of 45 on the original 45) | 46 of 46 |
+| verified / refused / terminal failures | 70 / 0 / 1 | **71 / 0 / 0** | 70 / 0 / 1 |
+| `first_tool_ok` / `tool_set_ok` | 67 / 67 of 71 | 65 / 64 of 71 | 70 / 69 of 71 |
+| cost per query | $0.002067 | $0.001987 | $0.002063 |
+| answers that became wrong, by reading every changed answer | n/a | **0** of 35 changed | **1** of 30 changed |
+
+The figure n is 46 rather than 45 because `qa_0066` carries a figure since its
+correction on 2026-09-28, after `contract-v3` was generated. The one terminal
+failure of the rule-on run is `qa_0024` (a nine-search loop on a list question);
+it also hit the recursion limit in `reindex-v3` and answered in the other runs,
+as `qa_0062` did in `contract-v3` and `cost-v3` and in all three runs here:
+the failing item moves from run to run.
+
+**Every gate passed against `contract-v3`, and the rule is still off, because
+reading the answers found what the gates cannot.** For the rule-on run, all six
+conditions the plan set held: `figure_primary` not below, verified not below and
+no refusal, terminal failures not above, p50 latency better, cost per query
+equal, rejected lookups below baseline. But `qa_0008` ("Which of Apple's
+reportable segments saw a decrease in net sales in fiscal 2025?", ground truth
+Greater China) was answered correctly in all six runs without the rule and
+**wrongly in all four runs with it**: the model fans out ten parallel lookups
+over Apple's product categories (iPhone, Mac, iPad, Wearables, Services; two
+years each), treats them as the reportable segments (they are geographic) and
+answers "Wearables, Home and Accessories". The figure check does not apply to a
+ground truth with no figure, and the contract verifies figures against the
+observations, which the model did retrieve, so no judge-free metric moved. A
+hand read of the 30 answers whose text changed between `contract-v3` and the
+rule-on run found it; `qa_0014`, `qa_0035` and `qa_0047` are paraphrase-level
+changes that also differ between committed runs, and the rest are the same
+answer in other words. In the shipped configuration `qa_0008` is correct again
+and all 35 changed answers were read the same way, with nothing wrong.
+
+**Latency is not claimed.** p50 fell from 3,684 ms to 2,839 ms between
+`contract-v3` and the shipped run, but 55 items used exactly the same tools in
+both runs (43 of them a single call) and their p50 fell from 3,360 to 2,704 ms,
+a median per-item ratio of 0.79, with nothing about what they did changed; the
+median `search_filings` call fell from 859 to 714 ms (against the rule-on run:
+52 items, ratio 0.84). The items that did the same work got 21% faster, nearly
+all of the 23% by which the overall p50 fell: that is the day, not the code. Only
+counts of model calls, steps and batched calls are evidence about the change.
+Rule on and off had the same p50 in the full runs (2,831 and 2,839 ms).
+
+### What this does not show
+
+* The tool labels are author-written; the audit is by language models reading the
+  same rules, so they are blind but not independent, and two of the four
+  baseline first-tool misses are arguable. The `list_available_companies`-first
+  misses rise from 4 to 6 in the shipped run, under labels that were not widened
+  after the fact.
+* Every subset is small and was chosen for a reason: `ITEMS_A` for failing,
+  `ITEMS_B` for being where the rule acts and where its wording was tuned. One
+  run per configuration; the run-to-run variation of a configuration was
+  measured (12% on p50) but not sampled for each new one. The full runs are the
+  regression check, not a significance test.
+* Whether the model batches is its own choice, 19% to 29% of calls on this
+  benchmark; no change here makes it reliable on a question it handles serially.
 
 ---
 
@@ -1679,6 +1929,106 @@ chunk.
 
 ---
 
+### 23. The model sometimes dropped a required argument; saying so in the places it reads removed the failure on the benchmark, and it was not a batching problem
+
+7 of the 131 tool calls in the committed cost run (all `lookup_financial_fact`,
+on six items) were rejected with `concept: Field required`: the model passed a
+ticker and a fiscal year and no concept. Each is a wasted model round trip. The
+cause is not visible in the code, which declares `concept` required in every
+schema; it is the model emitting a malformed call, and it did so on single calls
+as much as inside batches (3 of today's 5 on the same items were single calls).
+The fix is words, in four places the model reads: the first sentence of the tool
+description, its parameter text, rule 7, and the MCP description, each saying
+that `concept` is REQUIRED on every call and one call returns one concept for
+one year, with an example. Measured on the 12 items chosen for the failures
+(`a-before` against `a-wording`): **5 of 20 lookups rejected today unchanged, 0
+of 15 after** (committed runs: 7), with `figure_primary` and verification
+unchanged on all twelve. On the full benchmark the shipped configuration made 0
+rejected calls of 119 and no later run had any. A tolerant tool, which accepts
+a missing concept and returns an observation naming it, was specified as the
+fallback and not built; a default `concept` was ruled out in advance, because a
+wrong default returns the wrong kind of figure silently, which is worse than a
+rejection. What it does not show: the 12 items were selected on failing, so the
+effect is overstated by regression to the mean (the unchanged re-run already
+fell from 7 to 5), and 0 of 15 against 5 of 20 is Fisher p = 0.057. The
+full-benchmark zeros are the stronger evidence: 0 of 119 where the committed
+rate was 7 of 131.
+
+---
+
+### 24. A batching rule moved what it was written to move and broke one answer that no judge-free metric can see; reading the changed answers found it, and the rule ships off
+
+LangGraph's tool node already runs the calls of one model step concurrently and
+the model already batches some questions (19% of calls over the 71 items in the
+shipped run, 45% on the 17 items that need several lookups). A rule asking for
+more was measured against a rule-off control on those 17 items (table in
+"Tool-call quality"): the first wording moved almost nothing (47 calls either way, 3.00 model
+calls against 3.06); a second wording, written after seeing which items still
+searched one company at a time, took agent model calls to 2.53 and a five-company
+question from four serial searches to one `compare_companies` call, with
+`figure_primary` and verification unchanged. On the full benchmark it made
+2.37 model calls per query against 2.49 for the shipped configuration and passed
+every gate set in advance against `contract-v3`. **Then one answer was wrong**:
+`qa_0008` (Apple's reportable segments) fans out ten lookups over product
+categories and names the wrong segment, deterministically (4 of 4 runs with the
+rule, 6 of 6 without), and the answer is verified because every figure in it is a
+real retrieved figure. The cost of finding it was reading 30 changed answers; a
+judge pass is $1.10. The decision: `AGENT_BATCH_RULE` is off by default, the rule
+text stays behind the switch, and the wording fix of finding 23, which the
+control showed already does most of the batching, is on. Two things this finding
+is not: it is not evidence that batching is unsafe (the tool calls were proven
+safe to run concurrently once the first-use race was fixed, and 0 of 119 to 0 of
+121 calls were rejected either way), and it is not a latency result ("Latency is
+not claimed" above: the day moved the p50 by about as much as the whole
+difference).
+The first-use race itself was a real defect found by the safety test the plan
+asked for before any rule: eight threads building the Chroma client at once, six
+failures, fixed with a lock taken only on the first build.
+
+---
+
+### 25. A follow-up now works through a server-side memory of the previous turns' text; on eight small conversations it answered 11 of 11 follow-ups where the stateless API answered 3 of 11, and the 3 were lucky defaults
+
+The API is stateless, so "and Microsoft?" has no company, year or metric to
+resolve. `agent/memory.py` keeps the text of up to six served turns per thread id
+the client sends; a request with a thread id hands the model one human message
+(a labelled history block, then the current question) and a request without one
+is byte for byte what it was before. The design reasons are in
+[`docs/DECISIONS.md`](../docs/DECISIONS.md): identical on the direct and MCP
+agent, small (text only), and, crucially, the output contract stays turn-scoped:
+it checks each figure against THIS turn's observations, so the history block tells
+the model to reuse no figure and re-retrieve every one it states, and a figure
+served from an earlier turn would fail verification. Only an answer that passed
+verification is remembered, never a refusal, an unverified draft or a terminal
+failure.
+
+Measured with `eval/multi_turn_probe.json`: 8 conversations of two or three
+turns over the five filings, each follow-up leaving out the company, the year, the
+metric or relying on a pronoun, every ground-truth figure read from
+`data/facts.sqlite` by fact id, run through the real `/query` path with the real
+agent and contract (30 requests, $0.051 meter cost,
+[`probes/multiturn-memory-v1-3b4d5b73e61d.json`](probes/multiturn-memory-v1-3b4d5b73e61d.json)):
+
+| | with memory | each follow-up asked alone |
+|---|---|---|
+| follow-up turns answered correctly (figure check) | **11 of 11** | 3 of 11 |
+| first turns answered correctly | 8 of 8 | (the same request) |
+| answers verified / refused | 30 of 30 / 0 | |
+
+The three that succeeded alone are guesses that matched: "And Microsoft's?" and
+"And Alphabet's?" were answered with total net sales (the model's most common
+metric) and "And what were its Services net sales?" with Apple's (the only
+company with a Services segment). The eight failures answered for the wrong
+company or year, gave every company's figure, or asked what was meant. **N is 11
+follow-up turns in 8 conversations, written by the author who built the memory:**
+it shows the mechanism works end to end and that the contract still verifies
+every answer under it, not a rate. The web UI mints one thread id per page load
+(React state only), has a "New chat" control and says follow-ups are remembered
+for the session and that memory clears when the server restarts, which is the
+truth: the store is in process and ephemeral.
+
+---
+
 ## Prior result: the n = 8 run
 
 Kept deliberately. The sequence matters: the quota constraint was real, it was
@@ -1802,6 +2152,31 @@ VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEV
 # from its cache with no agent call:
 VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
   python -m eval.run_eval --score-only --label reindex-v3 --cache-file eval/cache/agent_outputs_reindex.json
+
+# Tool-call quality ("Tool-call quality"): computed from a results file with no
+# model call and no network; output in eval/tool_metrics/. --baseline adds a
+# side-by-side block; --ids restricts to a subset.
+python -m eval.tool_metrics eval/results/upgrade-control-7c50eed7da71.json \
+  --baseline eval/results/contract-v3-76b8f532c332.json
+python -m eval.tool_metrics eval/results/b-rule-v2-2b81f7712548.json --ids <the 17 ITEMS_B ids> \
+  --baseline eval/results/b-control-e8f826600800.json --out eval/tool_metrics/b-rule-v2-vs-b-control-subset.json
+
+# The generation runs of the tool-call upgrade (about $0.15 a full run; every one
+# used its own cache file, a distinct label and LANGSMITH_TRACING=false; the
+# shipped configuration is AGENT_BATCH_RULE=off):
+VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
+  AGENT_BATCH_RULE=off python -m eval.run_eval --generate-only --label upgrade-control --cache-file eval/cache/upgrade-control.json
+#   the same with AGENT_BATCH_RULE=on, --label upgrade-v1: the batching rule over all 71 items
+#   --ids <12 or 17 ids> with --label a-before / a-wording / b-control / b-rule-v1 / b-rule-v2: the subsets
+#   (a-before, a-wording, b-rule-v1 and b-rule-v2 ran at different prompt, tool and rule wordings: check out the
+#   commit each results file records in `git_commit`; prompt_version, tool_schema_version and agent_batch_rule
+#   in its config say which)
+
+# The conversation-memory probe: eight conversations through the real /query
+# path, once with a thread per conversation and once with each follow-up alone
+# (30 requests, about $0.05; --dry-run prints the plan and the expected cost).
+python -m eval.run_multi_turn_probe --dry-run
+python -m eval.run_multi_turn_probe --label memory-v1
 ```
 
 A run whose resolved configuration already has a complete results file prints
@@ -1911,3 +2286,43 @@ Including the ones that weaken the numbers above.
     Finding 22 also shows the contract's edge: `qa_0027` served a correct
     name its retrieved chunks did not contain, verified, because the checks
     attribute figures and citations and cannot see an unsupported prose claim.
+20. **The tool labels are blind but not independent.** `eval/benchmark_tools.json`
+    was written by the author before any results file's tool fields were opened
+    and audited by three language models given the same rules; there was no human
+    annotator. Two of the four baseline first-tool misses are arguable and the
+    labels were not revised after seeing them. `first_tool_ok` and
+    `tool_set_ok` measure conformity to the prompt's tool rules, not correctness.
+21. **Every tool-call subset is small and was chosen for a reason, and each
+    configuration ran once.** `ITEMS_A` (12) was chosen on failures, so its
+    improvement is overstated by regression to the mean; `ITEMS_B` (17) is where
+    the batching rule acts and where its second wording was tuned. The run-to-run
+    variation of the shipped configuration was measured (12% on p50 between two
+    committed runs of it; 68 of 71 answers byte-identical across another pair) but
+    not re-sampled for each new configuration; the two full runs are a regression
+    check, not a significance test.
+22. **Latency across days is confounded; only structural counts are claimed.**
+    55 items that did exactly the same work in `contract-v3` and in the shipped
+    run got 21% faster, nearly the whole of the overall p50 improvement. Counts
+    of model calls, steps and batched calls are evidence about a change; a
+    latency difference between runs on different days is not.
+23. **Judge-free metrics cannot see answer correctness on a question with no
+    figure.** The regression in finding 24 passed `figure_primary`, verification
+    and every tool metric and was found by the author reading the 30 answers that
+    changed; that read is not an independent annotation, and it covered the
+    answers that changed, not all 71 in every run.
+24. **The memory is in process, ephemeral and measured on a probe of eleven
+    follow-ups.** It lives in one server process (a restart, or a second replica,
+    forgets it), holds text only, and its protection against reusing an earlier
+    turn's figure is the contract, not the history block's instruction. The probe
+    is eight conversations written by the author who built the memory; its three
+    isolation successes are lucky defaults. No persistent, cross-session or
+    per-user memory exists or was started.
+25. **Whether the model batches is its own choice.** 19% to 29% of calls were in
+    batched steps on this benchmark, and the explicit rule is off. The lock on
+    first use fixes the race that was measured; steady-state thread safety of the
+    embedding model, the cross-encoder and Chroma was verified by about 100
+    concurrent calls per tool, not proven, and the thread pool buys little wall
+    time on two vCPUs.
+26. **Tracing was off for every run of this upgrade** (the owner's LangSmith
+    setting was overridden so no run called a non-Gemini API), so the `trace_id`
+    recorded in these results files does not open as a LangSmith trace.
