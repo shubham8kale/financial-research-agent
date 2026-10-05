@@ -35,7 +35,8 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 6 | 23:01 | `run_eval --generate-only --label upgrade-v1 --cache-file eval/cache/upgrade-v1.json` with `AGENT_BATCH_RULE=on`, rule v2 (git `cc21568`), all 71 items | 71 | $0.2219 | $0.1465 | $0.1831 | $0.3961 |
 | 7 | 23:13 | `run_eval --generate-only --label upgrade-control --cache-file eval/cache/upgrade-control.json` with `AGENT_BATCH_RULE=off` (the shipped configuration: fix on, rule off; git `a143cfd`), all 71 items | 71 | $0.2219 | $0.1411 | $0.1764 | $0.5725 |
 | 8 | 23:55 | three runs of `run_eval --generate-only --label q8-rule-on-{1,2,3} --ids qa_0008 --force` with `AGENT_BATCH_RULE=on` (git `7fd642d`, `546e6bd`, `5a79ed2`) | 3 | $0.0094 | $0.0120 | $0.0150 | $0.5875 |
-| | | (no other paid call yet) | | | | | |
+| 9 | 23:27 | `python -m eval.run_multi_turn_probe --label memory-v1` (30 requests through the real `/query` path; git `342149a`) | 30 | $0.0938 | $0.0514 | $0.0643 | $0.6518 |
+| | | (no other paid call; the run is finished) | | | | | |
 
 ## Journal
 
@@ -277,3 +278,13 @@ Three more runs of `qa_0008` alone with the rule ON (`eval/results/q8-rule-on-{1
 Decision unchanged and now firmly supported: `AGENT_BATCH_RULE` ships **off**. (The hand read of the full run found it; this repeat establishes it. Judge-free metrics, verification and a $1.10 judge pass would not necessarily have: the answer's figures are all in the observations.)
 
 NEXT STEP: run the multi-turn probe (`python -m eval.run_multi_turn_probe --label memory-v1`; 30 requests, expected counted $0.0938; ledger $0.5875 + $0.0938 = $0.6813 against the $1.00 cap; the unit and API tests pass: 356). Then Phase 5 documentation.
+
+### 2026-10-04 23:32 Phase 4.3: the multi-turn probe, `memory-v1`
+
+`eval/probes/multiturn-memory-v1-3b4d5b73e61d.json` (git `342149a`, clean tree, `prompt_version sha256:e96ec6393c90`, rule off, `VERIFY_MODE=strict`, shipped retrieval configuration, tracing off): 8 conversations, 19 questions, 30 requests (19 with memory on one thread per conversation, 11 follow-ups asked alone; the first turns are the same request in both modes so the isolation run reuses them), through the real `/query` code path with the real agent and contract. Actual $0.0514, counted $0.0643, ledger total **$0.6518** (cap $1.00, aim under $0.75).
+
+- **With memory: 11 of 11 follow-up turns answered correctly** (the 8 first turns also 8 of 8; all 30 requests verified, 0 refused, 0 HTTP errors); `meta.thread_turns` read 0, 1, 2 along each conversation as it should.
+- **Without memory: 3 of 11.** And the 3 are not a counter-example, they are guesses that happened to match: "And Microsoft's?" and "And Alphabet's?" asked alone were answered with the company's total net sales (the agent defaulted to the most common metric), and "And what were its Services net sales?" was answered for Apple (the only company with a Services segment). The other 8 were wrong or empty: "What about its diluted EPS?" got Apple's, "And in 2024?" and "What about 2024?" got every company's 2024 net sales, "By what percentage did it grow?" and "How much was that in 2024?" asked what was meant, "How about Alphabet's?" gave revenue where operating income was meant, and "What was its operating income that year?" gave Apple's FY2025.
+- **N is 11 follow-up turns in 8 conversations.** That is enough to show the mechanism works end to end (the history reaches the model, the contract still verifies every answer against this turn's observations, no figure was served from an earlier turn: every answer is `verified`) and not enough to estimate a rate or compare two systems. It was written by the author, who also built the memory.
+
+NEXT STEP: commit the probe results; Phase 5 documentation (EVALUATION.md "Tool-call quality", findings 23 to 25, limitations 20 onward, "Reproducing this"; README minimal edits; ROADMAP three Done entries; leaderboard regenerated; this file's "Resume-safe numbers" and "Do not quote"); then an adversarial review of the whole diff and every documented number, then Phase 6.

@@ -1,0 +1,1313 @@
+{
+  "schema_version": 1,
+  "run_id": "multiturn-memory-v1-342149a",
+  "label": "memory-v1",
+  "timestamp": "2026-10-05T03:29:43+00:00",
+  "git_commit": "342149a",
+  "git_dirty": false,
+  "config": {
+    "result_kind": "multiturn_probe",
+    "schema_version": 1,
+    "probe_file": "multi_turn_probe.json",
+    "probe_sha256": "2af28a3d87517bd35d6d2e5ba38f711cbdcab45f35bbe0a96adc417d9b77caf1",
+    "conversation_ids": "all",
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "prompt_version": "sha256:e96ec6393c90",
+    "tool_schema_version": "sha256:88e7a8918c7f",
+    "agent_batch_rule": "off",
+    "verify_mode": "strict",
+    "contract_version": "da6f5bea0c8b",
+    "retrieval": {
+      "mode": "dense",
+      "k": 5,
+      "fetch_k": 50,
+      "rrf_k": 60,
+      "dense_weight": 1.0,
+      "sparse_weight": 1.0,
+      "rerank": true,
+      "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "ticker_filter": "inferred"
+    },
+    "memory": {
+      "max_turns": 6,
+      "history_preface_sha": "4e010de8"
+    },
+    "scoring": "eval/figure_match.py::figure_match, figure_primary",
+    "config_hash": "3b4d5b73e61d"
+  },
+  "complete": true,
+  "stop_reason": null,
+  "summary": {
+    "n_conversations": 8,
+    "n_follow_up_turns": 11,
+    "n_first_turns": 8,
+    "follow_ups_correct_with_memory": {
+      "n": 11,
+      "of": 11
+    },
+    "follow_ups_correct_in_isolation": {
+      "n": 3,
+      "of": 11
+    },
+    "first_turns_correct": {
+      "n": 8,
+      "of": 8
+    },
+    "n_requests": 30,
+    "http_errors": 0,
+    "refused": 0,
+    "verification": {
+      "verified": 30
+    },
+    "cost_usd_actual": 0.051409,
+    "cost_usd_counted": 0.064261,
+    "latency_ms_mean": 2917.0,
+    "per_conversation": [
+      {
+        "id": "mt_01",
+        "kind": "swap the company",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": true
+          },
+          {
+            "turn": 2,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": true
+          }
+        ]
+      },
+      {
+        "id": "mt_02",
+        "kind": "swap the year",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      },
+      {
+        "id": "mt_03",
+        "kind": "swap the metric",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      },
+      {
+        "id": "mt_04",
+        "kind": "pronoun and a swapped segment",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": true
+          }
+        ]
+      },
+      {
+        "id": "mt_05",
+        "kind": "ellipsis, then a derived figure over two earlier answers",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          },
+          {
+            "turn": 2,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      },
+      {
+        "id": "mt_06",
+        "kind": "swap the company",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      },
+      {
+        "id": "mt_07",
+        "kind": "swap the year, then the metric, carrying the company and the year",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          },
+          {
+            "turn": 2,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      },
+      {
+        "id": "mt_08",
+        "kind": "swap the year",
+        "turns": [
+          {
+            "turn": 0,
+            "depends_on_history": false,
+            "with_memory": true,
+            "in_isolation": null
+          },
+          {
+            "turn": 1,
+            "depends_on_history": true,
+            "with_memory": true,
+            "in_isolation": false
+          }
+        ]
+      }
+    ],
+    "note": "N is small: 11 follow-up turns in 8 conversations. This shows the memory mechanism works on these conversations; it is not an estimate of a rate."
+  },
+  "turns": [
+    {
+      "key": "memory|mt_01|0",
+      "conversation": "mt_01",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Apple's total net sales in fiscal 2025?",
+      "ground_truth": "Apple's total net sales in fiscal 2025 were $416,161 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_01",
+      "http_status": 200,
+      "answer": "Apple's total net sales for fiscal year 2025 were $416,161 million.",
+      "verification_status": "verified",
+      "wall_ms": 2036.9,
+      "meta": {
+        "latency_ms": 2022.7,
+        "llm_calls": 3,
+        "input_tokens": 4376,
+        "output_tokens": 140,
+        "cost_usd": 0.001304,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_01",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_01|1",
+      "conversation": "mt_01",
+      "turn": 1,
+      "mode": "memory",
+      "question": "And Microsoft's?",
+      "ground_truth": "Microsoft's total revenue in fiscal 2025 was $281,724 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_01",
+      "http_status": 200,
+      "answer": "Microsoft's total net sales for fiscal year 2025 were $281,724 million.",
+      "verification_status": "verified",
+      "wall_ms": 1965.1,
+      "meta": {
+        "latency_ms": 1960.3,
+        "llm_calls": 3,
+        "input_tokens": 4620,
+        "output_tokens": 145,
+        "cost_usd": 0.001373,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_01",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_01|2",
+      "conversation": "mt_01",
+      "turn": 2,
+      "mode": "memory",
+      "question": "And Alphabet's?",
+      "ground_truth": "Alphabet's total revenues in 2025 were $402,836 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_01",
+      "http_status": 200,
+      "answer": "Alphabet's total net sales for fiscal year 2025 were $402,836 million.",
+      "verification_status": "verified",
+      "wall_ms": 2347.1,
+      "meta": {
+        "latency_ms": 2342.5,
+        "llm_calls": 3,
+        "input_tokens": 4714,
+        "output_tokens": 147,
+        "cost_usd": 0.001399,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_01",
+        "thread_turns": 2,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_02|0",
+      "conversation": "mt_02",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was AWS's net sales in 2025?",
+      "ground_truth": "AWS's net sales in 2025 were $128,725 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_02",
+      "http_status": 200,
+      "answer": "AWS's net sales for fiscal year 2025 were $128,725 million.",
+      "verification_status": "verified",
+      "wall_ms": 1986.3,
+      "meta": {
+        "latency_ms": 1982.0,
+        "llm_calls": 3,
+        "input_tokens": 4629,
+        "output_tokens": 165,
+        "cost_usd": 0.001405,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_02",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_02|1",
+      "conversation": "mt_02",
+      "turn": 1,
+      "mode": "memory",
+      "question": "And in 2024?",
+      "ground_truth": "AWS's net sales in 2024 were $107,556 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_02",
+      "http_status": 200,
+      "answer": "AWS's net sales for fiscal year 2024 were $107,556 million.",
+      "verification_status": "verified",
+      "wall_ms": 2326.6,
+      "meta": {
+        "latency_ms": 2322.6,
+        "llm_calls": 3,
+        "input_tokens": 4873,
+        "output_tokens": 165,
+        "cost_usd": 0.001466,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_02",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_03|0",
+      "conversation": "mt_03",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Meta's net income for 2025?",
+      "ground_truth": "Meta's net income for 2025 was $60,458 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_03",
+      "http_status": 200,
+      "answer": "Meta's net income for 2025 was $60,458 million.",
+      "verification_status": "verified",
+      "wall_ms": 2283.5,
+      "meta": {
+        "latency_ms": 2279.2,
+        "llm_calls": 3,
+        "input_tokens": 4342,
+        "output_tokens": 134,
+        "cost_usd": 0.001287,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_03",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_03|1",
+      "conversation": "mt_03",
+      "turn": 1,
+      "mode": "memory",
+      "question": "What about its diluted EPS?",
+      "ground_truth": "Meta's diluted earnings per share for 2025 were $23.49.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_03",
+      "http_status": 200,
+      "answer": "Meta's diluted EPS for 2025 was $23.49 per share.",
+      "verification_status": "verified",
+      "wall_ms": 1895.7,
+      "meta": {
+        "latency_ms": 1891.1,
+        "llm_calls": 3,
+        "input_tokens": 4592,
+        "output_tokens": 135,
+        "cost_usd": 0.00135,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_03",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_04|0",
+      "conversation": "mt_04",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Apple's iPhone net sales in fiscal 2025?",
+      "ground_truth": "Apple's iPhone net sales in fiscal 2025 were $209,586 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_04",
+      "http_status": 200,
+      "answer": "Apple's iPhone net sales for fiscal year 2025 were $209,586 million.",
+      "verification_status": "verified",
+      "wall_ms": 2150.1,
+      "meta": {
+        "latency_ms": 2145.2,
+        "llm_calls": 3,
+        "input_tokens": 4390,
+        "output_tokens": 142,
+        "cost_usd": 0.001311,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_04",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_04|1",
+      "conversation": "mt_04",
+      "turn": 1,
+      "mode": "memory",
+      "question": "And what were its Services net sales?",
+      "ground_truth": "Apple's Services net sales in fiscal 2025 were $109,158 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_04",
+      "http_status": 200,
+      "answer": "Apple's Services net sales for fiscal year 2025 were $109,158 million.",
+      "verification_status": "verified",
+      "wall_ms": 2090.8,
+      "meta": {
+        "latency_ms": 2086.1,
+        "llm_calls": 3,
+        "input_tokens": 4628,
+        "output_tokens": 140,
+        "cost_usd": 0.001367,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_04",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_05|0",
+      "conversation": "mt_05",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Microsoft's Intelligent Cloud segment revenue in fiscal 2025?",
+      "ground_truth": "Microsoft's Intelligent Cloud segment revenue in fiscal 2025 was $106,265 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_05",
+      "http_status": 200,
+      "answer": "Microsoft's Intelligent Cloud segment revenue for fiscal year 2025 was $106,265 million.",
+      "verification_status": "verified",
+      "wall_ms": 14668.1,
+      "meta": {
+        "latency_ms": 14663.8,
+        "llm_calls": 4,
+        "input_tokens": 7901,
+        "output_tokens": 183,
+        "cost_usd": 0.00225,
+        "tools": {
+          "lookup_financial_fact": 1,
+          "search_filings": 1
+        },
+        "thread_id": "probe-memory-v1-mt_05",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_05|1",
+      "conversation": "mt_05",
+      "turn": 1,
+      "mode": "memory",
+      "question": "And in fiscal 2024?",
+      "ground_truth": "Microsoft's Intelligent Cloud segment revenue in fiscal 2024 was $87,464 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_05",
+      "http_status": 200,
+      "answer": "Microsoft's Intelligent Cloud segment revenue for fiscal year 2024 was $87,464 million.",
+      "verification_status": "verified",
+      "wall_ms": 1930.8,
+      "meta": {
+        "latency_ms": 1925.7,
+        "llm_calls": 3,
+        "input_tokens": 4708,
+        "output_tokens": 147,
+        "cost_usd": 0.001398,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_05",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_05|2",
+      "conversation": "mt_05",
+      "turn": 2,
+      "mode": "memory",
+      "question": "By what percentage did it grow?",
+      "ground_truth": "It grew 21.50% from fiscal 2024 to fiscal 2025.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_05",
+      "http_status": 200,
+      "answer": "Microsoft's Intelligent Cloud segment revenue grew by 21.50% from fiscal year 2024 to fiscal year 2025.",
+      "verification_status": "verified",
+      "wall_ms": 2294.2,
+      "meta": {
+        "latency_ms": 2288.8,
+        "llm_calls": 3,
+        "input_tokens": 4572,
+        "output_tokens": 152,
+        "cost_usd": 0.001371,
+        "tools": {
+          "compute_metric": 1
+        },
+        "thread_id": "probe-memory-v1-mt_05",
+        "thread_turns": 2,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_06|0",
+      "conversation": "mt_06",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Microsoft's operating income in fiscal 2025?",
+      "ground_truth": "Microsoft's operating income in fiscal 2025 was $128,528 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_06",
+      "http_status": 200,
+      "answer": "Microsoft's operating income for fiscal year 2025 was $128,528 million.",
+      "verification_status": "verified",
+      "wall_ms": 2374.3,
+      "meta": {
+        "latency_ms": 2369.9,
+        "llm_calls": 3,
+        "input_tokens": 4358,
+        "output_tokens": 142,
+        "cost_usd": 0.001303,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_06",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_06|1",
+      "conversation": "mt_06",
+      "turn": 1,
+      "mode": "memory",
+      "question": "How about Alphabet's?",
+      "ground_truth": "Alphabet's operating income in 2025 was $129,039 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_06",
+      "http_status": 200,
+      "answer": "Alphabet's operating income for fiscal year 2025 was $129,039 million.",
+      "verification_status": "verified",
+      "wall_ms": 2494.4,
+      "meta": {
+        "latency_ms": 2489.5,
+        "llm_calls": 3,
+        "input_tokens": 4601,
+        "output_tokens": 144,
+        "cost_usd": 0.001366,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_06",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_07|0",
+      "conversation": "mt_07",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was Alphabet's net income in 2025?",
+      "ground_truth": "Alphabet's net income in 2025 was $132,170 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_07",
+      "http_status": 200,
+      "answer": "Alphabet's net income for the 2025 fiscal year was $132,170 million.",
+      "verification_status": "verified",
+      "wall_ms": 2162.9,
+      "meta": {
+        "latency_ms": 2158.2,
+        "llm_calls": 3,
+        "input_tokens": 4362,
+        "output_tokens": 146,
+        "cost_usd": 0.001309,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_07",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_07|1",
+      "conversation": "mt_07",
+      "turn": 1,
+      "mode": "memory",
+      "question": "What about 2024?",
+      "ground_truth": "Alphabet's net income in 2024 was $100,118 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_07",
+      "http_status": 200,
+      "answer": "Alphabet's net income for the 2024 fiscal year was $100,118 million.",
+      "verification_status": "verified",
+      "wall_ms": 2222.3,
+      "meta": {
+        "latency_ms": 2217.8,
+        "llm_calls": 3,
+        "input_tokens": 4608,
+        "output_tokens": 146,
+        "cost_usd": 0.001371,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_07",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_07|2",
+      "conversation": "mt_07",
+      "turn": 2,
+      "mode": "memory",
+      "question": "What was its operating income that year?",
+      "ground_truth": "Alphabet's operating income in 2024 was $112,390 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_07",
+      "http_status": 200,
+      "answer": "Alphabet's operating income for the 2024 fiscal year was $112,390 million.",
+      "verification_status": "verified",
+      "wall_ms": 2145.8,
+      "meta": {
+        "latency_ms": 2141.3,
+        "llm_calls": 3,
+        "input_tokens": 4710,
+        "output_tokens": 146,
+        "cost_usd": 0.001396,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_07",
+        "thread_turns": 2,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_08|0",
+      "conversation": "mt_08",
+      "turn": 0,
+      "mode": "memory",
+      "question": "What was the revenue of Meta's Reality Labs segment in 2025?",
+      "ground_truth": "Meta's Reality Labs segment revenue in 2025 was $2,207 million.",
+      "depends_on_history": false,
+      "thread_id": "probe-memory-v1-mt_08",
+      "http_status": 200,
+      "answer": "The revenue for Meta's Reality Labs segment in 2025 was $2,207 million.",
+      "verification_status": "verified",
+      "wall_ms": 2078.4,
+      "meta": {
+        "latency_ms": 2074.0,
+        "llm_calls": 3,
+        "input_tokens": 4389,
+        "output_tokens": 146,
+        "cost_usd": 0.001316,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_08",
+        "thread_turns": 0,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "memory|mt_08|1",
+      "conversation": "mt_08",
+      "turn": 1,
+      "mode": "memory",
+      "question": "How much was that in 2024?",
+      "ground_truth": "Meta's Reality Labs segment revenue in 2024 was $2,146 million.",
+      "depends_on_history": true,
+      "thread_id": "probe-memory-v1-mt_08",
+      "http_status": 200,
+      "answer": "The revenue for Meta's Reality Labs segment in 2024 was $2,146 million.",
+      "verification_status": "verified",
+      "wall_ms": 2003.9,
+      "meta": {
+        "latency_ms": 1999.4,
+        "llm_calls": 3,
+        "input_tokens": 4635,
+        "output_tokens": 141,
+        "cost_usd": 0.00137,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": "probe-memory-v1-mt_08",
+        "thread_turns": 1,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "isolated|mt_01|1",
+      "conversation": "mt_01",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "And Microsoft's?",
+      "ground_truth": "Microsoft's total revenue in fiscal 2025 was $281,724 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "Microsoft's total net sales for fiscal year 2025 were $281,724 million.",
+      "verification_status": "verified",
+      "wall_ms": 1811.6,
+      "meta": {
+        "latency_ms": 1805.7,
+        "llm_calls": 3,
+        "input_tokens": 4359,
+        "output_tokens": 136,
+        "cost_usd": 0.001294,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "isolated|mt_01|2",
+      "conversation": "mt_01",
+      "turn": 2,
+      "mode": "isolated",
+      "question": "And Alphabet's?",
+      "ground_truth": "Alphabet's total revenues in 2025 were $402,836 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "Alphabet's total net sales for fiscal year 2025 were $402,836 million.",
+      "verification_status": "verified",
+      "wall_ms": 2389.3,
+      "meta": {
+        "latency_ms": 2384.7,
+        "llm_calls": 4,
+        "input_tokens": 6382,
+        "output_tokens": 150,
+        "cost_usd": 0.001821,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "isolated|mt_02|1",
+      "conversation": "mt_02",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "And in 2024?",
+      "ground_truth": "AWS's net sales in 2024 were $107,556 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "In fiscal year 2024, the total net sales for the companies were as follows:\n\n*   **Amazon:** $637,959 million\n*   **Apple:** $391,035 million\n*   **Alphabet (Google):** $350,018 million\n*   **Microsoft:** $245,122 million\n*   **Meta:** $164,501 million",
+      "verification_status": "verified",
+      "wall_ms": 3325.1,
+      "meta": {
+        "latency_ms": 3320.2,
+        "llm_calls": 4,
+        "input_tokens": 7685,
+        "output_tokens": 607,
+        "cost_usd": 0.002832,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 5
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$107,556 million"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_03|1",
+      "conversation": "mt_03",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "What about its diluted EPS?",
+      "ground_truth": "Meta's diluted earnings per share for 2025 were $23.49.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "For the 2025 fiscal year, Apple reported a diluted EPS of $7.46 per share.",
+      "verification_status": "verified",
+      "wall_ms": 2469.0,
+      "meta": {
+        "latency_ms": 2464.3,
+        "llm_calls": 4,
+        "input_tokens": 6367,
+        "output_tokens": 142,
+        "cost_usd": 0.001805,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$23.49"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_04|1",
+      "conversation": "mt_04",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "And what were its Services net sales?",
+      "ground_truth": "Apple's Services net sales in fiscal 2025 were $109,158 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "For fiscal year 2025, Apple reported Services net sales of $109,158 million.",
+      "verification_status": "verified",
+      "wall_ms": 2588.8,
+      "meta": {
+        "latency_ms": 2583.7,
+        "llm_calls": 4,
+        "input_tokens": 6395,
+        "output_tokens": 143,
+        "cost_usd": 0.001813,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": true,
+        "applicable": true,
+        "figure_primary": true,
+        "figure_exact": true,
+        "refused": false,
+        "missing": []
+      }
+    },
+    {
+      "key": "isolated|mt_05|1",
+      "conversation": "mt_05",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "And in fiscal 2024?",
+      "ground_truth": "Microsoft's Intelligent Cloud segment revenue in fiscal 2024 was $87,464 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "In fiscal year 2024, the total revenue or net sales for the companies were as follows:\n\n*   **Amazon:** $637,959 million\n*   **Apple:** $391,035 million\n*   **Alphabet (Google):** $350,018 million\n*   **Microsoft:** $245,122 million\n*   **Meta:** $164,501 million",
+      "verification_status": "verified",
+      "wall_ms": 3646.5,
+      "meta": {
+        "latency_ms": 3640.7,
+        "llm_calls": 4,
+        "input_tokens": 7685,
+        "output_tokens": 609,
+        "cost_usd": 0.002835,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 5
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$87,464 million"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_05|2",
+      "conversation": "mt_05",
+      "turn": 2,
+      "mode": "isolated",
+      "question": "By what percentage did it grow?",
+      "ground_truth": "It grew 21.50% from fiscal 2024 to fiscal 2025.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "To answer your question about growth, I need to know which company and which specific financial metric (such as revenue, net income, or a specific segment) you are interested in. Please provide those details so I can retrieve the correct figures and calculate the growth percentage for you.",
+      "verification_status": "verified",
+      "wall_ms": 2289.8,
+      "meta": {
+        "latency_ms": 2285.3,
+        "llm_calls": 3,
+        "input_tokens": 4117,
+        "output_tokens": 179,
+        "cost_usd": 0.001298,
+        "tools": {
+          "list_available_companies": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "21.50%",
+          "2024",
+          "2025"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_06|1",
+      "conversation": "mt_06",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "How about Alphabet's?",
+      "ground_truth": "Alphabet's operating income in 2025 was $129,039 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "Alphabet's total revenue for the 2025 fiscal year was $402,836 million.",
+      "verification_status": "verified",
+      "wall_ms": 2691.6,
+      "meta": {
+        "latency_ms": 2687.2,
+        "llm_calls": 4,
+        "input_tokens": 6386,
+        "output_tokens": 150,
+        "cost_usd": 0.001821,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$129,039 million"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_07|1",
+      "conversation": "mt_07",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "What about 2024?",
+      "ground_truth": "Alphabet's net income in 2024 was $100,118 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "For fiscal year 2024, the total net sales for the companies are as follows:\n\n*   **Amazon:** $637,959 million\n*   **Apple:** $391,035 million\n*   **Alphabet (Google):** $350,018 million\n*   **Microsoft:** $245,122 million\n*   **Meta:** $164,501 million",
+      "verification_status": "verified",
+      "wall_ms": 7109.5,
+      "meta": {
+        "latency_ms": 7104.3,
+        "llm_calls": 8,
+        "input_tokens": 17666,
+        "output_tokens": 607,
+        "cost_usd": 0.005327,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 5
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$100,118 million"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_07|2",
+      "conversation": "mt_07",
+      "turn": 2,
+      "mode": "isolated",
+      "question": "What was its operating income that year?",
+      "ground_truth": "Alphabet's operating income in 2024 was $112,390 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "For fiscal year 2025, Apple reported an operating income of $133,050 million.",
+      "verification_status": "verified",
+      "wall_ms": 2683.1,
+      "meta": {
+        "latency_ms": 2677.9,
+        "llm_calls": 4,
+        "input_tokens": 6366,
+        "output_tokens": 143,
+        "cost_usd": 0.001806,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "2024",
+          "$112,390 million"
+        ]
+      }
+    },
+    {
+      "key": "isolated|mt_08|1",
+      "conversation": "mt_08",
+      "turn": 1,
+      "mode": "isolated",
+      "question": "How much was that in 2024?",
+      "ground_truth": "Meta's Reality Labs segment revenue in 2024 was $2,146 million.",
+      "depends_on_history": true,
+      "thread_id": null,
+      "http_status": 200,
+      "answer": "It appears there is no context from a previous question to determine what \"that\" refers to. Please specify the financial figure or topic you are interested in, and I will be happy to look up the 2024 data for you.",
+      "verification_status": "verified",
+      "wall_ms": 3202.2,
+      "meta": {
+        "latency_ms": 3197.1,
+        "llm_calls": 4,
+        "input_tokens": 7029,
+        "output_tokens": 192,
+        "cost_usd": 0.002045,
+        "tools": {
+          "list_available_companies": 1,
+          "search_filings": 1
+        },
+        "thread_id": null,
+        "thread_turns": null,
+        "backend": "direct"
+      },
+      "score": {
+        "correct": false,
+        "applicable": true,
+        "figure_primary": false,
+        "figure_exact": false,
+        "refused": false,
+        "missing": [
+          "$2,146 million"
+        ]
+      }
+    }
+  ]
+}
