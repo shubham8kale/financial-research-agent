@@ -1,0 +1,1262 @@
+{
+  "tool_metrics_version": "1",
+  "source": {
+    "file": "eval/results/a-wording-5512347a3b12.json",
+    "sha256": "6acc51b2d38be719c8f883c2013a89530b076df2dfbac04651426f93084f159d",
+    "run_id": "a-wording-8e3d248",
+    "label": "a-wording",
+    "git_commit": "8e3d248",
+    "git_dirty": false,
+    "config_hash": "5512347a3b12",
+    "prompt_version": "sha256:e96ec6393c90",
+    "tool_schema_version": "sha256:88e7a8918c7f",
+    "agent_model": "gemini-3.1-flash-lite",
+    "benchmark_version": "sha256:b55a114e8c8a",
+    "n_items_selected": 12,
+    "ids": null
+  },
+  "labels": {
+    "file": "eval/benchmark_tools.json",
+    "sha256": "0dd9b822cfd3899ce638c7883351fdeb54b698ab2d5fc314abaddf094c73cfe5"
+  },
+  "method": {
+    "overlap_slack_ms": 50.0,
+    "concept_check": "ran",
+    "first_call": "earliest t0_ms when every call has one, else the first recorded call (completion order)"
+  },
+  "metrics": {
+    "overall": {
+      "n_items": 12,
+      "tool_calls": 24,
+      "calls_per_item": {
+        "1": 6,
+        "3": 6
+      },
+      "tools": {
+        "compute_metric": 5,
+        "list_available_companies": 1,
+        "lookup_financial_fact": 15,
+        "search_filings": 3
+      },
+      "call_validity": {
+        "overall": {
+          "n": 24,
+          "of": 24,
+          "rate": 1.0
+        },
+        "by_tool": {
+          "compute_metric": {
+            "n": 5,
+            "of": 5,
+            "rate": 1.0
+          },
+          "list_available_companies": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "lookup_financial_fact": {
+            "n": 15,
+            "of": 15,
+            "rate": 1.0
+          },
+          "search_filings": {
+            "n": 3,
+            "of": 3,
+            "rate": 1.0
+          }
+        },
+        "failed_by_tool": {},
+        "items_with_a_failed_call": {
+          "n": 0,
+          "of": 12,
+          "rate": 0.0
+        }
+      },
+      "first_tool_ok": {
+        "n": 11,
+        "of": 12,
+        "rate": 0.9167
+      },
+      "tool_set_ok": {
+        "n": 11,
+        "of": 12,
+        "rate": 0.9167
+      },
+      "allowed_only_ok": {
+        "n": 11,
+        "of": 12,
+        "rate": 0.9167
+      },
+      "batched": {
+        "method": "t0",
+        "steps": 19,
+        "batched_steps": 5,
+        "calls_in_batched_steps": {
+          "n": 10,
+          "of": 24,
+          "rate": 0.4167
+        },
+        "items_with_a_batched_step": {
+          "n": 5,
+          "of": 12,
+          "rate": 0.4167
+        }
+      },
+      "more_calls_than_steps": {
+        "n": 5,
+        "of": 12,
+        "rate": 0.4167,
+        "ids": [
+          "qa_0005",
+          "qa_0007",
+          "qa_0021",
+          "qa_0041",
+          "qa_0053"
+        ]
+      },
+      "redundant_calls": {
+        "items_measured": 12,
+        "redundant_calls": 0,
+        "items_with_one": 0
+      },
+      "arg_validity": {
+        "lookup_calls": 15,
+        "ticker_ok": {
+          "n": 15,
+          "of": 15,
+          "rate": 1.0
+        },
+        "concept_present": {
+          "n": 15,
+          "of": 15,
+          "rate": 1.0
+        },
+        "concept_resolved": {
+          "n": 15,
+          "of": 15,
+          "rate": 1.0
+        },
+        "concept_returns_rows": {
+          "n": 15,
+          "of": 15,
+          "rate": 1.0
+        },
+        "fiscal_year_exact": {
+          "n": 15,
+          "of": 15,
+          "rate": 1.0
+        },
+        "fiscal_year_omitted": {
+          "n": 0,
+          "of": 15,
+          "rate": 0.0
+        },
+        "fiscal_year_wrong": {
+          "n": 0,
+          "of": 15,
+          "rate": 0.0
+        }
+      },
+      "model_calls": {
+        "agent_mean": 2.58,
+        "total_mean": 3.58
+      },
+      "terminal_failures": {
+        "n": 0,
+        "recursion_limit": 0
+      },
+      "latency_excluding_terminal_failures": {
+        "n": 12,
+        "p50_ms": 3372.2,
+        "p95_ms": 4949.5,
+        "mean_ms": 4018.9,
+        "p50_ms_linear": 3199.9,
+        "p95_ms_linear": 8965.4
+      },
+      "latency_including_terminal_failures": {
+        "n": 12,
+        "p50_ms": 3372.2,
+        "p95_ms": 4949.5,
+        "mean_ms": 4018.9,
+        "p50_ms_linear": 3199.9,
+        "p95_ms_linear": 8965.4
+      },
+      "cost_usd": {
+        "mean": 0.001928,
+        "total": 0.0231
+      },
+      "figure_primary": {
+        "n": 11,
+        "of": 11,
+        "rate": 1.0
+      },
+      "verification": {
+        "verified": 12
+      }
+    },
+    "by_question_type": {
+      "numerical": {
+        "n_items": 10,
+        "tool_calls": 20,
+        "calls_per_item": {
+          "1": 5,
+          "3": 5
+        },
+        "tools": {
+          "compute_metric": 5,
+          "lookup_financial_fact": 14,
+          "search_filings": 1
+        },
+        "call_validity": {
+          "overall": {
+            "n": 20,
+            "of": 20,
+            "rate": 1.0
+          },
+          "by_tool": {
+            "compute_metric": {
+              "n": 5,
+              "of": 5,
+              "rate": 1.0
+            },
+            "lookup_financial_fact": {
+              "n": 14,
+              "of": 14,
+              "rate": 1.0
+            },
+            "search_filings": {
+              "n": 1,
+              "of": 1,
+              "rate": 1.0
+            }
+          },
+          "failed_by_tool": {},
+          "items_with_a_failed_call": {
+            "n": 0,
+            "of": 10,
+            "rate": 0.0
+          }
+        },
+        "first_tool_ok": {
+          "n": 10,
+          "of": 10,
+          "rate": 1.0
+        },
+        "tool_set_ok": {
+          "n": 10,
+          "of": 10,
+          "rate": 1.0
+        },
+        "allowed_only_ok": {
+          "n": 10,
+          "of": 10,
+          "rate": 1.0
+        },
+        "batched": {
+          "method": "t0",
+          "steps": 15,
+          "batched_steps": 5,
+          "calls_in_batched_steps": {
+            "n": 10,
+            "of": 20,
+            "rate": 0.5
+          },
+          "items_with_a_batched_step": {
+            "n": 5,
+            "of": 10,
+            "rate": 0.5
+          }
+        },
+        "more_calls_than_steps": {
+          "n": 5,
+          "of": 10,
+          "rate": 0.5,
+          "ids": [
+            "qa_0005",
+            "qa_0007",
+            "qa_0021",
+            "qa_0041",
+            "qa_0053"
+          ]
+        },
+        "redundant_calls": {
+          "items_measured": 10,
+          "redundant_calls": 0,
+          "items_with_one": 0
+        },
+        "arg_validity": {
+          "lookup_calls": 14,
+          "ticker_ok": {
+            "n": 14,
+            "of": 14,
+            "rate": 1.0
+          },
+          "concept_present": {
+            "n": 14,
+            "of": 14,
+            "rate": 1.0
+          },
+          "concept_resolved": {
+            "n": 14,
+            "of": 14,
+            "rate": 1.0
+          },
+          "concept_returns_rows": {
+            "n": 14,
+            "of": 14,
+            "rate": 1.0
+          },
+          "fiscal_year_exact": {
+            "n": 14,
+            "of": 14,
+            "rate": 1.0
+          },
+          "fiscal_year_omitted": {
+            "n": 0,
+            "of": 14,
+            "rate": 0.0
+          },
+          "fiscal_year_wrong": {
+            "n": 0,
+            "of": 14,
+            "rate": 0.0
+          }
+        },
+        "model_calls": {
+          "agent_mean": 2.5,
+          "total_mean": 3.5
+        },
+        "terminal_failures": {
+          "n": 0,
+          "recursion_limit": 0
+        },
+        "latency_excluding_terminal_failures": {
+          "n": 10,
+          "p50_ms": 2958.9,
+          "p95_ms": 3638.5,
+          "mean_ms": 2940.4,
+          "p50_ms_linear": 2993.2,
+          "p95_ms_linear": 3628.2
+        },
+        "latency_including_terminal_failures": {
+          "n": 10,
+          "p50_ms": 2958.9,
+          "p95_ms": 3638.5,
+          "mean_ms": 2940.4,
+          "p50_ms_linear": 2993.2,
+          "p95_ms_linear": 3628.2
+        },
+        "cost_usd": {
+          "mean": 0.001854,
+          "total": 0.0185
+        },
+        "figure_primary": {
+          "n": 10,
+          "of": 10,
+          "rate": 1.0
+        },
+        "verification": {
+          "verified": 10
+        }
+      },
+      "single_hop": {
+        "n_items": 2,
+        "tool_calls": 4,
+        "calls_per_item": {
+          "1": 1,
+          "3": 1
+        },
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1,
+          "search_filings": 2
+        },
+        "call_validity": {
+          "overall": {
+            "n": 4,
+            "of": 4,
+            "rate": 1.0
+          },
+          "by_tool": {
+            "list_available_companies": {
+              "n": 1,
+              "of": 1,
+              "rate": 1.0
+            },
+            "lookup_financial_fact": {
+              "n": 1,
+              "of": 1,
+              "rate": 1.0
+            },
+            "search_filings": {
+              "n": 2,
+              "of": 2,
+              "rate": 1.0
+            }
+          },
+          "failed_by_tool": {},
+          "items_with_a_failed_call": {
+            "n": 0,
+            "of": 2,
+            "rate": 0.0
+          }
+        },
+        "first_tool_ok": {
+          "n": 1,
+          "of": 2,
+          "rate": 0.5
+        },
+        "tool_set_ok": {
+          "n": 1,
+          "of": 2,
+          "rate": 0.5
+        },
+        "allowed_only_ok": {
+          "n": 1,
+          "of": 2,
+          "rate": 0.5
+        },
+        "batched": {
+          "method": "t0",
+          "steps": 4,
+          "batched_steps": 0,
+          "calls_in_batched_steps": {
+            "n": 0,
+            "of": 4,
+            "rate": 0.0
+          },
+          "items_with_a_batched_step": {
+            "n": 0,
+            "of": 2,
+            "rate": 0.0
+          }
+        },
+        "more_calls_than_steps": {
+          "n": 0,
+          "of": 2,
+          "rate": 0.0,
+          "ids": []
+        },
+        "redundant_calls": {
+          "items_measured": 2,
+          "redundant_calls": 0,
+          "items_with_one": 0
+        },
+        "arg_validity": {
+          "lookup_calls": 1,
+          "ticker_ok": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "concept_present": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "concept_resolved": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "concept_returns_rows": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "fiscal_year_exact": {
+            "n": 1,
+            "of": 1,
+            "rate": 1.0
+          },
+          "fiscal_year_omitted": {
+            "n": 0,
+            "of": 1,
+            "rate": 0.0
+          },
+          "fiscal_year_wrong": {
+            "n": 0,
+            "of": 1,
+            "rate": 0.0
+          }
+        },
+        "model_calls": {
+          "agent_mean": 3.0,
+          "total_mean": 4.0
+        },
+        "terminal_failures": {
+          "n": 0,
+          "recursion_limit": 0
+        },
+        "latency_excluding_terminal_failures": {
+          "n": 2,
+          "p50_ms": 4949.5,
+          "p95_ms": 13873.7,
+          "mean_ms": 9411.6,
+          "p50_ms_linear": 9411.6,
+          "p95_ms_linear": 13427.5
+        },
+        "latency_including_terminal_failures": {
+          "n": 2,
+          "p50_ms": 4949.5,
+          "p95_ms": 13873.7,
+          "mean_ms": 9411.6,
+          "p50_ms_linear": 9411.6,
+          "p95_ms_linear": 13427.5
+        },
+        "cost_usd": {
+          "mean": 0.002299,
+          "total": 0.0046
+        },
+        "figure_primary": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "verification": {
+          "verified": 2
+        }
+      }
+    },
+    "items": [
+      {
+        "id": "qa_0002",
+        "question_type": "single_hop",
+        "n_calls": 1,
+        "tools": {
+          "search_filings": 1
+        },
+        "by_tool": {
+          "search_filings": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "search_filings",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 13873.7,
+        "cost_usd": 0.001433,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0004",
+        "question_type": "numerical",
+        "n_calls": 1,
+        "tools": {
+          "search_filings": 1
+        },
+        "by_tool": {
+          "search_filings": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "search_filings",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 3638.5,
+        "cost_usd": 0.001635,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0005",
+        "question_type": "numerical",
+        "n_calls": 3,
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 2,
+            "failed": 0
+          },
+          "compute_metric": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 2,
+          "batched_steps": 1,
+          "calls_in_batched_steps": 2,
+          "batched": true,
+          "step_sizes": [
+            2,
+            1
+          ]
+        },
+        "steps_by_model_calls": 2,
+        "more_calls_than_steps": true,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          },
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 4,
+        "agent_llm_calls": 3,
+        "latency_ms": 2958.9,
+        "cost_usd": 0.002245,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0006",
+        "question_type": "numerical",
+        "n_calls": 1,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 2046.4,
+        "cost_usd": 0.001311,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0007",
+        "question_type": "numerical",
+        "n_calls": 3,
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 2,
+            "failed": 0
+          },
+          "compute_metric": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 2,
+          "batched_steps": 1,
+          "calls_in_batched_steps": 2,
+          "batched": true,
+          "step_sizes": [
+            2,
+            1
+          ]
+        },
+        "steps_by_model_calls": 2,
+        "more_calls_than_steps": true,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          },
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 4,
+        "agent_llm_calls": 3,
+        "latency_ms": 3447.1,
+        "cost_usd": 0.002285,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0008",
+        "question_type": "single_hop",
+        "n_calls": 3,
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1,
+          "search_filings": 1
+        },
+        "by_tool": {
+          "list_available_companies": {
+            "n": 1,
+            "failed": 0
+          },
+          "lookup_financial_fact": {
+            "n": 1,
+            "failed": 0
+          },
+          "search_filings": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "list_available_companies",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 3,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1,
+            1,
+            1
+          ]
+        },
+        "steps_by_model_calls": 3,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 5,
+        "agent_llm_calls": 4,
+        "latency_ms": 4949.5,
+        "cost_usd": 0.003164,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": false,
+        "figure_primary": null,
+        "first_tool_ok": false,
+        "tool_set_ok": false,
+        "allowed_only_ok": false,
+        "disallowed": [
+          "list_available_companies"
+        ],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0009",
+        "question_type": "numerical",
+        "n_calls": 1,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 2628.7,
+        "cost_usd": 0.001295,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0010",
+        "question_type": "numerical",
+        "n_calls": 1,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 2408.5,
+        "cost_usd": 0.00129,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0018",
+        "question_type": "numerical",
+        "n_calls": 1,
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 1,
+          "steps": 1,
+          "batched_steps": 0,
+          "calls_in_batched_steps": 0,
+          "batched": false,
+          "step_sizes": [
+            1
+          ]
+        },
+        "steps_by_model_calls": 1,
+        "more_calls_than_steps": false,
+        "redundant_calls": 0,
+        "n_calls_with_args": 1,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 3,
+        "agent_llm_calls": 2,
+        "latency_ms": 2260.6,
+        "cost_usd": 0.001305,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0021",
+        "question_type": "numerical",
+        "n_calls": 3,
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 2,
+            "failed": 0
+          },
+          "compute_metric": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 2,
+          "batched_steps": 1,
+          "calls_in_batched_steps": 2,
+          "batched": true,
+          "step_sizes": [
+            2,
+            1
+          ]
+        },
+        "steps_by_model_calls": 2,
+        "more_calls_than_steps": true,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          },
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 4,
+        "agent_llm_calls": 3,
+        "latency_ms": 3027.6,
+        "cost_usd": 0.002486,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0041",
+        "question_type": "numerical",
+        "n_calls": 3,
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 2,
+            "failed": 0
+          },
+          "compute_metric": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 2,
+          "batched_steps": 1,
+          "calls_in_batched_steps": 2,
+          "batched": true,
+          "step_sizes": [
+            2,
+            1
+          ]
+        },
+        "steps_by_model_calls": 2,
+        "more_calls_than_steps": true,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          },
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 4,
+        "agent_llm_calls": 3,
+        "latency_ms": 3615.7,
+        "cost_usd": 0.002357,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      },
+      {
+        "id": "qa_0053",
+        "question_type": "numerical",
+        "n_calls": 3,
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "by_tool": {
+          "lookup_financial_fact": {
+            "n": 2,
+            "failed": 0
+          },
+          "compute_metric": {
+            "n": 1,
+            "failed": 0
+          }
+        },
+        "failed_calls": 0,
+        "marker_failures": {},
+        "first_tool": "lookup_financial_fact",
+        "first_tool_method": "t0",
+        "batching": {
+          "method": "t0",
+          "n_calls": 3,
+          "steps": 2,
+          "batched_steps": 1,
+          "calls_in_batched_steps": 2,
+          "batched": true,
+          "step_sizes": [
+            2,
+            1
+          ]
+        },
+        "steps_by_model_calls": 2,
+        "more_calls_than_steps": true,
+        "redundant_calls": 0,
+        "n_calls_with_args": 3,
+        "arg_checks": [
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          },
+          {
+            "ticker_ok": true,
+            "concept_present": true,
+            "concept_resolved": true,
+            "concept_returns_rows": true,
+            "fiscal_year": "exact"
+          }
+        ],
+        "llm_calls": 4,
+        "agent_llm_calls": 3,
+        "latency_ms": 3372.2,
+        "cost_usd": 0.002333,
+        "terminal_failure": null,
+        "recursion_limit_hit": false,
+        "verification_status": "verified",
+        "figure_applicable": true,
+        "figure_primary": true,
+        "first_tool_ok": true,
+        "tool_set_ok": true,
+        "allowed_only_ok": true,
+        "disallowed": [],
+        "missing_required": []
+      }
+    ],
+    "ids_without_a_tool_call_record": [],
+    "unlabelled_ids": []
+  }
+}

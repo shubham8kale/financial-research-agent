@@ -28,6 +28,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | # | time | command | items | expected (counted) | actual | counted (x1.25) | ledger total |
 |---|------|---------|-------|--------------------|--------|-----------------|--------------|
 | 1 | 22:25 | `run_eval --generate-only --label a-before --cache-file eval/cache/a-before.json --ids <ITEMS_A>` (shipped configuration, unchanged code at `bf271f0`) | 12 | $0.0375 | $0.0247 | $0.0309 | $0.0309 |
+| 2 | 22:50 | `run_eval --generate-only --label a-wording --cache-file eval/cache/a-wording.json --ids <ITEMS_A>` (candidate (a), git `8e3d248`) | 12 | $0.0375 | $0.0231 | $0.0289 | $0.0598 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -105,3 +106,24 @@ Ran the UNCHANGED code (git `bf271f0`, clean tree, `prompt_version sha256:99d36a
 - Side findings: (1) this run made Hugging Face Hub metadata GETs for the locally cached reranker at start-up (public, unauthenticated, no spend; later runs set `HF_HUB_OFFLINE=1` so they talk to Gemini only); (2) the harness's `--generate-only` log line and resume hint print the default cache path (`eval\cachegent_outputs.json`) although the run wrote to the `--cache-file` it was given; I confirmed `agent_outputs.json` is untouched (mtime 2026-09-27) and will fix the message in the next harness commit; (3) tracing was off as intended (no LangSmith call).
 
 NEXT STEP: write candidate (a), wording: tool description first sentence and `_SYSTEM_PROMPT` rule 7 say `concept` is REQUIRED on every call and one call is needed per concept and year, with an example call; mirror in `mcp_server/server.py`; update `tests/test_mcp_contract.py` deliberately; then run label `a-wording` on ITEMS_A (expected counted cost $0.0375; ledger $0.0309 + $0.0375 = $0.0684).
+
+### 2026-10-04 22:55 Phase 2 decision: candidate (a), the wording, passes; (b) and (c) not needed
+
+`a-wording` (`eval/results/a-wording-5512347a3b12.json`, git `8e3d248`, clean tree, `prompt_version sha256:e96ec6393c90`, `tool_schema_version sha256:88e7a8918c7f`), ITEMS_A, 12 items, actual $0.0231 (counted $0.0289), ledger total **$0.0598** of $1.00. Tool metrics: `eval/tool_metrics/a-wording-5512347a3b12.json`.
+
+| ITEMS_A, 12 items | committed `contract-v3` / `cost-v3` | `a-before` (today, unchanged) | `a-wording` |
+|---|---|---|---|
+| `lookup_financial_fact` calls rejected | 7 | **5 of 20** | **0 of 15** |
+| tool calls | 28 | 28 | 24 |
+| agent model calls per query (mean) | n/a | 3.00 | 2.58 |
+| `figure_primary` (11 applicable items) | 11 of 11 | 11 of 11 | 11 of 11 |
+| verification | 12 verified | 12 verified | 12 verified |
+| `first_tool_ok` / `tool_set_ok` | n/a | 12 of 12 / 12 of 12 | 11 of 12 / 11 of 12 |
+| cost per query | n/a | $0.00206 | $0.00193 |
+
+- **Rule 2.4 (keep only if invalid lookup calls are strictly fewer on ITEMS_A and no control item changes its `figure_primary` result or its verification status): met.** Invalid calls 0 < 5 (today) < 7 (committed). All six controls (`qa_0002, 0004, 0006, 0007, 0009, 0010`) keep `figure_primary` True and `verified`; the six error items keep both too. So (a) is kept and unconditional (it repairs a defect). Candidates (b) schema and (c) tolerant tool were not needed, so they were not built and their code does not exist; the argument-error marker helpers in `agent/observations.py` and the metric that counts them stay (the metric is still the right instrument if a tool ever returns the marker), and the docs will say (c) was not taken.
+- The one tool-selection miss in `a-wording` is `qa_0008` calling `list_available_companies` first; the committed `cost-v3` and `contract-v3` runs also did, and `a-before` did not, so this is run-to-run variation on that item, not an effect of the wording (the labels were not revised).
+- **What this does and does not show.** n is 12 items and 15 to 20 calls. ITEMS_A was chosen BECAUSE six of its items failed in the committed run, so it over-represents failures (the committed full-benchmark rate is 7 of 58 lookups, 12%, and `a-before` reproduced 5 of 20 on these items: a regression-to-the-mean effect is visible already). 0 of 15 against 5 of 20 is Fisher exact p about 0.06 (one-sided about 0.05): suggestive, not conclusive. The full 71-item confirmation run in Phase 3.4 re-measures call validity over every lookup (baseline 7 of 58 lookups rejected, 12%), and the docs will quote the ITEMS_A figures as a subset result with this caveat, not as a headline.
+- Also seen while comparing: the model omits `concept` inside a batched step (see the previous entry). With the wording in, the three-lookup trajectories of `qa_0005`, `qa_0021`, `qa_0041` and `qa_0053` still batch (`batched` 10 of 24 calls) and none were rejected.
+
+NEXT STEP: commit these results; run the gates and commit the Phase 4.2 API wiring (`api/main.py`, `tests/test_query_threads.py`, 38 tests, written while the live run was in flight); then Phase 3.1 (concurrency test for `search_filings` and `compare_companies` against the real index, no spend).

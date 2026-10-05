@@ -1,0 +1,1751 @@
+{
+  "schema_version": 3,
+  "run_id": "a-wording-8e3d248",
+  "label": "a-wording",
+  "timestamp": "2026-10-05T02:32:56+00:00",
+  "git_commit": "8e3d248",
+  "git_dirty": false,
+  "config": {
+    "result_kind": "generation",
+    "schema_version": 3,
+    "context_granularity": "chunk",
+    "context_format": "chunk+provenance",
+    "agent_model": "gemini-3.1-flash-lite",
+    "agent_provider": "google",
+    "judge_model": "gemini-3.6-flash",
+    "judge_provider": "google",
+    "judge_temperature_configured": 0.0,
+    "judge_temperature_note": "RAGAS overrides temperature to 0.3 for metrics that request n>1 generations (answer_relevancy, strictness=3); see ragas.llms.base.BaseRagasLLM.get_temperature. answer_relevancy is therefore NOT deterministic even with temperature=0 configured.",
+    "judge_bypass_n": true,
+    "judge_requests_per_second": 0.2,
+    "answer_relevancy_strictness": 3,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "k": 5,
+    "retrieval": {
+      "mode": "dense",
+      "k": 5,
+      "fetch_k": 50,
+      "rrf_k": 60,
+      "dense_weight": 1.0,
+      "sparse_weight": 1.0,
+      "rerank": true,
+      "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "ticker_filter": "inferred"
+    },
+    "prompt_version": "sha256:e96ec6393c90",
+    "tool_schema_version": "sha256:88e7a8918c7f",
+    "ragas_version": "0.4.3",
+    "ragas_seed": 42,
+    "ragas_max_workers": 2,
+    "agent_sleep_seconds": 5,
+    "agent_recursion_limit": 20,
+    "benchmark_file": "eval/benchmark.csv",
+    "benchmark_version": "sha256:b55a114e8c8a",
+    "benchmark_n": 12,
+    "benchmark_item_ids": [
+      "qa_0002",
+      "qa_0004",
+      "qa_0005",
+      "qa_0006",
+      "qa_0007",
+      "qa_0008",
+      "qa_0009",
+      "qa_0010",
+      "qa_0018",
+      "qa_0021",
+      "qa_0041",
+      "qa_0053"
+    ],
+    "metrics": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_recall"
+    ],
+    "deterministic_metrics": [
+      "figure_recall",
+      "figure_exact_rate",
+      "figure_primary_rate",
+      "agent_hit_rate",
+      "agent_recall",
+      "grounded_rate",
+      "verified_rate"
+    ],
+    "figure_match_version": "4",
+    "price_table_date": "2026-09-27",
+    "verify_mode": "strict",
+    "contract_version": "da6f5bea0c8b",
+    "config_hash": "5512347a3b12"
+  },
+  "run_status": {
+    "complete": false,
+    "n_requested": 12,
+    "n_generated": 12,
+    "n_scored": 0,
+    "stopped_early": false,
+    "stop_reason": null,
+    "scores_error": null
+  },
+  "judge_diagnostics": {},
+  "metric_coverage": {
+    "faithfulness": {
+      "n_scored": 0,
+      "n_nan": 12,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 12,
+      "coverage": 0.0
+    },
+    "answer_relevancy": {
+      "n_scored": 0,
+      "n_nan": 12,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 12,
+      "coverage": 0.0
+    },
+    "context_recall": {
+      "n_scored": 0,
+      "n_nan": 12,
+      "n_nan_terminal_failure": 0,
+      "n_nan_unexplained": 12,
+      "coverage": 0.0
+    }
+  },
+  "aggregates": null,
+  "aggregates_withheld_reason": "--generate-only: generation checkpointed, judge pass not run",
+  "results": [
+    {
+      "id": "qa_0002",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "cover",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Where is Apple's principal executive office located?",
+      "ground_truth": "One Apple Park Way, Cupertino, California 95014",
+      "answer": "Apple's principal executive office is located at One Apple Park Way, Cupertino, California 95014.",
+      "observations": [
+        "[1] ticker=AAPL  chunk_idx=1\n    . Commission File Number: 001-36743 Apple Inc. (Exact name of Registrant as specified in its charter) California 94-2404110 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) One Apple Park Way Cupertino , California 95014 (Address of principal executive offices) (Zip Code) ( 408 ) 996-1010 (Registrant’s telephone number, including area code) Securities registered pursuant to Section 12(b) of the Act: Title of each class Trading symbol(s)\n\n[2] ticker=AAPL  chunk_idx=489\n    Substantially all of the Company’s hardware products are manufactured by outsourcing partners that are located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam. Apple Inc. | 2025 Form 10-K | 46 Note 13 – Segment Information and Geographic Data The Company manages its business primarily on a geographic basis. The Company’s CEO is its CODM.\n\n[3] ticker=AAPL  chunk_idx=517\n    /s/ Ernst & Young LLP We have served as the Company’s auditor since 2009. San Jose, California October 31, 2025 Apple Inc. | 2025 Form 10-K | 50 Report of Independent Registered Public Accounting Firm To the Shareholders and the Board of Directors of Apple Inc. Opinion on Internal Control Over Financial Reporting We have audited Apple Inc.’s internal control over financial reporting as of September 27, 2025, based on criteria established in Internal Control – Integrated Framework\n\n[4] ticker=AAPL  chunk_idx=57\n    Apple Inc. | 2025 Form 10-K | 3\n\n[5] ticker=AAPL  chunk_idx=193\n    Apple Inc. | 2025 Form 10-K | 12"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, chunk 1] . Commission File Number: 001-36743 Apple Inc. (Exact name of Registrant as specified in its charter) California 94-2404110 (State or other jurisdiction of incorporation or organization) (I.R.S. Employer Identification No.) One Apple Park Way Cupertino , California 95014 (Address of principal executive offices) (Zip Code) ( 408 ) 996-1010 (Registrant’s telephone number, including area code) Securities registered pursuant to Section 12(b) of the Act: Title of each class Trading symbol(s)",
+        "[AAPL 10-K, chunk 489] Substantially all of the Company’s hardware products are manufactured by outsourcing partners that are located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam. Apple Inc. | 2025 Form 10-K | 46 Note 13 – Segment Information and Geographic Data The Company manages its business primarily on a geographic basis. The Company’s CEO is its CODM.",
+        "[AAPL 10-K, chunk 517] /s/ Ernst & Young LLP We have served as the Company’s auditor since 2009. San Jose, California October 31, 2025 Apple Inc. | 2025 Form 10-K | 50 Report of Independent Registered Public Accounting Firm To the Shareholders and the Board of Directors of Apple Inc. Opinion on Internal Control Over Financial Reporting We have audited Apple Inc.’s internal control over financial reporting as of September 27, 2025, based on criteria established in Internal Control – Integrated Framework",
+        "[AAPL 10-K, chunk 57] Apple Inc. | 2025 Form 10-K | 3",
+        "[AAPL 10-K, chunk 193] Apple Inc. | 2025 Form 10-K | 12"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [
+        "AAPL_10K_chunk_1",
+        "AAPL_10K_chunk_489",
+        "AAPL_10K_chunk_517",
+        "AAPL_10K_chunk_57",
+        "AAPL_10K_chunk_193"
+      ],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:31:26+00:00",
+      "error": null,
+      "latency_ms": 13873.7,
+      "llm_calls": 3,
+      "input_tokens": 4989,
+      "output_tokens": 124,
+      "cost_usd": 0.001433,
+      "tools_used": {
+        "search_filings": 1
+      },
+      "tool_ms_total": 11464.8,
+      "trace_id": "01a109e6-a30e-7071-96c2-8c708014b62e",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e6-a30e-7071-96c2-8c708014b62e",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 13873.7,
+        "llm_calls": 3,
+        "input_tokens": 4989,
+        "output_tokens": 124,
+        "total_tokens": 5113,
+        "cost_usd": 0.001433,
+        "tool_calls": [
+          {
+            "name": "search_filings",
+            "ms": 11464.8,
+            "error": false,
+            "args": {
+              "query": "Apple principal executive office location"
+            },
+            "t0_ms": 1049.9
+          }
+        ],
+        "tools": {
+          "search_filings": 1
+        },
+        "tool_ms_total": 11464.8
+      },
+      "draft_answer": "Apple's principal executive office is located at One Apple Park Way, Cupertino, California 95014.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_chunk_1"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "95014",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": true,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "first_rank": 1
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0004",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "human_capital",
+      "difficulty": "easy",
+      "requires_table": "False",
+      "question": "Approximately how many full-time equivalent employees did Apple have as of September 27, 2025?",
+      "ground_truth": "approximately 166,000",
+      "answer": "As of September 27, 2025, Apple had approximately 166,000 full-time equivalent employees.",
+      "observations": [
+        "[1] ticker=AAPL  chunk_idx=65\n    As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.\n\n[2] ticker=AAPL  chunk_idx=369\n    $ 0.98  $ 0.94  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943  $ 30,737  $ 24,977  Operating activities: Net income 112,010  93,736  96,995\n\n[3] ticker=AAPL  chunk_idx=361\n    $ 98,016  $ 96,652  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 30 Apple Inc. CONSOLIDATED BALANCE SHEETS (In millions, except number of shares, which are reflected in thousands, and par value) September 27, 2025 September 28, 2024 ASSETS: Current assets: Cash and cash equivalents $ 35,934  $ 29,943  Marketable securities 18,763  35,228  Accounts receivable, net 39,777  33,410  Vendor non-trade receivables 33,180  32,833  Inventories 5,718  7,286\n\n[4] ticker=AAPL  chunk_idx=402\n    Approximately 24 million restricted stock units (“RSUs”) were excluded from the computation of diluted earnings per share for 2023 because their effect would have been antidilutive. Apple Inc. | 2025 Form 10-K | 36 Note 4 – Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost\n\n[5] ticker=AAPL  chunk_idx=358\n    Diluted 15,004,697  15,408,095  15,812,547  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 29 Apple Inc. CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Net income $ 112,010  $ 93,736  $ 96,995  Other comprehensive income/(loss): Change in foreign currency translation, net of tax ( 267 ) 395"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, chunk 65] As of September 27, 2025, the Company had approximately 166,000 full-time equivalent employees.",
+        "[AAPL 10-K, chunk 369] $ 0.98  $ 0.94  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 32 Apple Inc. CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances $ 29,943  $ 30,737  $ 24,977  Operating activities: Net income 112,010  93,736  96,995",
+        "[AAPL 10-K, chunk 361] $ 98,016  $ 96,652  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 30 Apple Inc. CONSOLIDATED BALANCE SHEETS (In millions, except number of shares, which are reflected in thousands, and par value) September 27, 2025 September 28, 2024 ASSETS: Current assets: Cash and cash equivalents $ 35,934  $ 29,943  Marketable securities 18,763  35,228  Accounts receivable, net 39,777  33,410  Vendor non-trade receivables 33,180  32,833  Inventories 5,718  7,286",
+        "[AAPL 10-K, chunk 402] Approximately 24 million restricted stock units (“RSUs”) were excluded from the computation of diluted earnings per share for 2023 because their effect would have been antidilutive. Apple Inc. | 2025 Form 10-K | 36 Note 4 – Financial Instruments Cash, Cash Equivalents and Marketable Securities The following tables show the Company’s cash, cash equivalents and marketable securities by significant investment category as of September 27, 2025 and September 28, 2024 (in millions): 2025 Adjusted Cost",
+        "[AAPL 10-K, chunk 358] Diluted 15,004,697  15,408,095  15,812,547  See accompanying Notes to Consolidated Financial Statements. Apple Inc. | 2025 Form 10-K | 29 Apple Inc. CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME (In millions) Years ended September 27, 2025 September 28, 2024 September 30, 2023 Net income $ 112,010  $ 93,736  $ 96,995  Other comprehensive income/(loss): Change in foreign currency translation, net of tax ( 267 ) 395"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [
+        "AAPL_10K_chunk_65",
+        "AAPL_10K_chunk_369",
+        "AAPL_10K_chunk_361",
+        "AAPL_10K_chunk_402",
+        "AAPL_10K_chunk_358"
+      ],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:31:34+00:00",
+      "error": null,
+      "latency_ms": 3638.5,
+      "llm_calls": 3,
+      "input_tokens": 5647,
+      "output_tokens": 149,
+      "cost_usd": 0.001635,
+      "tools_used": {
+        "search_filings": 1
+      },
+      "tool_ms_total": 749.1,
+      "trace_id": "01a109e6-ecf0-75e1-94b5-1d9029c2c534",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e6-ecf0-75e1-94b5-1d9029c2c534",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3638.5,
+        "llm_calls": 3,
+        "input_tokens": 5647,
+        "output_tokens": 149,
+        "total_tokens": 5796,
+        "cost_usd": 0.001635,
+        "tool_calls": [
+          {
+            "name": "search_filings",
+            "ms": 749.1,
+            "error": false,
+            "args": {
+              "query": "number of full-time equivalent employees Apple September 27 2025"
+            },
+            "t0_ms": 783.8
+          }
+        ],
+        "tools": {
+          "search_filings": 1
+        },
+        "tool_ms_total": 749.1
+      },
+      "draft_answer": "As of September 27, 2025, Apple had approximately 166,000 full-time equivalent employees.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_chunk_65"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "166,000",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": true,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "first_rank": 1
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0005",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's total net sales for fiscal 2025, and what was the year-over-year percentage change?",
+      "ground_truth": "Total net sales were $416,161 million in fiscal 2025, a 6% increase from $391,035 million in fiscal 2024.",
+      "answer": "Apple's total net sales for fiscal 2025 were $416,161 million. This represents a year-over-year increase of 6.43 percent compared to fiscal 2024.",
+      "observations": [
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=9\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=10\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=416,161, b=391,035 = 6.43"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 9] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $416,161 million | consolidated | tagged \"416,161\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 10] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=416,161, b=391,035 = 6.43"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:31:42+00:00",
+      "error": null,
+      "latency_ms": 2958.9,
+      "llm_calls": 4,
+      "input_tokens": 7245,
+      "output_tokens": 289,
+      "cost_usd": 0.002245,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 96.8,
+      "trace_id": "01a109e7-0ed9-7b02-80ab-8cb01a44c010",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-0ed9-7b02-80ab-8cb01a44c010",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2958.9,
+        "llm_calls": 4,
+        "input_tokens": 7245,
+        "output_tokens": 289,
+        "total_tokens": 7534,
+        "cost_usd": 0.002245,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 46.4,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "fiscal_year": 2024,
+              "concept": "total net sales"
+            },
+            "t0_ms": 655.7
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 50.0,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "concept": "total net sales",
+              "ticker": "AAPL"
+            },
+            "t0_ms": 653.7
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.4,
+            "error": false,
+            "args": {
+              "b": 391035,
+              "operation": "pct_change",
+              "a": 416161
+            },
+            "t0_ms": 1427.1
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 96.8
+      },
+      "draft_answer": "Apple's total net sales for fiscal 2025 were $416,161 million. This represents a year-over-year increase of 6.43 percent compared to fiscal 2024.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 2,
+        "n_supported": 2,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_9",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 5,
+        "n_found": 4,
+        "figure_recall": 0.8,
+        "figure_exact": false,
+        "primary": "$416,161 million",
+        "figure_primary": true,
+        "missing": [
+          "$391,035 million"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0006",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Apple's iPhone net sales in fiscal 2025?",
+      "ground_truth": "$209,586 million",
+      "answer": "Apple's iPhone net sales for fiscal year 2025 were $209,586 million.",
+      "observations": [
+        "XBRL facts for AAPL: 'iPhone net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=272\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $209,586 million | ProductOrService=IPhone | tagged \"209,586\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 272] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $209,586 million | ProductOrService=IPhone | tagged \"209,586\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:31:50+00:00",
+      "error": null,
+      "latency_ms": 2046.4,
+      "llm_calls": 3,
+      "input_tokens": 4390,
+      "output_tokens": 142,
+      "cost_usd": 0.001311,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.7,
+      "trace_id": "01a109e7-2e18-7f63-925e-ea759fca7415",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-2e18-7f63-925e-ea759fca7415",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2046.4,
+        "llm_calls": 3,
+        "input_tokens": 4390,
+        "output_tokens": 142,
+        "total_tokens": 4532,
+        "cost_usd": 0.001311,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.7,
+            "error": false,
+            "args": {
+              "concept": "iPhone net sales",
+              "fiscal_year": 2025,
+              "ticker": "AAPL"
+            },
+            "t0_ms": 516.2
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.7
+      },
+      "draft_answer": "Apple's iPhone net sales for fiscal year 2025 were $209,586 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_272"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$209,586 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0007",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Apple's Services net sales in fiscal 2025, and how did they change versus fiscal 2024?",
+      "ground_truth": "Services net sales were $109,158 million in fiscal 2025, up 14% from $96,169 million in fiscal 2024.",
+      "answer": "Apple's Services net sales were $109,158 million in fiscal 2025, compared to $96,169 million in fiscal 2024. This represents an increase of 13.51%.",
+      "observations": [
+        "XBRL facts for AAPL: 'Services net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=6\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "XBRL facts for AAPL: 'Services net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=7\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=109,158, b=96,169 = 13.51"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 6] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-09-29 to 2025-09-27) | $109,158 million | ProductOrService=Service | tagged \"109,158\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, XBRL fact 7] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $96,169 million | ProductOrService=Service | tagged \"96,169\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=109,158, b=96,169 = 13.51"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:31:58+00:00",
+      "error": null,
+      "latency_ms": 3447.1,
+      "llm_calls": 4,
+      "input_tokens": 7268,
+      "output_tokens": 312,
+      "cost_usd": 0.002285,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 7.9,
+      "trace_id": "01a109e7-49c8-7e53-bb19-e1b7d4710592",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-49c8-7e53-bb19-e1b7d4710592",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3447.1,
+        "llm_calls": 4,
+        "input_tokens": 7268,
+        "output_tokens": 312,
+        "total_tokens": 7580,
+        "cost_usd": 0.002285,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.3,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "concept": "Services net sales",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 807.7
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 5.0,
+            "error": false,
+            "args": {
+              "concept": "Services net sales",
+              "fiscal_year": 2025,
+              "ticker": "AAPL"
+            },
+            "t0_ms": 805.6
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.6,
+            "error": false,
+            "args": {
+              "a": 109158,
+              "operation": "pct_change",
+              "b": 96169
+            },
+            "t0_ms": 1834.0
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 7.9
+      },
+      "draft_answer": "Apple's Services net sales were $109,158 million in fiscal 2025, compared to $96,169 million in fiscal 2024. This represents an increase of 13.51%.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_6",
+          "AAPL_10K_fact_7",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 5,
+        "n_found": 5,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$109,158 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0008",
+      "question_type": "single_hop",
+      "ticker": "AAPL",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "Which of Apple's reportable segments saw a decrease in net sales in fiscal 2025 compared with fiscal 2024?",
+      "ground_truth": "Greater China",
+      "answer": "In fiscal 2025, the reportable segment that saw a decrease in net sales compared with fiscal 2024 was Greater China. Net sales for Greater China were $64,377 million in 2025, compared to $66,952 million in 2024.",
+      "observations": [
+        "AAPL, MSFT, GOOGL, AMZN, META",
+        "XBRL facts for AAPL: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AAPL  fact_id=10\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[1] ticker=AAPL  chunk_idx=305\n    Segment Operating Performance The following table shows net sales by reportable segment for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 Americas $ 178,353 7 % $ 167,045 3 % $ 162,560 Europe 111,032 10 % 101,328 7 % 94,294 Greater China 64,377 (4) % 66,952 (8) % 72,559 Japan 28,703 15 % 25,052 3 % 24,257 Rest of Asia Pacific 33,696 10 % 30,658 4 % 29,615 Total net sales $ 416,161 6 % $ 391,035 2 % $ 383,285 Americas\n\n[2] ticker=AAPL  chunk_idx=398\n    (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, “Segment Information and Geographic Data” for 2025, 2024 and 2023, except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales.\n\n[3] ticker=AAPL  chunk_idx=494\n    The following tables show information by reportable segment for 2025, 2024 and 2023 (in millions): 2025 Americas Europe Greater China Japan Rest of Asia Pacific Corporate Total Net sales $ 178,353\n\n[4] ticker=AAPL  chunk_idx=308\n    Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586 4 % $ 201,183 — % $ 200,583 Mac 33,708 12 % 29,984 2 % 29,357 iPad 28,023 5 % 26,694 (6) % 28,300 Wearables, Home and Accessories 35,686 (4) % 37,005 (7) % 39,845 Services (1) 109,158 14 % 96,169 13 % 85,200 Total net sales $ 416,161 6 % $ 391,035 2 % $ 383,285 (1)\n\n[5] ticker=AAPL  chunk_idx=499\n    $ 36,098  $ 30,328  $ 11,888  $ 12,066  $ ( 36,587 ) $ 114,301  Apple Inc. | 2025 Form 10-K | 47 The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790  $ 142,196  $ 138,573  China (1) 64,377  66,952  72,559  Other countries 199"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 10] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-10-01 to 2024-09-28) | $391,035 million | consolidated | tagged \"391,035\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL",
+        "[AAPL 10-K, chunk 305] Segment Operating Performance The following table shows net sales by reportable segment for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 Americas $ 178,353 7 % $ 167,045 3 % $ 162,560 Europe 111,032 10 % 101,328 7 % 94,294 Greater China 64,377 (4) % 66,952 (8) % 72,559 Japan 28,703 15 % 25,052 3 % 24,257 Rest of Asia Pacific 33,696 10 % 30,658 4 % 29,615 Total net sales $ 416,161 6 % $ 391,035 2 % $ 383,285 Americas",
+        "[AAPL 10-K, chunk 398] (1) Services net sales include amortization of the deferred value of services bundled in the sales price of certain products. The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, “Segment Information and Geographic Data” for 2025, 2024 and 2023, except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales.",
+        "[AAPL 10-K, chunk 494] The following tables show information by reportable segment for 2025, 2024 and 2023 (in millions): 2025 Americas Europe Greater China Japan Rest of Asia Pacific Corporate Total Net sales $ 178,353",
+        "[AAPL 10-K, chunk 308] Products and Services Performance The following table shows net sales by category for 2025, 2024 and 2023 (dollars in millions): 2025 Change 2024 Change 2023 iPhone $ 209,586 4 % $ 201,183 — % $ 200,583 Mac 33,708 12 % 29,984 2 % 29,357 iPad 28,023 5 % 26,694 (6) % 28,300 Wearables, Home and Accessories 35,686 (4) % 37,005 (7) % 39,845 Services (1) 109,158 14 % 96,169 13 % 85,200 Total net sales $ 416,161 6 % $ 391,035 2 % $ 383,285 (1)",
+        "[AAPL 10-K, chunk 499] $ 36,098  $ 30,328  $ 11,888  $ 12,066  $ ( 36,587 ) $ 114,301  Apple Inc. | 2025 Form 10-K | 47 The following tables show net sales for 2025, 2024 and 2023 and long-lived assets as of September 27, 2025 and September 28, 2024 for countries that individually accounted for 10% or more of the respective totals, as well as aggregate amounts for the remaining countries (in millions): 2025 2024 2023 Net sales: U.S. $ 151,790  $ 142,196  $ 138,573  China (1) 64,377  66,952  72,559  Other countries 199"
+      ],
+      "n_contexts": 6,
+      "retrieved_chunk_ids": [
+        "AAPL_10K_chunk_305",
+        "AAPL_10K_chunk_398",
+        "AAPL_10K_chunk_494",
+        "AAPL_10K_chunk_308",
+        "AAPL_10K_chunk_499"
+      ],
+      "n_agent_messages": 8,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:08+00:00",
+      "error": null,
+      "latency_ms": 4949.5,
+      "llm_calls": 5,
+      "input_tokens": 10701,
+      "output_tokens": 326,
+      "cost_usd": 0.003164,
+      "tools_used": {
+        "list_available_companies": 1,
+        "lookup_financial_fact": 1,
+        "search_filings": 1
+      },
+      "tool_ms_total": 777.8,
+      "trace_id": "01a109e7-6aed-7711-8639-8aa31629eadd",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-6aed-7711-8639-8aa31629eadd",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 4949.5,
+        "llm_calls": 5,
+        "input_tokens": 10701,
+        "output_tokens": 326,
+        "total_tokens": 11027,
+        "cost_usd": 0.003164,
+        "tool_calls": [
+          {
+            "name": "list_available_companies",
+            "ms": 0.3,
+            "error": false,
+            "args": {},
+            "t0_ms": 481.5
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.2,
+            "error": false,
+            "args": {
+              "fiscal_year": 2024,
+              "concept": "net sales",
+              "ticker": "AAPL"
+            },
+            "t0_ms": 1004.6
+          },
+          {
+            "name": "search_filings",
+            "ms": 776.3,
+            "error": false,
+            "args": {
+              "query": "Apple reportable segments net sales fiscal 2025 and 2024"
+            },
+            "t0_ms": 2214.3
+          }
+        ],
+        "tools": {
+          "list_available_companies": 1,
+          "lookup_financial_fact": 1,
+          "search_filings": 1
+        },
+        "tool_ms_total": 777.8
+      },
+      "draft_answer": "In fiscal 2025, the reportable segment that saw a decrease in net sales compared with fiscal 2024 was Greater China. Net sales for Greater China were $64,377 million in 2025, compared to $66,952 million in 2024.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 2,
+        "n_supported": 2,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_chunk_305",
+          "AAPL_10K_chunk_499"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": false,
+        "n_expected": 0,
+        "n_found": 0,
+        "figure_recall": null,
+        "figure_exact": null,
+        "primary": null,
+        "figure_primary": null,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 2,
+        "n_grounded": 2,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0009",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Apple's net income for fiscal 2025?",
+      "ground_truth": "$112,010 million",
+      "answer": "Apple's net income for fiscal year 2025 was $112,010 million.",
+      "observations": [
+        "XBRL facts for AAPL: 'net income' resolved by synonym to us-gaap:NetIncomeLoss; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=45\n    us-gaap:NetIncomeLoss | FY2025 (2024-09-29 to 2025-09-27) | $112,010 million | consolidated | tagged \"112,010\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 45] us-gaap:NetIncomeLoss | FY2025 (2024-09-29 to 2025-09-27) | $112,010 million | consolidated | tagged \"112,010\" x10^6 iso4217:USD | source: AAPL 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:16+00:00",
+      "error": null,
+      "latency_ms": 2628.7,
+      "llm_calls": 3,
+      "input_tokens": 4351,
+      "output_tokens": 138,
+      "cost_usd": 0.001295,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.7,
+      "trace_id": "01a109e7-91f2-79f3-b28b-b70b121fde15",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-91f2-79f3-b28b-b70b121fde15",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2628.7,
+        "llm_calls": 3,
+        "input_tokens": 4351,
+        "output_tokens": 138,
+        "total_tokens": 4489,
+        "cost_usd": 0.001295,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.7,
+            "error": false,
+            "args": {
+              "ticker": "AAPL",
+              "fiscal_year": 2025,
+              "concept": "net income"
+            },
+            "t0_ms": 884.5
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.7
+      },
+      "draft_answer": "Apple's net income for fiscal year 2025 was $112,010 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_45"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$112,010 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0010",
+      "question_type": "numerical",
+      "ticker": "AAPL",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was Apple's diluted earnings per share for fiscal 2025?",
+      "ground_truth": "$7.46",
+      "answer": "Apple's diluted earnings per share for fiscal 2025 was $7.46.",
+      "observations": [
+        "XBRL facts for AAPL: 'diluted EPS' resolved by synonym to us-gaap:EarningsPerShareDiluted; fiscal year 2025.\n\n[1] ticker=AAPL  fact_id=51\n    us-gaap:EarningsPerShareDiluted | FY2025 (2024-09-29 to 2025-09-27) | $7.46 per share | consolidated | tagged \"7.46\" x10^0 iso4217:USD/xbrli:shares | source: AAPL 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AAPL 10-K, XBRL fact 51] us-gaap:EarningsPerShareDiluted | FY2025 (2024-09-29 to 2025-09-27) | $7.46 per share | consolidated | tagged \"7.46\" x10^0 iso4217:USD/xbrli:shares | source: AAPL 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:23+00:00",
+      "error": null,
+      "latency_ms": 2408.5,
+      "llm_calls": 3,
+      "input_tokens": 4364,
+      "output_tokens": 133,
+      "cost_usd": 0.00129,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 1.6,
+      "trace_id": "01a109e7-afec-76d2-8b10-7c33e029b1bd",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-afec-76d2-8b10-7c33e029b1bd",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2408.5,
+        "llm_calls": 3,
+        "input_tokens": 4364,
+        "output_tokens": 133,
+        "total_tokens": 4497,
+        "cost_usd": 0.00129,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 1.6,
+            "error": false,
+            "args": {
+              "concept": "diluted EPS",
+              "ticker": "AAPL",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 814.9
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 1.6
+      },
+      "draft_answer": "Apple's diluted earnings per share for fiscal 2025 was $7.46.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AAPL_10K_fact_51"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$7.46",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0018",
+      "question_type": "numerical",
+      "ticker": "AMZN",
+      "section": "financials",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What were Amazon's consolidated net sales for 2025?",
+      "ground_truth": "$716,924 million",
+      "answer": "Amazon's consolidated net sales for 2025 were $716,924 million.",
+      "observations": [
+        "XBRL facts for AMZN: 'total net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AMZN  fact_id=974\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $716,924 million | consolidated | tagged \"716,924\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL"
+      ],
+      "n_observations": 1,
+      "contexts": [
+        "[AMZN 10-K, XBRL fact 974] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $716,924 million | consolidated | tagged \"716,924\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL"
+      ],
+      "n_contexts": 1,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 4,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:30+00:00",
+      "error": null,
+      "latency_ms": 2260.6,
+      "llm_calls": 3,
+      "input_tokens": 4378,
+      "output_tokens": 140,
+      "cost_usd": 0.001305,
+      "tools_used": {
+        "lookup_financial_fact": 1
+      },
+      "tool_ms_total": 2.0,
+      "trace_id": "01a109e7-cd04-7613-9e12-222c4e1f0583",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-cd04-7613-9e12-222c4e1f0583",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 2260.6,
+        "llm_calls": 3,
+        "input_tokens": 4378,
+        "output_tokens": 140,
+        "total_tokens": 4518,
+        "cost_usd": 0.001305,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.0,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "concept": "total net sales",
+              "ticker": "AMZN"
+            },
+            "t0_ms": 593.4
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 1
+        },
+        "tool_ms_total": 2.0
+      },
+      "draft_answer": "Amazon's consolidated net sales for 2025 were $716,924 million.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 1,
+        "n_supported": 1,
+        "failures": [],
+        "cited": [
+          "AMZN_10K_fact_974"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$716,924 million",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 1,
+        "n_grounded": 1,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0021",
+      "question_type": "numerical",
+      "ticker": "AMZN",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "True",
+      "question": "What was the year-over-year percentage growth in Amazon's AWS net sales from 2024 to 2025?",
+      "ground_truth": "20%",
+      "answer": "Amazon's AWS net sales grew from $107,556 million in 2024 to $128,725 million in 2025, representing a year-over-year increase of 19.68%.",
+      "observations": [
+        "XBRL facts for AMZN: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=AMZN  fact_id=2003\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL\n\n[2] ticker=AMZN  fact_id=2027\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | ProductOrService=AmazonWebServices | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "XBRL facts for AMZN: 'net sales' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=AMZN  fact_id=2004\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL\n\n[2] ticker=AMZN  fact_id=2028\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=128,725, b=107,556 = 19.68"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[AMZN 10-K, XBRL fact 2003] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2027] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $107,556 million | ProductOrService=AmazonWebServices | tagged \"107,556\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2004] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | StatementBusinessSegments=AmazonWebServicesSegment | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[AMZN 10-K, XBRL fact 2028] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $128,725 million | ProductOrService=AmazonWebServices | tagged \"128,725\" x10^6 iso4217:USD | source: AMZN 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=128,725, b=107,556 = 19.68"
+      ],
+      "n_contexts": 5,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:39+00:00",
+      "error": null,
+      "latency_ms": 3027.6,
+      "llm_calls": 4,
+      "input_tokens": 8047,
+      "output_tokens": 316,
+      "cost_usd": 0.002486,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 6.1,
+      "trace_id": "01a109e7-e988-7ac2-b8da-02511d0bed21",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e7-e988-7ac2-b8da-02511d0bed21",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3027.6,
+        "llm_calls": 4,
+        "input_tokens": 8047,
+        "output_tokens": 316,
+        "total_tokens": 8363,
+        "cost_usd": 0.002486,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.0,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "ticker": "AMZN",
+              "segment": "AWS",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 575.6
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.7,
+            "error": false,
+            "args": {
+              "concept": "net sales",
+              "fiscal_year": 2025,
+              "segment": "AWS",
+              "ticker": "AMZN"
+            },
+            "t0_ms": 576.9
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.4,
+            "error": false,
+            "args": {
+              "operation": "pct_change",
+              "b": 107556,
+              "a": 128725
+            },
+            "t0_ms": 1244.9
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 6.1
+      },
+      "draft_answer": "Amazon's AWS net sales grew from $107,556 million in 2024 to $128,725 million in 2025, representing a year-over-year increase of 19.68%.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 1,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "AMZN_10K_fact_2003",
+          "AMZN_10K_fact_2004",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 1,
+        "n_found": 1,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "20%",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0041",
+      "question_type": "numerical",
+      "ticker": "META",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "What was Meta's total revenue for the year ended December 31, 2025, and how did it change versus 2024?",
+      "ground_truth": "Total revenue for 2025 was $200.97 billion, an increase of 22% compared to 2024.",
+      "answer": "Meta's total revenue for the year ended December 31, 2025, was $200,966 million. This represents an increase of 22.17% compared to the total revenue of $164,501 million reported for the year ended December 31, 2024.",
+      "observations": [
+        "XBRL facts for META: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=META  fact_id=3701\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $200,966 million | consolidated | tagged \"200,966\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "XBRL facts for META: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=META  fact_id=3702\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $164,501 million | consolidated | tagged \"164,501\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=200,966, b=164,501 = 22.17"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[META 10-K, XBRL fact 3701] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2025-01-01 to 2025-12-31) | $200,966 million | consolidated | tagged \"200,966\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[META 10-K, XBRL fact 3702] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2024-01-01 to 2024-12-31) | $164,501 million | consolidated | tagged \"164,501\" x10^6 iso4217:USD | source: META 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=200,966, b=164,501 = 22.17"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:47+00:00",
+      "error": null,
+      "latency_ms": 3615.7,
+      "llm_calls": 4,
+      "input_tokens": 7293,
+      "output_tokens": 356,
+      "cost_usd": 0.002357,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 7.3,
+      "trace_id": "01a109e8-090d-75b2-bd5d-682a8ba603be",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e8-090d-75b2-bd5d-682a8ba603be",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3615.7,
+        "llm_calls": 4,
+        "input_tokens": 7293,
+        "output_tokens": 356,
+        "total_tokens": 7649,
+        "cost_usd": 0.002357,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.6,
+            "error": false,
+            "args": {
+              "fiscal_year": 2025,
+              "ticker": "META",
+              "concept": "total revenue"
+            },
+            "t0_ms": 833.9
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.2,
+            "error": false,
+            "args": {
+              "ticker": "META",
+              "concept": "total revenue",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 835.2
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.5,
+            "error": false,
+            "args": {
+              "b": 164501,
+              "a": 200966,
+              "operation": "pct_change"
+            },
+            "t0_ms": 1517.0
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 7.3
+      },
+      "draft_answer": "Meta's total revenue for the year ended December 31, 2025, was $200,966 million. This represents an increase of 22.17% compared to the total revenue of $164,501 million reported for the year ended December 31, 2024.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "META_10K_fact_3701",
+          "META_10K_fact_3702",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 4,
+        "n_found": 4,
+        "figure_recall": 1.0,
+        "figure_exact": true,
+        "primary": "$200.97 billion",
+        "figure_primary": true,
+        "missing": []
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    },
+    {
+      "id": "qa_0053",
+      "question_type": "numerical",
+      "ticker": "MSFT",
+      "section": "mdna",
+      "difficulty": "medium",
+      "requires_table": "False",
+      "question": "By what percentage did Microsoft's total revenue grow from fiscal 2024 to fiscal 2025?",
+      "ground_truth": "15% (an increase of $36.6 billion)",
+      "answer": "Microsoft's total revenue grew by 14.93% from fiscal 2024 to fiscal 2025. Total revenue was $245,122 million in fiscal 2024 and $281,724 million in fiscal 2025.",
+      "observations": [
+        "XBRL facts for MSFT: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2024.\n\n[1] ticker=MSFT  fact_id=4672\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-07-01 to 2024-06-30) | $245,122 million | consolidated | tagged \"245,122\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "XBRL facts for MSFT: 'total revenue' resolved by synonym to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax; fiscal year 2025.\n\n[1] ticker=MSFT  fact_id=4671\n    us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[1] calc=pct_change\n    (a - b) / b * 100 with a=281,724, b=245,122 = 14.93"
+      ],
+      "n_observations": 3,
+      "contexts": [
+        "[MSFT 10-K, XBRL fact 4672] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2024 (2023-07-01 to 2024-06-30) | $245,122 million | consolidated | tagged \"245,122\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[MSFT 10-K, XBRL fact 4671] us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax | FY2025 (2024-07-01 to 2025-06-30) | $281,724 million | consolidated | tagged \"281,724\" x10^6 iso4217:USD | source: MSFT 10-K inline XBRL",
+        "[calculator pct_change] (a - b) / b * 100 with a=281,724, b=245,122 = 14.93"
+      ],
+      "n_contexts": 3,
+      "retrieved_chunk_ids": [],
+      "n_agent_messages": 7,
+      "terminal_failure": null,
+      "recursion_limit_hit": false,
+      "agent_model": "gemini-3.1-flash-lite",
+      "agent_provider": "google",
+      "k": 5,
+      "prompt_version": "sha256:e96ec6393c90",
+      "generated_at": "2026-10-05T02:32:56+00:00",
+      "error": null,
+      "latency_ms": 3372.2,
+      "llm_calls": 4,
+      "input_tokens": 7269,
+      "output_tokens": 344,
+      "cost_usd": 0.002333,
+      "tools_used": {
+        "lookup_financial_fact": 2,
+        "compute_metric": 1
+      },
+      "tool_ms_total": 6.5,
+      "trace_id": "01a109e8-2ae6-7302-8dda-9634b308a47d",
+      "finish_reason": "STOP",
+      "final_content_type": "list",
+      "answer_is_empty": false,
+      "meter": {
+        "trace_id": "01a109e8-2ae6-7302-8dda-9634b308a47d",
+        "model": "gemini-3.1-flash-lite",
+        "latency_ms": 3372.2,
+        "llm_calls": 4,
+        "input_tokens": 7269,
+        "output_tokens": 344,
+        "total_tokens": 7613,
+        "cost_usd": 0.002333,
+        "tool_calls": [
+          {
+            "name": "lookup_financial_fact",
+            "ms": 3.4,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "concept": "total revenue",
+              "fiscal_year": 2024
+            },
+            "t0_ms": 821.9
+          },
+          {
+            "name": "lookup_financial_fact",
+            "ms": 2.8,
+            "error": false,
+            "args": {
+              "ticker": "MSFT",
+              "concept": "total revenue",
+              "fiscal_year": 2025
+            },
+            "t0_ms": 823.6
+          },
+          {
+            "name": "compute_metric",
+            "ms": 0.3,
+            "error": false,
+            "args": {
+              "a": 281724,
+              "b": 245122,
+              "operation": "pct_change"
+            },
+            "t0_ms": 1279.8
+          }
+        ],
+        "tools": {
+          "lookup_financial_fact": 2,
+          "compute_metric": 1
+        },
+        "tool_ms_total": 6.5
+      },
+      "draft_answer": "Microsoft's total revenue grew by 14.93% from fiscal 2024 to fiscal 2025. Total revenue was $245,122 million in fiscal 2024 and $281,724 million in fiscal 2025.",
+      "verification": {
+        "status": "verified",
+        "mode": "strict",
+        "n_claims": 2,
+        "n_figures": 3,
+        "n_supported": 3,
+        "failures": [],
+        "cited": [
+          "MSFT_10K_fact_4671",
+          "MSFT_10K_fact_4672",
+          "calc_pct_change"
+        ],
+        "not_disclosed": false,
+        "attempts": 1,
+        "repaired": false,
+        "error": null,
+        "contract_version": "da6f5bea0c8b"
+      },
+      "figure": {
+        "applicable": true,
+        "n_expected": 2,
+        "n_found": 1,
+        "figure_recall": 0.5,
+        "figure_exact": false,
+        "primary": "15%",
+        "figure_primary": true,
+        "missing": [
+          "$36.6 billion"
+        ]
+      },
+      "figure_draft": null,
+      "grounding": {
+        "applicable": true,
+        "n_figures": 3,
+        "n_grounded": 3,
+        "grounded": true,
+        "ungrounded": []
+      },
+      "agent_retrieval": {
+        "labelled": true,
+        "n_groups": 1,
+        "hit": false,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "first_rank": null
+      },
+      "scores": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_recall": null
+      },
+      "judge_model": "gemini-3.6-flash",
+      "judge_provider": "google"
+    }
+  ]
+}
