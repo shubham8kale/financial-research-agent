@@ -29,6 +29,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 |---|------|---------|-------|--------------------|--------|-----------------|--------------|
 | 1 | 22:25 | `run_eval --generate-only --label a-before --cache-file eval/cache/a-before.json --ids <ITEMS_A>` (shipped configuration, unchanged code at `bf271f0`) | 12 | $0.0375 | $0.0247 | $0.0309 | $0.0309 |
 | 2 | 22:50 | `run_eval --generate-only --label a-wording --cache-file eval/cache/a-wording.json --ids <ITEMS_A>` (candidate (a), git `8e3d248`) | 12 | $0.0375 | $0.0231 | $0.0289 | $0.0598 |
+| 3 | 22:45 | `run_eval --generate-only --label b-rule-v1 --cache-file eval/cache/b-rule-v1.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on` (git `3d1f616`) | 17 | $0.0531 | $0.0425 | $0.0531 | $0.1129 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -137,3 +138,27 @@ NEXT STEP: commit these results; run the gates and commit the Phase 4.2 API wiri
 - Gates after each commit: green. Python tests: 224 at start, **334 now** (+110: labels 4, meter 8, metrics 29, schema version 4, memory 17, API threads 38 plus 2 deliberate contract/wiring assertions, concurrency 8, harness hint 1).
 
 NEXT STEP: Phase 3.2: `AGENT_BATCH_RULE=on|off` (default off for now; the default is decided by the measured gate in 3.4). The rule text is appended to the system prompt only when on, and `_prompt_version()` must hash the composed prompt; mirror in `agent/mcp_agent.py`; tests; then 3.3 on ITEMS_B (17 items, expected counted cost 17 x $0.0025 x 1.25 = $0.0531; ledger $0.0598, so $0.1129).
+
+### 2026-10-04 22:50 Phase 3.3 (first measurement): `b-rule-v1`, the Phase 2 fix plus the batching rule on, ITEMS_B
+
+ITEMS_B (17 items, never changes): `qa_0005, 0007, 0012, 0021, 0034, 0041, 0044, 0053` (the eight `compute_metric` items), `qa_0060` to `qa_0063` (comparative), `qa_0067` to `qa_0071` (temporal). `eval/results/b-rule-v1-8a8b2d430b78.json`, git `3d1f616`, clean tree, `prompt_version sha256:07b9ce75c773` (rule on), `agent_batch_rule on`, `tool_schema_version sha256:88e7a8918c7f`; actual $0.0425, counted $0.0531, ledger total **$0.1129**. Tool metrics with the comparison: `eval/tool_metrics/b-rule-v1-8a8b2d430b78-subset.json` (`--ids <ITEMS_B> --baseline contract-v3`).
+
+| ITEMS_B, 17 items | committed `contract-v3` (before the fix) | `b-rule-v1` (fix + rule on) |
+|---|---|---|
+| tool calls (calls per item) | 59 | 47 |
+| calls that failed | 5 of 59 (all `lookup_financial_fact`) | **0 of 47** |
+| calls issued in a step with 2 or more calls | not measurable (no start offsets); 7 of 17 items had more calls than tool steps | **23 of 47 (48.9%)**; 10 of 17 items had a batched step; 10 of 17 had more calls than steps |
+| agent model calls per query (mean) | 3.82 | **3.00** |
+| latency p50 / mean, harness nearest-rank, excluding the terminal failure | 4,586 ms (n=16) / 5,283 ms | 3,199 ms (n=17) / 4,172 ms |
+| latency including the terminal failure (n=17) p50 / mean | 4,586 ms / 6,014 ms | 3,199 ms / 4,172 ms |
+| recursion-limit failures | 1 (`qa_0062`) | **0** (`qa_0062` answered) |
+| `figure_primary` (16 applicable) | 16 of 16 | 16 of 16 |
+| verification | 16 verified, 1 terminal failure | 17 verified, 0 refused |
+| cost per query | $0.00302 | $0.00250 |
+| `first_tool_ok` / `tool_set_ok` | 15 of 17 / 15 of 17 | 15 of 17 / 15 of 17 |
+
+By stratum (anecdotal, n = 4, 5 and 8): comparative p50 4,003 ms (3 answered) to 5,939 ms and mean 5,658 ms to 5,237 ms; temporal p50 3,245 ms to 2,593 ms; numerical p50 5,084 ms to 3,199 ms.
+
+**Read this with care.** (1) This compares a run made today with a run made on 09-28, and it changes two things at once (candidate (a) and the rule), so by itself it attributes nothing to the rule; the same items are being re-run with the rule OFF (`b-control`) to separate them. (2) The latency numbers were taken with my own CPU work (tests, a web build) running in the same minutes, which is noise of unknown size on top of the 12% run-to-run difference already measured between two committed runs of the same configuration. (3) `qa_0062` answering is one item; it has hit the recursion limit on every earlier run of this configuration, so it is a notable observation, not a statistic.
+
+NEXT STEP: run `b-control` (the same 17 items, rule OFF, fix kept) on a quiet machine (expected counted cost $0.0531; ledger $0.1129 + $0.0531 = $0.1660); then decide whether to iterate the rule's wording (at most twice) or go to the full run.
