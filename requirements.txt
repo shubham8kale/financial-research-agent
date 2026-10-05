@@ -60,7 +60,7 @@ langchain-text-splitters==1.1.2
 #           refresh. This pin is also
 #           verified to read the prebuilt index shipped in the deployed
 #           Space, so changing it needs an index-compatibility re-check.
-chromadb==1.5.7
+chromadb==1.5.9
 
 # ── Sparse retrieval ───────────────────────────────────────────────────────────
 # rank-bm25          : pure-Python BM25 over the same chunks the dense index
