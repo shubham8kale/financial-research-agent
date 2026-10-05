@@ -42,7 +42,16 @@ langchain-text-splitters==1.1.2
 # SECURITY: chromadb has open advisories (GHSA-36p7-vc44-83pf,
 #           GHSA-f4j7-r4q5-qw2c, GHSA-xph7-9rjv-w5fr,
 #           GHSA-2wm9-hf6c-p5cr) with NO patched release upstream as of
-#           2026-09. No version bump clears them. This pin is also
+#           2026-10-05; the advisory pages list no patched version through
+#           1.5.9. No version bump clears them. All four are in Chroma's
+#           HTTP server (the /api/v2 collection endpoints and the
+#           multi-tenant and SimpleRBAC authorization providers). This
+#           project opens the index in-process (chromadb.PersistentClient
+#           and langchain Chroma with persist_directory), runs no Chroma
+#           server and configures no auth provider, so the vulnerable code
+#           is not reachable from any request; the alerts are dismissed as
+#           not used, and the pin is re-checked at every dependency
+#           refresh. This pin is also
 #           verified to read the prebuilt index shipped in the deployed
 #           Space, so changing it needs an index-compatibility re-check.
 chromadb==1.5.7
@@ -156,6 +165,13 @@ langchain-mcp-adapters==0.2.2
 #                     actually address the question?), and context_recall (did
 #                     the retriever surface the evidence the ground-truth answer
 #                     depends on?).
+# SECURITY: GHSA-95ww-475f-pr4f (CVE-2026-6587), a server-side request
+#           forgery in src/ragas/metrics/collections/multi_modal_faithfulness/
+#           util.py, has no fixed version as of 2026-10-05 (vulnerable
+#           through 0.4.3). That module is imported nowhere in this
+#           repository (a grep for multi_modal and MultiModal across *.py
+#           finds nothing), and ragas runs only in evaluation
+#           (eval/run_eval.py), never in the API.
 ragas==0.4.3
 
 # datasets          : HuggingFace's tabular dataset library.  RAGAS 0.2 accepts
