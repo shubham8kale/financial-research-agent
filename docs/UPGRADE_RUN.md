@@ -2,7 +2,107 @@
 
 Prompt: `FRA upgrade prompts/FRA_UPGRADE_PROMPT.md` (outside this repo). This file is the run's journal (appended after every step), its spend ledger, and, at the end, its REPORT.
 
-<!-- REPORT: written at the top of this file in Phase 6 -->
+## REPORT
+
+**Run:** 2026-10-04, unattended, on branch `main` (checked out at the start; no branch created, none switched; the two other local branches `review-fixes` and `upgrade-1-eval-v2` date from 09-28 and are not mine). **START_SHA `eda988efb5c5331bef5af9173a240ee7d683a3b3`.** Nothing was pushed (PUSH = false). 34 commits sit on top of START_SHA before this report's own commit: `git log --oneline eda988e..HEAD`. Final gates, all green: pytest 358 passed, flake8 clean, the three dry-runs, web lint, 16 Vitest tests, `npm run build`. The working tree is clean.
+
+### What shipped, and each switch's default
+
+| change | shipped as | default |
+|---|---|---|
+| **A. the dropped `concept`** | wording in the tool's first sentence, its parameter text, rule 7 and the MCP description; contract test pins it | on, unconditional (it repairs a defect) |
+| A. tool-call evaluation | the meter records each call's arguments, start offset and error (thread-safe); `eval/tool_metrics.py`; 71 blind labels in `eval/benchmark_tools.json` (a sidecar, not in `benchmark_version`); a `tool_schema_version` fingerprint and `agent_batch_rule` in every results file's config | always |
+| **B. a race on first use** | every lazily built singleton (vectorstore, retriever, reranker, sparse index, cross-encoder, fact store) built once under a double-checked lock; 6 of 8 racing threads had failed | on, unconditional |
+| B. batching rule | `AGENT_BATCH_RULE=on\|off` appends rule 9 to the system prompt (direct and MCP agent) | **off** |
+| **C. thread memory** | `agent/memory.py`; optional `thread_id` on `/query` and `/query/stream`; `meta.thread_id` and `meta.thread_turns` | `THREAD_MEMORY=on` (acts only on a request with a `thread_id`), `THREAD_MEMORY_MAX_TURNS=6`, `THREAD_MEMORY_TTL_SECONDS=1800`, `THREAD_MEMORY_MAX_THREADS=500` |
+| C. web | one thread id per page load in React state, a "New chat" control, the line "Follow-up questions are remembered for this session. Memory is not saved and clears when the server restarts." | on |
+| C. probe | `eval/multi_turn_probe.json` (8 conversations, 11 follow-ups, ground truth by fact id) and `eval/run_multi_turn_probe.py` | n/a |
+| harness | the `--generate-only` log line and resume hint name the cache file the run used | n/a |
+| docs | `eval/EVALUATION.md` ("Tool-call quality", findings 23 to 25, limitations 20 to 26), README, ROADMAP (three Done entries), `docs/DECISIONS.md` (eight entries), `.env.example` (five variables), leaderboard regenerated, this file | n/a |
+
+An unknown value of `AGENT_BATCH_RULE` or `THREAD_MEMORY` stops the server at startup (as `VERIFY_MODE` already does) instead of silently choosing.
+
+### What did not ship, and why
+
+* **The batching rule as the default.** Every gate the plan set held against `contract-v3`, and one answer was wrong: `qa_0008` (Apple's reportable segments) is answered wrongly **4 of 4** times with the rule on (ten parallel lookups over product categories, taken for segments) and correctly in all 6 runs without it. No judge-free metric sees it (the ground truth has no figure and every figure in the answer was retrieved); reading the 30 changed answers found it. The rule stays behind the switch, off (finding 24).
+* **Candidates (b), an argument schema, and (c), a tolerant tool.** Not needed: the wording passed its gate. The marker helpers and the metric that counts them stay in the code. A default `concept` was ruled out in advance.
+* **Any latency claim.** Work that did not change got 15% faster between two runs on the same index, as much as the whole p50 difference.
+* **A judged run** (JUDGED_RUNS_ALLOWED = 0); **persistent or cross-session memory**; **deployment of any kind**; **a push**.
+
+### Before and after, 71 items, generation only, `gemini-3.1-flash-lite`
+
+`contract-v3` is the plan's baseline and is on the FIRST 67,521-chunk index; `reindex-v3` is the same prompt and tools on the rebuilt index and is the like-for-like baseline. "Shipped" is the new default (wording fix on, rule off), run `upgrade-control`, rebuilt index.
+
+| | `contract-v3` (first index) | `reindex-v3` (rebuilt, no change) | **shipped** |
+|---|---|---|---|
+| tool calls / rejected | 131 / 7 | 129 / 7 | **119 / 0** |
+| agent model calls per query | 2.68 | 2.65 | **2.49** |
+| verified / refused / terminal failures | 70 / 0 / 1 | 70 / 0 / 1 | **71 / 0 / 0** |
+| `figure_primary` | 45 of 45 | 46 of 46 | 46 of 46 |
+| calls issued in a batched step | n/a | n/a | 23 of 119 (19.3%) |
+| `first_tool_ok` / `tool_set_ok` (labels not revised; baselines' first call is completion order) | 67 / 67 of 71 | 67 / 66 of 71 | 65 / 64 of 71 |
+| cost per query | $0.002067 | $0.002031 | $0.001987 |
+| answers that became wrong (hand read of every changed answer vs `contract-v3`) | n/a | not read | **0** of 35 changed |
+
+Not shipped, for the record (`upgrade-v1`, rule on): 121 calls, 0 rejected, 2.37 model calls, 70 verified, 1 terminal failure, 28.9% of calls batched, **1 wrong answer in 30 changed**. **Memory** (`eval/probes/multiturn-memory-v1-3b4d5b73e61d.json`): **11 of 11 follow-up turns correct with memory, 3 of 11 without; N = 11** in 8 conversations (the 3 are lucky defaults), all 30 requests verified. Latency is deliberately absent: see the do-not-quote list.
+
+### Spend
+
+Counted ledger total **$0.6518** against SPEND_CAP_USD $1.00 (under the $0.75 aim); the repo meter's own total is $0.5214 (counted = x1.25). Nine ledger rows (eleven paid runs: one row is three single-item repeats), all `--generate-only` or the probe, none a judge pass. Against the roughly $5 of credit: about $4.35 left by this ledger's counting; the meter cannot see retried or interrupted requests, so check Google billing before the next paid run. Tracing was forced off for every run so no non-Gemini API was called (the first live run made public Hugging Face Hub metadata fetches for the cached reranker, no spend; later runs set `HF_HUB_OFFLINE=1`).
+
+### Files changed (66 files, +83,736 / -89; 43 added, 23 modified)
+
+Code: `agent/` (`financial_agent.py`, `mcp_agent.py`, `meter.py`, `observations.py`, new `memory.py`), `api/main.py`, `mcp_server/server.py`, `retrieval/` (`facts.py`, `rerank.py`, `retriever.py`), `eval/` (`run_eval.py`; new `tool_metrics.py`, `run_multi_turn_probe.py`, `benchmark_tools.json`, `multi_turn_probe.json`), `web/` (`app/page.tsx`, `lib/api.ts`, new `lib/thread.ts`, two new test files, `README.md`). Tests: 11 new files and 6 extended. Evidence, all new files: 10 results files under `eval/results/` (plus the regenerated `LEADERBOARD.md`, the only existing file there that changed), 13 under `eval/tool_metrics/`, 1 under `eval/probes/`. Docs: `eval/EVALUATION.md`, `README.md`, `ROADMAP.md`, `docs/DECISIONS.md`, `.env.example`, this file. Untouched: `eval/benchmark.csv`, `benchmark_chunks.json`, `chunk_labels_overrides.json`, every other results file, `data/`, `hf-space/`, `requirements.txt`, `.github/workflows/`, `.env`.
+
+### Tests
+
+Python **224 to 358** (collected; three skip without the index or the fact table); web **3 to 16**.
+
+### Known risks
+
+* **Wording changed rule 7 and the tool description**, so everything generated is a new distribution; the manual judged workflow (`eval-judged.yml`, never clicked) was calibrated on the old prompt and has not been re-run (about $0.20 a click).
+* **The plan's baseline is on another index.** Part of the movement against `contract-v3` is the index rebuild; `reindex-v3` is quoted beside it everywhere and the conclusions use it.
+* **Memory is in process and per worker.** A restart or a second replica or uvicorn worker forgets it (the Space runs one worker); a long thread adds a history block of up to about 10,000 characters to each follow-up. The UI note says follow-ups are remembered, which is false against the currently deployed backend until the Space is synced.
+* **The labels are blind but not independent** (author plus three language models); two of the four baseline first-tool misses are arguable.
+* **`qa_0024`** loops on nine searches in some runs (terminal in `reindex-v3` and the rule-on run); not addressed.
+* **`.env.example`** had five variables appended without reading the file (the `tail` I printed to check showed four placeholder lines of its existing block); `.env` was never opened.
+* The lock change is on the retrieval hot path; a warm call costs 39 ns and the new race tests fail on the old code.
+
+### Needs the owner
+
+1. **Review the commits** (`git log --oneline eda988e..HEAD`) and push them yourself. **Order matters: sync the Space first, then push**, because the web change tells users their follow-ups are remembered and the deployed backend does not do that until it is synced; a push to `main` also runs CI and probably auto-deploys the Vercel frontend. The Space sync and the Vercel deploy are manual and were not touched.
+2. Decide whether to **click the manual judged workflow** once (the prompt wording changed; JUDGED_RUNS_ALLOWED was 0).
+3. **Review the 71 labels** in `eval/benchmark_tools.json` (and the four first-tool misses of `contract-v3`).
+4. Decide about **`AGENT_BATCH_RULE`**: it saves model calls (2.49 to 2.37 per query) and breaks `qa_0008`. Setting it on is a one-line env change.
+5. Merge the appended block of **`.env.example`** where you want it.
+6. **Check Google billing** (ledger: $0.52 of meter cost, $0.65 counted).
+7. Know that the plan's `contract-v3` baseline is on the first index; the quoted comparisons lean on `reindex-v3` for that reason.
+
+### Reproduce each result
+
+```bash
+# gates
+python -m pytest --tb=short --strict-markers -p no:cacheprovider
+flake8 . --max-line-length 120 --ignore E501,W503
+python -m eval.run_eval --dry-run && python -m eval.run_retrieval_eval --dry-run && python -m eval.ci_gate retrieval --dry-run
+# tool-call metrics from the committed results (no model, no network)
+python -m eval.tool_metrics eval/results/upgrade-control-7c50eed7da71.json --baseline eval/results/reindex-v3-5b1deb95bdcc.json
+python -m eval.tool_metrics eval/results/contract-v3-76b8f532c332.json
+# a generation run (the shipped configuration; set LANGSMITH_TRACING=false to keep traces off)
+VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
+  AGENT_BATCH_RULE=off python -m eval.run_eval --generate-only --label <label> --cache-file eval/cache/<file>.json [--ids ...]
+# the memory probe (about $0.05)
+python -m eval.run_multi_turn_probe --dry-run
+python -m eval.run_multi_turn_probe --label memory-v1
+```
+
+Each results file records the commit it ran at (`git_commit`, `git_dirty`), `prompt_version`, `tool_schema_version` and `agent_batch_rule`; the experiments before the final wording ran at older commits. The per-experiment commands and ids are in the journal below and in `eval/EVALUATION.md` ("Reproducing this").
+
+### Undo the whole run
+
+For a run that has not been pushed, from the repo: `git reset --hard eda988efb5c5331bef5af9173a240ee7d683a3b3`. After a push: `git revert --no-commit eda988efb5c5331bef5af9173a240ee7d683a3b3..HEAD` and commit. Either is yours to run; the run never ran a reset.
+
+
 
 ## CONFIG (final as given; the owner did not edit it)
 
