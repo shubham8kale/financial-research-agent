@@ -2310,12 +2310,15 @@ Including the ones that weaken the numbers above.
     ships a prebuilt Chroma index via Git LFS). Because the sync is manual it can
     drift again, so the revision serving any given demo session is not guaranteed
     to be the revision measured here. See the README.
-13. **Open dependency advisories are tracked rather than auto-patched.** `npm
-    audit` now reports 0 vulnerabilities — the test-runner devDependency chain
-    was cleared by moving to Node 22 and vitest 4. What remains is Python-side:
-    four ChromaDB advisories and one `ragas` advisory, none of which has a
-    patched release upstream, so no version bump clears them. See the README's
-    limitations for the ChromaDB index-compatibility constraint.
+13. **Open dependency advisories are tracked rather than auto-patched.** Four
+    ChromaDB advisories and one `ragas` advisory have no patched release
+    upstream, so no version bump clears them; they are dismissed as not
+    reachable, with the reasons in SECURITY.md. Five that did have fixes
+    (`next`, `sentence-transformers`, `datasets`, two copies of
+    `brace-expansion`) were taken on 2026-10-05, and the retrieval eval was
+    identical afterwards. `npm audit` reports 5 high-severity findings, all in
+    the dev-only lint chain, and 0 for what ships. See the README's limitations
+    for the ChromaDB index-compatibility constraint.
 14. **The schema-3 baseline re-scores cached answers; it is not a fresh
     generation.** The same 71 answers the schema-2 tables scored were re-judged
     per chunk, so the two instruments are compared on identical outputs — and
