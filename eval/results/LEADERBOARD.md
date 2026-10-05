@@ -1,6 +1,6 @@
 # Leaderboard
 
-Regenerated 2026-10-05T03:34:22+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
+Regenerated 2026-10-05T12:41:16+00:00 by `python -m eval.leaderboard` from every results file in this directory. Do not edit by hand.
 
 Rows are comparable only within a table and only at the same benchmark version. Judge-scored means count a terminal failure (empty answer, recursion limit) as 0.
 
@@ -8,6 +8,7 @@ Rows are comparable only within a table and only at the same benchmark version. 
 
 | run | date | benchmark | agent | judge | contexts | n | faithfulness | answer_rel | context_recall | figure_exact | figure_primary | agent_hit (searched, n) | cost/query | p50 latency | config | file |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| upgrade-judged-1c3a876 | 2026-10-05 | b55a114e8c8a | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9404 | 0.9122 | 0.8592 | 0.8478 | 1.0000 | 0.7949 (39) | $0.0020 | 2.8 s | `7c50eed7da71` | [upgrade-judged-7c50eed7da71.json](upgrade-judged-7c50eed7da71.json) |
 | reindex-v3-013f548 | 2026-09-29 | b55a114e8c8a | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.9487 | 0.8899 | 0.8451 | 0.8696 | 1.0000 | 0.7895 (38) | $0.0020 | 3.2 s | `5b1deb95bdcc` | [reindex-v3-5b1deb95bdcc.json](reindex-v3-5b1deb95bdcc.json) |
 | baseline-v3-87b6dd0 | 2026-09-28 | c12868d9d0d0 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk+provenance | 71 | 0.8263 | 0.7639 | 0.7183 | 0.6000 | 0.7333 | 0.4366 | — | — | `a05e986405ba` | [baseline-v3-a05e986405ba.json](baseline-v3-a05e986405ba.json) |
 | baseline-v3-plain-7b245f5 | 2026-09-28 | c12868d9d0d0 | gemini-3.1-flash-lite | google/gemini-3.6-flash | chunk | 71 | 0.7042 | 0.7676 | 0.6901 | 0.6000 | 0.7333 | 0.4366 | — | — | `1f47fcda5bae` | [baseline-v3-plain-1f47fcda5bae.json](baseline-v3-plain-1f47fcda5bae.json) |
