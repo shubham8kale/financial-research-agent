@@ -99,7 +99,7 @@ MCP_SERVER_KEY = "sec_filings"
 # send figure questions to lookup_financial_fact first (7–8) therefore apply on
 # the MCP path too, where those tools are served by mcp_server/server.py.
 
-from agent.financial_agent import _SYSTEM_PROMPT  # noqa: E402
+from agent.financial_agent import system_prompt  # noqa: E402
 
 
 # ── Custom exception ──────────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ async def build_agent_executor():
         temperature=0,
     )
 
-    return create_react_agent(model=llm, tools=tools, prompt=_SYSTEM_PROMPT)
+    return create_react_agent(model=llm, tools=tools, prompt=system_prompt())
 
 
 # ── Public entry points ───────────────────────────────────────────────────────

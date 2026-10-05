@@ -497,6 +497,41 @@ _SYSTEM_PROMPT = (
     "result."
 )
 
+# Appended to the system prompt ONLY when AGENT_BATCH_RULE=on (system_prompt() below).  LangGraph's tool node already
+# runs the calls of one model step concurrently, and the model sometimes issues several at once; this asks it to do
+# so whenever a question needs the same lookup for several companies, years or concepts.  It repeats that every call
+# in the batch needs its required arguments because the rejected `concept`-less lookups of the committed runs
+# happened inside batched steps.  Off by default until a measured gate (eval/EVALUATION.md, finding 24) decides.
+_BATCH_RULE = (
+    "\n9. When a question needs the same lookup for several companies, years or "
+    "concepts, issue all of those calls together in ONE step rather than one per "
+    "step; every call in that step still needs all of its required arguments (for "
+    "lookup_financial_fact that includes concept). Prefer one lookup_financial_fact "
+    "or compare_companies call per company over repeated searches. Answer from what "
+    "you have before the step budget runs out."
+)
+
+_ON = ("on", "true", "1", "yes")
+_OFF = ("off", "false", "0", "no", "")
+
+
+def batch_rule_enabled() -> bool:
+    """AGENT_BATCH_RULE=on|off (default off).  Anything else is an error rather than a silent off."""
+    raw = (os.getenv("AGENT_BATCH_RULE") or "").strip().lower()
+    if raw in _ON:
+        return True
+    if raw in _OFF:
+        return False
+    raise ValueError(f"AGENT_BATCH_RULE must be on or off, got {raw!r}")
+
+
+def system_prompt() -> str:
+    """The system prompt the agent runs with: _SYSTEM_PROMPT, plus the batching rule when AGENT_BATCH_RULE is on.
+
+    With the switch off this is _SYSTEM_PROMPT itself, so a run's recorded prompt version is the one it always was.
+    """
+    return _SYSTEM_PROMPT + (_BATCH_RULE if batch_rule_enabled() else "")
+
 
 # ── Agent factory ─────────────────────────────────────────────────────────────
 
@@ -586,7 +621,7 @@ def build_agent_executor():
     # create_react_agent() from langgraph.prebuilt binds the LLM and tools,
     # then compiles a LangGraph StateGraph that drives the model→tools→model
     # loop automatically.  prompt is prepended as a system message each turn.
-    return create_react_agent(model=llm, tools=tools, prompt=_SYSTEM_PROMPT)
+    return create_react_agent(model=llm, tools=tools, prompt=system_prompt())
 
 
 def run_agent(question: str) -> str:

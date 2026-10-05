@@ -291,10 +291,16 @@ def _prompt_version() -> str:
     constant, so it cannot drift out of sync with the prompt it describes: edit
     the prompt and the recorded version changes on the next run automatically.
     """
-    from agent.financial_agent import _SYSTEM_PROMPT
+    from agent.financial_agent import system_prompt
 
-    digest = hashlib.sha256(_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(system_prompt().encode("utf-8")).hexdigest()
     return f"sha256:{digest[:12]}"
+
+
+def _batch_rule_enabled() -> bool:
+    from agent.financial_agent import batch_rule_enabled
+
+    return batch_rule_enabled()
 
 
 def _tool_schema_version() -> str:
@@ -1597,6 +1603,7 @@ def main() -> int:
         "retrieval": retrieval_config.as_dict(),
         "prompt_version": prompt_version,
         "tool_schema_version": _tool_schema_version(),
+        "agent_batch_rule": "on" if _batch_rule_enabled() else "off",
         "ragas_version": ragas.__version__,
         "ragas_seed": RAGAS_SEED,
         "ragas_max_workers": RAGAS_MAX_WORKERS,
