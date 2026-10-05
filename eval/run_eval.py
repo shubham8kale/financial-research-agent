@@ -297,6 +297,19 @@ def _prompt_version() -> str:
     return f"sha256:{digest[:12]}"
 
 
+def _tool_schema_version() -> str:
+    """Fingerprint of the tools' names, descriptions and argument schemas, as the model sees them.
+
+    _prompt_version() hashes the system prompt only, so a change to a tool's docstring or schema leaves it, and the
+    cache key built from it, unchanged: the harness would serve outputs generated before the change.  This is
+    recorded in every results file's config (and hashed with it, so the two configurations get different files) but
+    is deliberately NOT part of the cache key; an experiment that changes a tool uses its own --cache-file.
+    """
+    from agent.financial_agent import tool_schema_version
+
+    return tool_schema_version()
+
+
 # ── Benchmark loading ────────────────────────────────────────────────────────
 
 REQUIRED_COLUMNS = {"id", "question", "ground_truth", "question_type"}
@@ -1579,6 +1592,7 @@ def main() -> int:
         "k": retrieval_config.k,   # what the tools retrieve (RETRIEVAL_K), TOP_K unless overridden
         "retrieval": retrieval_config.as_dict(),
         "prompt_version": prompt_version,
+        "tool_schema_version": _tool_schema_version(),
         "ragas_version": ragas.__version__,
         "ragas_seed": RAGAS_SEED,
         "ragas_max_workers": RAGAS_MAX_WORKERS,

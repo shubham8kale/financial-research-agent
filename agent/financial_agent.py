@@ -424,6 +424,11 @@ def compute_metric(operation: str, a: float, b: float, n: int | None = None) -> 
             f"    {out['formula']} with a={a:,.10g}, b={b:,.10g}{n_note} = {out['result']:,.2f}")
 
 
+# Every tool the agent is bound to, in binding order.  One list, so the agent factory and the schema fingerprint
+# below can never disagree about what the model is shown.
+TOOLS = [search_filings, list_available_companies, compare_companies, lookup_financial_fact, compute_metric]
+
+
 # ── System prompt ─────────────────────────────────────────────────────────────
 #
 # create_react_agent() takes a plain `prompt` string rather
@@ -511,6 +516,24 @@ def build_llm() -> ChatGoogleGenerativeAI:
     )
 
 
+def tool_schema_version() -> str:
+    """A short fingerprint of everything the model is shown about the tools: each one's name, description and argument schema.
+
+    The evaluation harness fingerprints the system prompt (eval/run_eval.py::_prompt_version) but a tool's
+    docstring or argument schema is not part of it, so a change to either would leave the prompt version, and any
+    cache keyed on it, untouched.  Recording this beside it makes such a change visible in every results file.
+    The in-process tools only: the MCP server restates them in mcp_server/server.py, which the contract test pins.
+    """
+    import hashlib
+    import json
+
+    from langchain_core.utils.function_calling import convert_to_openai_tool
+
+    spec = [convert_to_openai_tool(t) for t in TOOLS]
+    digest = hashlib.sha256(json.dumps(spec, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+    return f"sha256:{digest[:12]}"
+
+
 def build_agent_executor():
     """Construct and return a ready-to-use LangGraph agent (LangChain 1.2 API).
 
@@ -544,8 +567,7 @@ def build_agent_executor():
     """
     llm = build_llm()
 
-    tools = [search_filings, list_available_companies, compare_companies,
-             lookup_financial_fact, compute_metric]
+    tools = list(TOOLS)
 
     # create_react_agent() from langgraph.prebuilt binds the LLM and tools,
     # then compiles a LangGraph StateGraph that drives the model→tools→model
