@@ -194,3 +194,18 @@ def test_record_reports_the_k_the_tools_retrieve(monkeypatch):
     assert rec["k"] == 7
     monkeypatch.delenv("RETRIEVAL_K")
     assert run_eval._record(_bench(1)[0], "m", "p", answer="a", observations=[], n_messages=0)["k"] == 5
+
+
+def test_the_resume_hint_names_the_cache_file_the_run_actually_used(tmp_path, capsys):
+    # A run given --cache-file wrote its checkpoints there; the hint (and the generate-only log line) used to name
+    # the default eval/cache/agent_outputs.json, which sent a resume to the wrong cache.
+    payload = {"config": {"judge_provider": "google", "judge_model": "m", "benchmark_file": "eval/benchmark.csv"}}
+    custom = tmp_path / "experiment.json"
+    run_eval.save_cache({"k": {}}, custom)
+    run_eval._print_resume_hint(payload, custom)
+    out = capsys.readouterr().out
+    assert f"--cache-file {custom}" in out
+    assert out.count("--cache-file") == 2 and "(1 entries)" in out and "agent_outputs.json" not in out
+    run_eval._print_resume_hint(payload)
+    default = capsys.readouterr().out
+    assert "--cache-file" not in default and "agent_outputs.json" in default

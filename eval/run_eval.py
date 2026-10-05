@@ -645,12 +645,13 @@ def _print_metric_row(label: str, block: dict, n_col: int = 12) -> None:
     print(f"  {label:<{n_col}} " + "   ".join(f"{c:<24}" for c in cells))
 
 
-def print_report(payload: dict) -> None:
+def print_report(payload: dict, cache_path: Path | None = None) -> None:
     """Print the human-readable report for a results payload.
 
     Aggregates are printed ONLY for a complete run.  For a partial run the
     per-item detail is still shown but every mean is withheld, so a stopped run
-    can never be screenshotted as a finished one.
+    can never be screenshotted as a finished one.  *cache_path* is the cache the
+    run actually used (--cache-file), which the resume hint must name.
     """
     status = payload["run_status"]
     cfg = payload["config"]
@@ -690,7 +691,7 @@ def print_report(payload: dict) -> None:
         print(f"  reason: {payload['aggregates_withheld_reason']}")
         print("  These numbers are NOT a baseline. Resume, then re-report.")
         print("!" * 78)
-        _print_resume_hint(payload)
+        _print_resume_hint(payload, cache_path)
         return
 
     agg = payload["aggregates"]
@@ -785,21 +786,24 @@ def print_report(payload: dict) -> None:
                   f"headline number.")
 
 
-def _print_resume_hint(payload: dict) -> None:
+def _print_resume_hint(payload: dict, cache_path: Path | None = None) -> None:
     """Print the exact command that resumes this run from its cache."""
     cfg = payload["config"]
+    cache_path = Path(cache_path) if cache_path else CACHE_FILE
+    # a run that wrote to a --cache-file must be resumed from it, not from the default cache
+    cache_flag = f" --cache-file {_display_path(cache_path)}" if cache_path != CACHE_FILE else ""
     # --judge-provider must be echoed alongside --judge-model.  The provider
     # defaults to google, so printing a Groq model id on its own produces a
     # command that resolves a Gemini provider for a Groq model and fails.
     judge_flags = (f"--judge-provider {cfg['judge_provider']} "
                    f"--judge-model {cfg['judge_model']}")
     print("\nTo resume (cached items are skipped; only missing items re-run):")
-    print(f"    python -m eval.run_eval --benchmark {cfg['benchmark_file']} {judge_flags}")
+    print(f"    python -m eval.run_eval --benchmark {cfg['benchmark_file']} {judge_flags}{cache_flag}")
     print("\nTo re-judge what is already cached without any new agent calls:")
     print(f"    python -m eval.run_eval --score-only "
-          f"--benchmark {cfg['benchmark_file']} {judge_flags}")
-    print(f"\nCache: {CACHE_FILE.relative_to(REPO_ROOT)} "
-          f"({len(load_cache())} entries)")
+          f"--benchmark {cfg['benchmark_file']} {judge_flags}{cache_flag}")
+    print(f"\nCache: {_display_path(cache_path)} "
+          f"({len(load_cache(cache_path))} entries)")
 
 
 # ── Judge construction ───────────────────────────────────────────────────────
@@ -1664,7 +1668,7 @@ def main() -> int:
         logger.info(
             "--generate-only: %d item(s) checkpointed to %s. Skipping the judge "
             "pass; nothing is scored and no aggregates will be produced.",
-            len(records), CACHE_FILE.relative_to(REPO_ROOT),
+            len(records), _display_path(cache_path),
         )
         for r in records:
             r.setdefault("scores", {m: None for m in METRIC_NAMES})
@@ -1731,7 +1735,7 @@ def main() -> int:
 
     out_path = args.out or (RESULTS_DIR / f"{label}-{config['config_hash']}.json")
     save_results(payload, out_path)
-    print_report(payload)
+    print_report(payload, cache_path)
     print(f"\nPer-item evidence: {_display_path(out_path)}")
 
     from eval.leaderboard import write_leaderboard
