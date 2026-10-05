@@ -27,7 +27,8 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 
 | # | time | command | items | expected (counted) | actual | counted (x1.25) | ledger total |
 |---|------|---------|-------|--------------------|--------|-----------------|--------------|
-| | | (no paid call yet) | | | | | $0.0000 |
+| 1 | 22:25 | `run_eval --generate-only --label a-before --cache-file eval/cache/a-before.json --ids <ITEMS_A>` (shipped configuration, unchanged code at `bf271f0`) | 12 | $0.0375 | $0.0247 | $0.0309 | $0.0309 |
+| | | (no other paid call yet) | | | | | |
 
 ## Journal
 
@@ -92,3 +93,15 @@ Live-run rules I apply to every paid command: shipped configuration (`VERIFY_MOD
 Plan for this phase: (0) run the UNCHANGED code on ITEMS_A once, label `a-before`, so any candidate is compared with today's model and not only with the 09-28 files (12 items, expected counted cost 12 x $0.0025 x 1.25 = $0.0375; ledger total before: $0.0000; cap $1.00); (a) wording; (b) schema; (c) tolerant tool, stopping at the first that passes the section 2.4 rule.
 
 NEXT STEP: run `a-before` (see the ledger row), then write the candidate (a).
+
+### 2026-10-04 22:33 Phase 2: same-day baseline on ITEMS_A (`a-before`), ledger row 1
+
+Ran the UNCHANGED code (git `bf271f0`, clean tree, `prompt_version sha256:99d36aed6b9c`, `tool_schema_version sha256:3eeb27dc718d`) on ITEMS_A: `eval/results/a-before-dfa6f50193ab.json`, 12 items, actual cost $0.0247 (counted $0.0309), ledger total **$0.0309** of $1.00. Tool metrics: `eval/tool_metrics/a-before-dfa6f50193ab.json`.
+
+- **Today, unchanged: 5 of 20 `lookup_financial_fact` calls were rejected (15 of 20 valid)**, every one for a missing `concept` (`concept_present` 15 of 20); the committed `cost-v3` and `contract-v3` had 7 on the same 12 items. So the same-day baseline is 5, not 7, and any candidate has to beat 5 (the smaller, harder baseline) to count. The other arg checks were clean: ticker 20 of 20, fiscal year exact 20 of 20, concept resolves to rows 15 of 15.
+- Tool use otherwise: 28 calls (lookup 20, search 3, compute 5); `first_tool_ok` 12 of 12; `tool_set_ok` 12 of 12; verification 12 of 12 verified; `figure_primary` 11 of 11 applicable; 0 terminal failures; model calls 3.0 per query (agent) and cost $0.00206 per query.
+- Batching, measured with start offsets for the first time: 24 model steps made the 28 calls; 4 steps batched 8 calls (28.6% of calls) on 3 of 12 items.
+- **Observation about the cause, from the stored error messages of `cost-v3` (no argument was recorded then):** in 5 of the 6 failing items the omission happens inside a batch: the model emits two or three `lookup_financial_fact` calls in one step (fiscal 2025 and fiscal 2024) and the FIRST one (on `qa_0053`, the first two) arrives with only `ticker` and `fiscal_year`. Batched emission and the rejected call are therefore linked, which matters for Workstream B: a rule that asks for more batching could raise the rejection rate, and its gate includes "invalid lookup calls below baseline".
+- Side findings: (1) this run made Hugging Face Hub metadata GETs for the locally cached reranker at start-up (public, unauthenticated, no spend; later runs set `HF_HUB_OFFLINE=1` so they talk to Gemini only); (2) the harness's `--generate-only` log line and resume hint print the default cache path (`eval\cachegent_outputs.json`) although the run wrote to the `--cache-file` it was given; I confirmed `agent_outputs.json` is untouched (mtime 2026-09-27) and will fix the message in the next harness commit; (3) tracing was off as intended (no LangSmith call).
+
+NEXT STEP: write candidate (a), wording: tool description first sentence and `_SYSTEM_PROMPT` rule 7 say `concept` is REQUIRED on every call and one call is needed per concept and year, with an example call; mirror in `mcp_server/server.py`; update `tests/test_mcp_contract.py` deliberately; then run label `a-wording` on ITEMS_A (expected counted cost $0.0375; ledger $0.0309 + $0.0375 = $0.0684).
