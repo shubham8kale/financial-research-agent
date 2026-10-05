@@ -209,3 +209,33 @@ def test_the_resume_hint_names_the_cache_file_the_run_actually_used(tmp_path, ca
     run_eval._print_resume_hint(payload)
     default = capsys.readouterr().out
     assert "--cache-file" not in default and "agent_outputs.json" in default
+
+
+# ── the tool schema fingerprint is part of the agent-output cache key ─────────────────────────────────────────
+
+def test_cache_key_tool_schema_tag_separates_tool_configurations_and_an_empty_tag_changes_nothing():
+    base = run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234")
+    assert run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234", "") == base       # no tag: the key as it was
+    a = run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234", "88e7a8918c7f")
+    b = run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234", "0123456789ab")
+    assert a == base + "|ts=88e7a8918c7f"                       # appended after rc= and vc=, following their pattern
+    assert len({base, a, b}) == 3                               # two different tags, two different keys
+    assert run_eval._cache_key("qa_1", "m", "p", tool_schema_tag="t") == "qa_1|m|p|ts=t"
+    assert run_eval._tool_schema_tag("sha256:88e7a8918c7f") == "88e7a8918c7f"
+    assert run_eval._tool_schema_tag("88e7a8918c7f") == "88e7a8918c7f"
+
+
+def test_generate_outputs_does_not_serve_a_cache_entry_written_under_other_tools(monkeypatch, tmp_path):
+    monkeypatch.setattr(run_eval, "AGENT_SLEEP_SECONDS", 0)
+    capture, calls = _fake_capture()
+    monkeypatch.setattr(run_eval, "run_agent_capture", capture)
+    cache_path = tmp_path / "cache.json"
+    cache: dict = {}
+    run_eval.generate_outputs(_bench(1), "m", "p", cache, cache_path=cache_path, tool_schema_tag="aaaa")
+    run_eval.generate_outputs(_bench(1), "m", "p", cache, cache_path=cache_path, tool_schema_tag="aaaa")
+    assert [c for c, _ in calls] == ["q1"]                      # the same tools: served from the cache
+    run_eval.generate_outputs(_bench(1), "m", "p", cache, cache_path=cache_path, tool_schema_tag="bbbb")
+    assert [c for c, _ in calls] == ["q1", "q1"]                # other tools: regenerated, not served stale
+    on_disk = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert set(on_disk) == {run_eval._cache_key("qa_0001", "m", "p", tool_schema_tag=t) for t in ("aaaa", "bbbb")}
+    assert run_eval._cache_key("qa_0001", "m", "p") not in on_disk

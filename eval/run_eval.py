@@ -22,9 +22,10 @@
 # crash partway through must not discard the work that already succeeded:
 #
 #   1. Agent outputs are written to eval/cache/agent_outputs.json after EVERY
-#      item, keyed by (item id, agent model id, prompt version) plus, when they
-#      differ from the shipped defaults, the retrieval configuration and the
-#      output contract's mode and version.  A rerun skips any item already
+#      item, keyed by (item id, agent model id, prompt version, tool schema
+#      fingerprint) plus, when they differ from the shipped defaults, the
+#      retrieval configuration and the output contract's mode and version.
+#      A rerun skips any item already
 #      cached under the same key — so resuming after a quota wall costs only
 #      the items that had not completed.
 #   2. The cache key includes everything that changes what is served, so
@@ -306,14 +307,28 @@ def _batch_rule_enabled() -> bool:
 def _tool_schema_version() -> str:
     """Fingerprint of the tools' names, descriptions and argument schemas, as the model sees them.
 
-    _prompt_version() hashes the system prompt only, so a change to a tool's docstring or schema leaves it, and the
-    cache key built from it, unchanged: the harness would serve outputs generated before the change.  This is
-    recorded in every results file's config (and hashed with it, so the two configurations get different files) but
-    is deliberately NOT part of the cache key; an experiment that changes a tool uses its own --cache-file.
+    _prompt_version() hashes the system prompt only, so a change to a tool's docstring or schema leaves it
+    unchanged.  This fingerprint is recorded in every results file's config (and hashed with it, so the two
+    configurations get different files) and IS part of the agent-output cache key (_cache_key's `tool_schema_tag`):
+    a docstring-only change to a tool changes what the model is shown and so what it produces, and must not let the
+    harness serve outputs generated before the change.
+
+    Consequence of adding it to the key: every cache entry written before it was added is unreachable under the new
+    key, including every local eval/cache/*.json of the October 2026 upgrade run (nothing under eval/cache/ is
+    committed, and none was migrated or rewritten).  A plain or resumed run therefore regenerates the missing items,
+    and that costs money.  `--score-only` does NOT regenerate: it omits an item with no cached output and exits with
+    "found no cached agent outputs" when none match, so a --score-only command that was documented for an older cache
+    finds nothing at this commit; the results file it produced stands as the record, and the command reproduces at
+    the commit that file records in `git_commit`.
     """
     from agent.financial_agent import tool_schema_version
 
     return tool_schema_version()
+
+
+def _tool_schema_tag(version: str) -> str:
+    """The cache-key tag for a tool schema fingerprint: its 12 hex digits (``sha256:88e7a8918c7f`` -> ``88e7a8918c7f``)."""
+    return version.split(":", 1)[-1]
 
 
 # ── Benchmark loading ────────────────────────────────────────────────────────
@@ -479,21 +494,29 @@ def _raise_if_quota_wall(verification) -> None:
 # ── Agent-output cache ───────────────────────────────────────────────────────
 
 def _cache_key(item_id: str, agent_model: str, prompt_version: str, retrieval_tag: str = "",
-               contract_tag: str = "") -> str:
+               contract_tag: str = "", tool_schema_tag: str = "") -> str:
     """Build the cache key for one generated agent output.
 
-    Keyed on every axis that changes what the agent produces — model, prompt
-    and, when it differs from the shipped default, the retrieval configuration
-    — so a swap of any of them invalidates the entry instead of letting a
-    stale generation be re-scored under a new configuration's label.  The
-    default retrieval leaves the key unchanged so entries cached before the
-    tag existed stay valid.
+    Keyed on every axis that changes what the agent produces — model, prompt,
+    the tools the model is shown (their names, descriptions and argument
+    schemas, as the `tool_schema_tag` fingerprint) and, when it differs from
+    the shipped default, the retrieval configuration — so a swap of any of
+    them invalidates the entry instead of letting a stale generation be
+    re-scored under a new configuration's label.  The default retrieval
+    leaves the key unchanged so entries cached before that tag existed stay
+    valid; the tool schema tag has no such grace: main() always passes one, so
+    an entry written before it was added is unreachable (see
+    _tool_schema_version for what that means for --score-only and for a
+    plain run).  An empty tag appends nothing, which is the key before the
+    tag existed.
     """
     key = f"{item_id}|{agent_model}|{prompt_version}"
     if retrieval_tag:
         key = f"{key}|rc={retrieval_tag}"
     if contract_tag:
         key = f"{key}|vc={contract_tag}"   # verify mode + contract version; "" = no contract, as cached before it existed
+    if tool_schema_tag:
+        key = f"{key}|ts={tool_schema_tag}"
     return key
 
 
@@ -1002,7 +1025,8 @@ def resolve_judge(args) -> tuple[str, str, str]:
 # ── Generation phase ─────────────────────────────────────────────────────────
 
 def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=True, retrieval_tag="",
-                     cache_path: Path = CACHE_FILE, verify_mode: str = "off", contract_tag: str = ""):
+                     cache_path: Path = CACHE_FILE, verify_mode: str = "off", contract_tag: str = "",
+                     tool_schema_tag: str = ""):
     """Run the agent over *benchmark*, checkpointing to the cache each item.
 
     Returns (records, stop_reason).  ``stop_reason`` is None on a clean pass and
@@ -1016,7 +1040,7 @@ def generate_outputs(benchmark, agent_model, prompt_version, cache, use_cache=Tr
 
     for i, row in enumerate(benchmark, start=1):
         item_id = row["id"]
-        key = _cache_key(item_id, agent_model, prompt_version, retrieval_tag, contract_tag)
+        key = _cache_key(item_id, agent_model, prompt_version, retrieval_tag, contract_tag, tool_schema_tag)
 
         if use_cache and key in cache:
             records.append(_upgrade_record(cache[key]))
@@ -1546,6 +1570,10 @@ def main() -> int:
     from ingestion.embedder import EMBEDDING_MODEL
 
     prompt_version = _prompt_version()
+    # Computed once: it imports and serialises every tool.  The same value is recorded in the config and tagged into
+    # every cache key below.
+    tool_schema_version = _tool_schema_version()
+    tool_schema_tag = _tool_schema_tag(tool_schema_version)
     judge_provider, judge_model, judge_key = resolve_judge(args)
     commit, dirty = _git_commit()
     label = args.label or ("smoke" if args.smoke else "baseline")
@@ -1602,7 +1630,7 @@ def main() -> int:
         "k": retrieval_config.k,   # what the tools retrieve (RETRIEVAL_K), TOP_K unless overridden
         "retrieval": retrieval_config.as_dict(),
         "prompt_version": prompt_version,
-        "tool_schema_version": _tool_schema_version(),
+        "tool_schema_version": tool_schema_version,
         "agent_batch_rule": "on" if _batch_rule_enabled() else "off",
         "ragas_version": ragas.__version__,
         "ragas_seed": RAGAS_SEED,
@@ -1638,7 +1666,7 @@ def main() -> int:
         records = []
         missing = []
         for row in benchmark:
-            key = _cache_key(row["id"], AGENT_MODEL, prompt_version, retrieval_tag, contract_tag)
+            key = _cache_key(row["id"], AGENT_MODEL, prompt_version, retrieval_tag, contract_tag, tool_schema_tag)
             if key in cache:
                 records.append(_upgrade_record(cache[key]))
             else:
@@ -1651,8 +1679,10 @@ def main() -> int:
             )
         if not records:
             logger.error(
-                "--score-only found no cached agent outputs for agent=%s prompt=%s. "
-                "Run without --score-only first.", AGENT_MODEL, prompt_version,
+                "--score-only found no cached agent outputs for agent=%s prompt=%s tool_schema=%s. "
+                "Run without --score-only first (a cache written before the tool schema fingerprint "
+                "joined the key is unreachable; --score-only never regenerates).",
+                AGENT_MODEL, prompt_version, tool_schema_version,
             )
             return 1
         stop_reason = None
@@ -1660,7 +1690,7 @@ def main() -> int:
         records, stop_reason = generate_outputs(
             benchmark, AGENT_MODEL, prompt_version, cache,
             use_cache=not args.no_cache, retrieval_tag=retrieval_tag, cache_path=cache_path,
-            verify_mode=verify_mode, contract_tag=contract_tag,
+            verify_mode=verify_mode, contract_tag=contract_tag, tool_schema_tag=tool_schema_tag,
         )
 
     # Judge-free metrics are computed for EVERY record, including on

@@ -210,8 +210,13 @@ rules (the "Tool-call quality" section's limits).
 schema fingerprint.** The prompt version hashes the system prompt only, so a
 tool docstring or argument schema change leaves it, and every cache key built
 from it, unchanged; the harness would serve answers generated before the change.
-`tool_schema_version` is recorded and hashed into each results file's config
-(not into the cache key), and every experiment names its own cache.
+`tool_schema_version` is recorded and hashed into each results file's config,
+and every experiment names its own cache. *Revised 2026-10-05:* the fingerprint
+is now also part of the cache key (`|ts=`), because relying on every experiment
+to remember its own cache file is the failure it exists to prevent. The price is
+that every cache written before the change is unreachable: a plain run
+regenerates (paid), `--score-only` finds nothing and never regenerates, and the
+results files stand as the record (eval/EVALUATION.md, "Reproducing this").
 
 **A subset run is paired with a control that changes one thing.** The first
 measurement of the batching rule changed two things at once (the Phase 2

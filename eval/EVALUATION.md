@@ -2121,9 +2121,9 @@ per-job timeout, `bypass_n=True`.
 `seed=42` governs its own sampling, not an LLM judge's output. See finding 7.
 
 **The harness is checkpointed and resumable.** Agent outputs are cached after every
-item, keyed on `(item id, agent model, prompt version)` plus the retrieval
-configuration and the output contract's mode and version when they differ from
-the defaults, so a quota wall costs one
+item, keyed on `(item id, agent model, prompt version, tool schema
+fingerprint)` plus the retrieval configuration and the output contract's mode
+and version when they differ from the defaults, so a quota wall costs one
 item rather than a run, and `--score-only` re-judges from cache at zero generation
 cost — which is how the cross-family check cost nothing. A partial run withholds
 aggregates in stdout *and* sets `"aggregates": null` in the JSON, so a stopped run
@@ -2134,6 +2134,26 @@ cannot be mistaken for a finished one.
 that added the guard. The dirty bit is recorded rather than hidden.
 
 ### Reproducing this
+
+**The cache key changed on 2026-10-05, and it makes every earlier cache unreachable.**
+The tool schema fingerprint (`tool_schema_version`, recorded in every results
+file since the upgrade run; finding 23) is now part of the agent-output cache key
+(`|ts=<12 hex digits>`, after `rc=` and `vc=`), so a docstring-only change to a
+tool can no longer be served from outputs generated before it. Every cache entry
+written before that commit is unreachable under the new key, including every
+local `eval/cache/*.json` of the upgrade run; nothing under `eval/cache/` is
+committed, and none was migrated, rewritten or deleted. Two consequences:
+
+- A plain or resumed run (no `--score-only`) **regenerates** the items it cannot
+  find, and that is paid.
+- `--score-only` does **not** regenerate. It leaves out an item with no cached
+  output and exits with "found no cached agent outputs" when none match. So the
+  `--score-only` commands below that name an older cache (`baseline-v3`,
+  `crossjudge20`, `reindex-v3`, and `upgrade-judged`) find nothing at this
+  commit. Their results files stand and are the record; each command reproduces
+  at the commit that file records in `git_commit`, where the key had no
+  fingerprint, given the local cache file. The judged GitHub workflow runs in a
+  fresh runner with no cache and is not affected.
 
 ```bash
 # No API calls — validates benchmark parsing, argparse and imports. This is CI.
@@ -2202,6 +2222,14 @@ VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEV
 #   (a-before, a-wording, b-rule-v1 and b-rule-v2 ran at different prompt, tool and rule wordings: check out the
 #   commit each results file records in `git_commit`; prompt_version, tool_schema_version and agent_batch_rule
 #   in its config say which)
+
+# The shipped configuration's 71 cached answers (upgrade-control), judged with no agent call: 426 judge calls,
+# $1.03, 37 minutes. Run it at the commit its results file records (1c3a876), with the local
+# eval/cache/upgrade-control.json present; at a later commit the key has the tool schema fingerprint and
+# --score-only finds nothing (see the note at the top of this section).
+VERIFY_MODE=strict LLM_MODEL=gemini-3.1-flash-lite RETRIEVAL_RERANK=true RETRIEVAL_FETCH_K=50 RETRIEVAL_TICKER_FILTER=inferred \
+  AGENT_BATCH_RULE=off RAGAS_LLM_MODEL=gemini-3.6-flash python -m eval.run_eval --score-only --judge-provider google \
+  --max-judge-calls 520 --label upgrade-judged --cache-file eval/cache/upgrade-control.json
 
 # The conversation-memory probe: eight conversations through the real /query
 # path, once with a thread per conversation and once with each follow-up alone

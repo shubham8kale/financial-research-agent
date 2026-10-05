@@ -614,9 +614,12 @@ python -m eval.chunk_labels
 python -m eval.run_eval --smoke --judge-provider groq
 
 # Re-score the cached answers per chunk (schema 3) — zero generation calls.
-# The cache key holds the prompt hash and, unless VERIFY_MODE=off, the output
-# contract's tag; the baseline answers were cached under the pre-facts prompt,
-# so this reproduces at the commit the results file records (`git_commit`).
+# The cache key holds the prompt hash, the tool schema fingerprint and, unless
+# VERIFY_MODE=off, the output contract's tag; the baseline answers were cached
+# under the pre-facts prompt and before the fingerprint joined the key, so this
+# reproduces at the commit the results file records (`git_commit`), not at
+# HEAD, where --score-only finds no cached output and never regenerates it
+# (eval/EVALUATION.md, "Reproducing this").
 VERIFY_MODE=off LLM_MODEL=gemini-3.1-flash-lite python -m eval.run_eval --score-only --judge-provider google --judge-model gemini-3.6-flash --label baseline-v3
 
 # A full generation + judge run.

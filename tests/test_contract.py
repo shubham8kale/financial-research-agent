@@ -293,6 +293,13 @@ def test_cache_key_tags_the_contract_but_leaves_old_keys_alone():
     assert run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234") == base + "|rc=r1|vc=strict-abcd1234"
 
 
+def test_cache_key_tool_schema_tag_follows_the_contract_tag_and_an_empty_tag_leaves_the_key_alone():
+    with_contract = run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234")
+    assert run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234", "") == with_contract
+    assert run_eval._cache_key("qa_1", "m", "p", "r1", "strict-abcd1234", "88e7a8918c7f") == (
+        with_contract + "|ts=88e7a8918c7f")
+
+
 def test_deterministic_block_scores_the_draft_apart_from_the_served_answer():
     verified = {"id": "a", "ground_truth": "$416,161 million", "answer": DRAFT, "draft_answer": DRAFT, "observations": OBS,
                 "verification": {"status": "verified", "repaired": False, "failures": []}}

@@ -575,7 +575,9 @@ def tool_schema_version() -> str:
 
     The evaluation harness fingerprints the system prompt (eval/run_eval.py::_prompt_version) but a tool's
     docstring or argument schema is not part of it, so a change to either would leave the prompt version, and any
-    cache keyed on it, untouched.  Recording this beside it makes such a change visible in every results file.
+    cache keyed on it, untouched.  Recording this beside it makes such a change visible in every results file, and
+    the harness tags it into the agent-output cache key (eval/run_eval.py::_cache_key) so the change cannot be
+    served from a cache generated before it.
     The in-process tools only: the MCP server restates them in mcp_server/server.py, which the contract test pins.
     """
     import hashlib
