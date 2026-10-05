@@ -17,10 +17,8 @@
 # question_type, never a bare rate.
 #
 #   call_validity     calls that did not fail, over all calls, split by tool.  A
-#                     call fails when the framework rejected it (meter `error`)
-#                     or when a tolerant tool answered it with the argument-error
-#                     marker (agent/observations.py): the marker is a returned
-#                     string, so the meter alone would score such a call as fine.
+#                     call fails when the framework rejected it (meter `error`),
+#                     nothing more.
 #   first_tool_ok     the first call's tool is in the item's `first_tool_ok`.  The
 #                     first call is the earliest start (`t0_ms`) when the file has
 #                     it; on an older file it is the first RECORDED call, which is
@@ -57,7 +55,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from agent.observations import argument_error_tool  # noqa: E402
 from eval.experiment import file_sha256  # noqa: E402
 
 EVAL_DIR = Path(__file__).resolve().parent
@@ -171,16 +168,6 @@ def batching_of(record: dict, calls: list[dict]) -> dict:
 
 # ── per-call and per-item ──────────────────────────────────────────────────────
 
-def _marker_failures(record: dict) -> Counter:
-    """Observations a tolerant tool answered with the argument-error marker, by the tool named in the marker."""
-    out: Counter = Counter()
-    for obs in record.get("observations") or []:
-        tool = argument_error_tool(obs) if isinstance(obs, str) else None
-        if tool:
-            out[tool] += 1
-    return out
-
-
 def _canonical_args(args: dict) -> str:
     return json.dumps(args, sort_keys=True, ensure_ascii=False, default=str)
 
@@ -248,15 +235,11 @@ def item_metrics(record: dict, label: dict | None, store=None) -> dict | None:
     calls = calls_of(record)
     if calls is None:
         return None
-    markers = _marker_failures(record)
     by_tool: dict[str, dict] = {}
     for c in calls:
         slot = by_tool.setdefault(c["name"], {"n": 0, "failed": 0})
         slot["n"] += 1
         slot["failed"] += 1 if c.get("error") else 0
-    for tool, n in markers.items():            # a tolerant tool's marker is a returned string, so the meter scored it fine
-        slot = by_tool.setdefault(tool, {"n": 0, "failed": 0})
-        slot["failed"] = min(slot["failed"] + n, slot["n"])
     tools = {t: s["n"] for t, s in by_tool.items()}
     first, first_how = first_call(calls)
     has_args = any("args" in c for c in calls)
@@ -271,7 +254,6 @@ def item_metrics(record: dict, label: dict | None, store=None) -> dict | None:
     out = {
         "id": record.get("id"), "question_type": record.get("question_type"), "n_calls": len(calls),
         "tools": tools, "by_tool": by_tool, "failed_calls": sum(s["failed"] for s in by_tool.values()),
-        "marker_failures": dict(markers),
         "first_tool": first["name"] if first else None, "first_tool_method": first_how,
         "batching": batching_of(record, calls),
         "steps_by_model_calls": steps_by_model_calls,

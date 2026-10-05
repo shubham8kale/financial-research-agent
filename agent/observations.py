@@ -38,24 +38,6 @@ FALLBACK_RE = re.compile(r"ticker=(\S+)\s+chunk_idx=(\S+)")
 
 _CHUNK_ID_RE = re.compile(r"^(?P<ticker>[A-Z0-9.\-]+)_10K_chunk_(?P<idx>\d+)$")
 
-# A tool that tolerates a malformed call (a missing required argument) answers it with an observation that starts
-# with this prefix and names the tool, instead of letting the framework raise.  It is still a FAILED call: it is a
-# returned string, so the meter scores it as fine, and eval/tool_metrics.py counts every observation that starts
-# with the prefix as an error.  It carries no chunk, fact or calc header, so parse_observation() reads nothing from it.
-TOOL_ARGUMENT_ERROR_PREFIX = "[tool argument error]"
-_ARGUMENT_ERROR_RE = re.compile(r"^\s*" + re.escape(TOOL_ARGUMENT_ERROR_PREFIX) + r"\s+(\w+):")
-
-
-def argument_error_text(tool: str, message: str) -> str:
-    """The observation a tolerant tool returns for a malformed call: the marker, the tool's name, what to fix."""
-    return f"{TOOL_ARGUMENT_ERROR_PREFIX} {tool}: {message}"
-
-
-def argument_error_tool(observation: str) -> str | None:
-    """The tool named by an argument-error observation, or None when *observation* is not one."""
-    m = _ARGUMENT_ERROR_RE.match(observation or "")
-    return m.group(1) if m else None
-
 
 def chunk_id(ticker: str, chunk_idx) -> str:
     """Canonical id for one indexed chunk: ``AAPL_10K_chunk_395``."""

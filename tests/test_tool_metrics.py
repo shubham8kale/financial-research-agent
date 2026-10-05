@@ -9,8 +9,6 @@ import random
 
 import pytest
 
-from agent.observations import (TOOL_ARGUMENT_ERROR_PREFIX, argument_error_text, argument_error_tool,
-                                parse_observation)
 from eval import run_eval, tool_metrics as tm
 
 FACT, SEARCH, COMPARE, COMPUTE, LIST = ("lookup_financial_fact", "search_filings", "compare_companies",
@@ -65,32 +63,23 @@ def test_percentile_is_the_harnesss_nearest_rank_and_linear_is_interpolated():
 
 # ── call_validity ───────────────────────────────────────────────────────────────
 
-def test_call_validity_counts_framework_errors_and_the_argument_error_marker_by_tool():
-    marker = argument_error_text(FACT, "concept is required; for example 'net income'")
+def test_call_validity_counts_the_calls_the_framework_rejected_by_tool():
     rec = record("qa_1", [call(FACT, error=True, args={"ticker": "AAPL"}), call(FACT, args={"ticker": "AAPL"}),
                           call(SEARCH, args={"query": "q"})],
-                 observations=["error text", marker, "[1] ticker=AAPL  chunk_idx=1\n    text"])
+                 observations=["error text", "[1] ticker=AAPL  fact_id=1\n    x", "[1] ticker=AAPL  chunk_idx=1\n    text"])
     m = metrics(rec, label())
-    assert m["by_tool"] == {FACT: {"n": 2, "failed": 2}, SEARCH: {"n": 1, "failed": 0}}   # 1 framework error + 1 marker
+    assert m["by_tool"] == {FACT: {"n": 2, "failed": 1}, SEARCH: {"n": 1, "failed": 0}}      # only the rejected call fails
     s = tm.summarize([m])
-    assert s["call_validity"]["overall"] == {"n": 1, "of": 3, "rate": 0.3333}
-    assert s["call_validity"]["by_tool"][FACT] == {"n": 0, "of": 2, "rate": 0.0}
-    assert s["call_validity"]["failed_by_tool"] == {FACT: 2}
+    assert s["call_validity"]["overall"] == {"n": 2, "of": 3, "rate": 0.6667}
+    assert s["call_validity"]["by_tool"][FACT] == {"n": 1, "of": 2, "rate": 0.5}
+    assert s["call_validity"]["failed_by_tool"] == {FACT: 1}
     assert s["call_validity"]["items_with_a_failed_call"] == {"n": 1, "of": 1, "rate": 1.0}
 
 
-def test_a_marker_never_fails_more_calls_than_were_made():
-    marker = argument_error_text(FACT, "concept is required")
-    m = metrics(record("qa_1", [call(FACT)], observations=[marker, marker]), label())
-    assert m["by_tool"][FACT] == {"n": 1, "failed": 1}
-
-
-def test_the_argument_error_marker_round_trips_and_carries_no_source():
-    text = argument_error_text(FACT, "concept is required")
-    assert text.startswith(TOOL_ARGUMENT_ERROR_PREFIX) and argument_error_tool(text) == FACT
-    assert argument_error_tool("[1] ticker=AAPL  fact_id=3\n    x") is None and argument_error_tool("") is None
-    assert argument_error_tool(None) is None
-    assert parse_observation(text) == []            # nothing to cite, nothing to score as a context
+def test_call_validity_reads_the_meter_only_not_the_observation_text():
+    # a call the framework accepted is valid, whatever its observation says
+    m = metrics(record("qa_1", [call(FACT)], observations=["[tool argument error] lookup_financial_fact: x"]), label())
+    assert m["by_tool"][FACT] == {"n": 1, "failed": 0} and m["failed_calls"] == 0
 
 
 # ── first_tool_ok and tool_set_ok ───────────────────────────────────────────────

@@ -817,7 +817,7 @@ and by `question_type`:
 
 | metric | definition |
 |---|---|
-| `call_validity` | calls that did not fail over all calls, by tool; a call fails when the framework rejected it or a tolerant tool answered it with the argument-error marker |
+| `call_validity` | calls that did not fail over all calls, by tool; a call fails when the framework rejected it |
 | `first_tool_ok` | the first call's tool is in the item's first-tool set (earliest start when the file has `t0_ms`; otherwise the first recorded call, which is completion order, and the output says so) |
 | `tool_set_ok` | every tool used is allowed and every required tool was used; `allowed_only_ok` drops the second half |
 | `batched` | calls issued in a model step that made two or more; with `t0_ms` a step is a set of calls whose start-to-end windows overlap, each end padded by 50 ms because a 2 ms lookup can finish before its sibling's worker thread has started; older files get the per-item heuristic "tool calls greater than model calls minus 1", marked `heuristic` |
