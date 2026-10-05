@@ -15,6 +15,7 @@
 # by eval/run_retrieval_eval.py before anyone decides to ship it.
 
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +29,17 @@ class CrossEncoderReranker:
         self.model_name = model_name
         self.batch_size = batch_size
         self._model = None
+        self._load_lock = threading.Lock()
 
     def _load(self):
         if self._model is None:
-            from sentence_transformers import CrossEncoder
+            # Concurrent first calls (a ToolNode's worker threads) must not each load a copy of the model.
+            with self._load_lock:
+                if self._model is None:
+                    from sentence_transformers import CrossEncoder
 
-            logger.info("Loading cross-encoder reranker %s", self.model_name)
-            self._model = CrossEncoder(self.model_name)
+                    logger.info("Loading cross-encoder reranker %s", self.model_name)
+                    self._model = CrossEncoder(self.model_name)
         return self._model
 
     def score(self, query: str, texts: list[str]) -> list[float]:

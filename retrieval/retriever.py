@@ -31,6 +31,7 @@
 # an upper bound the agent cannot reach on its own.
 
 import os
+import threading
 from dataclasses import asdict, dataclass
 
 from agent.observations import chunk_id
@@ -143,6 +144,9 @@ class Retriever:
         self._vectorstore = vectorstore
         self._bm25 = bm25
         self._reranker = reranker
+        # One thread builds a lazy resource; the others wait for it rather than loading a second copy (a ToolNode
+        # runs the calls of one model step on worker threads).  Taken only while the resource is still unbuilt.
+        self._init_lock = threading.Lock()
 
     # ── lazy resources ───────────────────────────────────────────────────
 
@@ -158,15 +162,19 @@ class Retriever:
     @property
     def bm25(self):
         if self._bm25 is None:
-            from retrieval.sparse import load_or_build
-            self._bm25 = load_or_build()
+            with self._init_lock:
+                if self._bm25 is None:
+                    from retrieval.sparse import load_or_build
+                    self._bm25 = load_or_build()
         return self._bm25
 
     @property
     def reranker(self):
         if self._reranker is None:
-            from retrieval.rerank import CrossEncoderReranker
-            self._reranker = CrossEncoderReranker(self.config.rerank_model)
+            with self._init_lock:
+                if self._reranker is None:
+                    from retrieval.rerank import CrossEncoderReranker
+                    self._reranker = CrossEncoderReranker(self.config.rerank_model)
         return self._reranker
 
     # ── retrieval ────────────────────────────────────────────────────────
@@ -209,13 +217,16 @@ class Retriever:
 
 
 _default_retriever: Retriever | None = None
+_default_retriever_lock = threading.Lock()
 
 
 def get_retriever() -> Retriever:
-    """The process-wide retriever built from the environment (RETRIEVAL_* vars)."""
+    """The process-wide retriever built from the environment (RETRIEVAL_* vars); one is built even under concurrent first calls."""
     global _default_retriever
     if _default_retriever is None:
-        _default_retriever = Retriever(RetrievalConfig.from_env())
+        with _default_retriever_lock:
+            if _default_retriever is None:
+                _default_retriever = Retriever(RetrievalConfig.from_env())
     return _default_retriever
 
 

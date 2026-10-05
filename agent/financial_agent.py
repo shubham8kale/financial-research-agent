@@ -51,6 +51,7 @@
 
 import logging
 import os
+import threading
 
 from dotenv import load_dotenv
 from langgraph.prebuilt import create_react_agent
@@ -86,6 +87,11 @@ TOP_K = 5
 # The reference is cached here to avoid rebuilding on every tool call within a
 # single agent run.
 _vectorstore = None
+# Guards that first build.  LangGraph's ToolNode runs the calls of one model step on worker threads, so two
+# search_filings calls in the first step of a process (or of a restarted Space) both found the singleton empty and
+# both built a Chroma client at once; six of eight failed with "Could not connect to tenant default_tenant".  The
+# lock is taken only while the singleton is empty, so a warm process pays nothing for it.
+_vectorstore_lock = threading.Lock()
 
 
 def _get_vectorstore():
@@ -95,11 +101,14 @@ def _get_vectorstore():
     the sentence-transformer model and opening the ChromaDB SQLite files on
     every tool invocation.  Within a single agent run there may be 5–10 tool
     calls; caching the instance turns that overhead into a one-time cost.
+    Safe to call from several threads at once: one of them builds it.
     """
     global _vectorstore
     if _vectorstore is None:
-        logger.info("Initialising ChromaDB vectorstore …")
-        _vectorstore = build_vectorstore()
+        with _vectorstore_lock:
+            if _vectorstore is None:
+                logger.info("Initialising ChromaDB vectorstore …")
+                _vectorstore = build_vectorstore()
     return _vectorstore
 
 

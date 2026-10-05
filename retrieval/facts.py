@@ -22,6 +22,7 @@
 
 import re
 import sqlite3
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -390,10 +391,14 @@ def format_fact_observation(rows: list[FactRow], info: dict, concept_query: str)
 
 
 _default_store: FactStore | None = None
+_default_store_lock = threading.Lock()
 
 
 def get_fact_store() -> FactStore:
+    """The process-wide fact store; one is opened even when several threads ask first at once."""
     global _default_store
     if _default_store is None:
-        _default_store = FactStore()
+        with _default_store_lock:
+            if _default_store is None:
+                _default_store = FactStore()
     return _default_store
