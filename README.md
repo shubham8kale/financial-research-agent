@@ -99,8 +99,8 @@ The browser client uses `fetch` + `ReadableStream` (not `EventSource`, since the
 | API | FastAPI + Uvicorn |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Streaming | Server-Sent Events over `POST /query/stream` (fetch + ReadableStream) |
-| Backend tests | pytest — 222 tests, no network / API key / index required |
-| Frontend tests | Vitest + React Testing Library — 3 tests |
+| Backend tests | pytest — 358 tests, no network or API key needed (three skip without the index or the fact table) |
+| Frontend tests | Vitest + React Testing Library — 16 tests |
 | Packaging | Docker, docker-compose |
 | Evaluation | RAGAS 0.4.3 (faithfulness, answer_relevancy, context_recall) scored per chunk, plus judge-free retrieval metrics (hit/recall@k, MRR, nDCG@5 against labelled chunks) and a ground-truth figure check — see [eval/EVALUATION.md](eval/EVALUATION.md) |
 | Verification | Output contract: every answer becomes claims with cited observation ids and is checked against what was retrieved this turn, with no model in the check; fail-closed (`agent/contract.py`) |
@@ -299,11 +299,12 @@ gives the model those turns, labelled as reference only, in front of the new que
 (`agent/memory.py`; `THREAD_MEMORY`, `THREAD_MEMORY_MAX_TURNS`, `THREAD_MEMORY_TTL_SECONDS`
 and `THREAD_MEMORY_MAX_THREADS` in `.env.example`). `meta` then also carries
 `thread_id` and `thread_turns` (how many earlier turns the model was shown). Only an
-answer that passed verification is remembered, every figure is still re-retrieved and
-checked this turn, and the memory is in process: it clears when the server restarts.
+answer that passed verification (or was served with it off) is remembered, every figure is still
+re-retrieved and checked this turn, and the memory is in process: it clears when the server restarts
+and after 30 idle minutes.
 A request without a `thread_id` is exactly what it was before. On the eight-conversation
 probe in [eval/EVALUATION.md](eval/EVALUATION.md) (finding 25) 11 of 11 follow-up turns
-were answered with it and 3 of 11 without; N is 11.
+were answered correctly (the figure check) with it and 3 of 11 without; N is 11.
 
 `meta` is the request's own meter, present on every successful answer:
 
@@ -388,9 +389,9 @@ read (`eval/benchmark_tools.json`), how many calls were valid, whether the first
 tool and the tool set were the ones the prompt's rules call for, how many calls were
 issued in a batched step and whether a lookup's arguments were right, each as a
 count over its denominator. On the shipped configuration over all 71 items: **0 of
-119 calls rejected** (the committed run had 7 of 131, a required `concept` the model
-omitted), 2.49 agent model calls per query against 2.68 (EVALUATION.md, "Tool-call
-quality"). An optional `AGENT_BATCH_RULE` asks the model to batch more; it is off
+119 calls rejected** (the committed runs had 7 of 131 and, on the same index, 7 of 129: a required
+`concept` the model omitted), 2.49 agent model calls per query against 2.65 on the same index
+before the change (EVALUATION.md, "Tool-call quality"). An optional `AGENT_BATCH_RULE` asks the model to batch more; it is off
 because it made one answer wrong that no judge-free metric could see.
 
 ---
@@ -674,7 +675,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
    and `python -m eval.ci_gate retrieval --dry-run` — the last one checks that
    every threshold in `eval/ci_gate.json` sits at or below the committed value
    it was set from, so the gate cannot be edited past what was measured
-4. `pytest` (222 tests; no zero-test escape hatch — a vanished suite fails the build)
+4. `pytest` (358 tests; no zero-test escape hatch — a vanished suite fails the build)
 
 **Retrieval quality gate (`retrieval-gate`)**
 1. `python -m ingestion.pipeline`: rebuild the index and the fact table from
@@ -691,7 +692,7 @@ Two workflows. `.github/workflows/ci.yml` runs on every push and PR to
 **Frontend (`frontend`, in `web/`)**
 1. `npm ci`
 2. `npm run lint`
-3. `npm test` (3 Vitest tests on the chat page's handling of streamed events, SSE client mocked; Node 22 — vitest 4 requires >=20.19)
+3. `npm test` (16 Vitest tests on the chat page's handling of streamed events and its conversation thread, SSE client mocked; Node 22 — vitest 4 requires >=20.19)
 4. `npm run build`
 
 `.github/workflows/eval-judged.yml` is the paid half, run by hand from the
@@ -794,20 +795,20 @@ financial-research-agent/
 │   ├── rerank.py                   # Cross-encoder reranker
 │   ├── tickers.py                  # Which company a question names (the inferred filter)
 │   └── facts.py                    # Fact lookup, concept/segment resolution, calculator
-├── tests/                          # 356 tests; none needs a network or a key (three skip without the index or the fact table)
+├── tests/                          # 358 tests; none needs a network or a key (three skip without the index or the fact table)
 │   ├── test_ingestion.py           # chunker, cleaner, embedder (32)
 │   ├── test_submission_audit.py    # the EDGAR envelope, 10-K isolation, the audit classifier (6)
 │   ├── test_retrieval.py           # query_engine retrieval + prompt path (18)
 │   ├── test_terminal_failures.py   # empty-answer / recursion-limit guard (33)
 │   ├── test_query_stream.py        # SSE streaming contract (2)
 │   ├── test_query_meta.py          # the meter on /query and the meta stream event (2)
-│   ├── test_meter.py               # latency, tokens, cost, tool calls (arguments, overlap, threads), trace id (14)
+│   ├── test_meter.py               # latency, tokens, cost, tool calls (arguments, overlap, threads), trace id (15)
 │   ├── test_tool_metrics.py        # the tool-call metrics, one edge case at a time, and the committed baseline (29)
 │   ├── test_tool_labels.py         # the label file covers the 71 ids and names real tools (4)
 │   ├── test_tool_schema_version.py # the tool fingerprint moves when a description or schema does (4)
 │   ├── test_batch_rule.py          # AGENT_BATCH_RULE: off leaves the prompt untouched, on appends the rule (6)
 │   ├── test_concurrent_search.py   # first-use races on every lazy singleton; real-index concurrency (8, 2 need the index)
-│   ├── test_thread_memory.py       # bounds, TTL, LRU, refusals not stored, thread safety (17)
+│   ├── test_thread_memory.py       # bounds, TTL, LRU, refusals not stored, the on|off switch, thread safety (18)
 │   ├── test_query_threads.py       # thread_id on /query and /query/stream: payloads, 422, parity, off switch (38)
 │   ├── test_multi_turn_probe.py    # the probe file against facts.sqlite, the runner against a stub API (16)
 │   ├── test_eval_instrument.py     # observation parser, retrieval metrics, figure check, labels, leaderboard (28)
@@ -847,9 +848,9 @@ financial-research-agent/
 - **Results files before schema 3 scored `context_recall` over context blobs, not chunks.** Those files (`eval/results/*-<commit>.json`) are kept and listed separately on the leaderboard; their `context_recall` is not comparable with schema-3 runs.
 - **Free-tier cold start.** The backend Space sleeps after inactivity; the first request after a sleep takes ~30–60 s to wake the container before answers stream. This is a demo-scale, single-user deployment — not sized for concurrent load.
 - **Five dependency advisories remain open, and none has an upstream fix.** `npm audit` reports **0 vulnerabilities** — the `vitest` chain was cleared by moving to vitest 4 on Node 22, and every patched Python advisory (`langchain`, `langchain-text-splitters`, `langchain-openai`, `lxml`, `mcp`) has been taken. What is left is four ChromaDB advisories (2 critical, 2 high) and one `ragas` advisory, all of which have **no patched release published upstream**, so no version bump clears them. The ChromaDB pin is additionally verified to read the prebuilt index shipped in the deployed Space, so moving it would need an index-compatibility re-check rather than a routine bump.
-- **Test coverage is real but not complete.** 356 backend tests plus 16 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
-- **Conversation memory is in process and ephemeral.** It holds the text of up to six served turns per thread in one server process, forgets a thread after 30 idle minutes and everything on a restart, and is not shared between replicas; the UI says so. It was measured on eight small conversations (11 follow-up turns), which shows the mechanism works and estimates no rate (EVALUATION.md finding 25). There is no persistent, cross-session or per-user memory.
-- **Batching is the model's choice.** LangGraph already runs the calls of one step concurrently and the model batches 19% of calls on this benchmark; the explicit `AGENT_BATCH_RULE` raised it to 29% and saved model calls, but it made one answer wrong that the judge-free metrics could not see, so it ships off (EVALUATION.md finding 24).
+- **Test coverage is real but not complete.** 358 backend tests plus 16 frontend Vitest tests. Covered: the chunker and cleaner (including the iXBRL-preamble heuristic), the embedder's batching and citation metadata, the retrieval query path and every retrieval switch, the fact store and calculator, the `/query` and `/query/stream` contracts including `meta` and `verification`, both terminal-failure states, list-shaped message content through every entry point that flattens it, the meter, the output contract's checks and repair-then-refuse loop, the CI gate, and the evaluation instrument (observation parsing, chunk labelling, retrieval metrics, the figure check, the cache upgrade and the leaderboard). The MCP server is tested in-process over the SDK's in-memory transport (discovery, schemas, observation format). Still untested: `ingestion/downloader.py` (network-bound) and `ingestion/pipeline.py` (the orchestration wrapper). The MCP path is also the one the deployed backend never exercises — `/health` reports `mcp_server: false` in production, so it runs the direct-agent fallback.
+- **Conversation memory is in process and ephemeral.** It holds the text of up to six served turns per thread in one server process, forgets a thread after 30 idle minutes and everything on a restart, and is not shared between replicas; the UI says it is not saved and clears on a restart (it does not mention the idle expiry). It was measured on eight small conversations (11 follow-up turns), which shows the mechanism works and estimates no rate (EVALUATION.md finding 25). There is no persistent, cross-session or per-user memory.
+- **Batching is the model's choice.** LangGraph already runs the calls of one step concurrently and the model batches 19% of calls on this benchmark; the explicit `AGENT_BATCH_RULE` raised it to 29% and cut agent model calls from 2.49 to 2.37 (cost per query did not fall, latency did not move), but it made one answer wrong that the judge-free metrics could not see, so it ships off (EVALUATION.md finding 24).
 - **Chunked streaming, not per-token LLM streaming.** `/query/stream` runs the agent to completion and then streams the final answer word-by-word, rather than surfacing raw Gemini token deltas via `astream_events`. This trades true first-token latency for reliable isolation of only the final answer (the agent emits model-stream events on every tool-calling turn).
 
 ---

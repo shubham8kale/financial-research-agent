@@ -232,14 +232,15 @@ over the whole benchmark it cut agent model calls from 2.49 to 2.37 per query
 and took a five-company question from four serial searches to one
 `compare_companies` call (finding 24).
 
-**Left open.** The rule is **off**. It made one answer wrong, deterministically
-(`qa_0008`, 4 of 4 runs: ten lookups fanned out over Apple's product
+**Left open.** The rule is **off**. It made one answer wrong (`qa_0008`, 4 of 4
+runs with the rule, 0 of 6 without: ten lookups fanned out over Apple's product
 categories, taken for its reportable segments), and nothing judge-free reads an
 answer to a question with no figure; reading the changed answers found it. The
 next step is a rule that does not fan out over entities the question did not
-name, or a check that reads non-figure answers. The wording fix above already
-does most of the batching, and a latency gain is not claimed: the day moved the
-p50 by about as much as the whole difference.
+name, or a check that reads non-figure answers. The model already batches about
+a fifth of calls without the rule (45% on the items that need several lookups),
+and a latency gain is not claimed: work that did not change got 15% faster between
+two runs on the same index, as much as the whole difference.
 
 ---
 

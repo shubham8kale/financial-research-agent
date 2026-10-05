@@ -31,7 +31,7 @@ the backend is controlled by its `FRONTEND_ORIGINS` variable.
 
 ```bash
 npm run lint
-npm test           # 3 Vitest tests: streamed tokens + citations + verdict + meter, a withheld answer, an error
+npm test           # 16 Vitest tests: streamed tokens + citations + verdict + meter, a withheld answer, an error, the conversation thread and New chat
 npm run build
 ```
 

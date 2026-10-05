@@ -216,15 +216,15 @@ from it, unchanged; the harness would serve answers generated before the change.
 **A subset run is paired with a control that changes one thing.** The first
 measurement of the batching rule changed two things at once (the Phase 2
 wording and the rule) and moved everything; the same items with the rule off
-moved almost as much, which showed the wording, not the rule, had done it. The
-control cost $0.05 and is the reason the rule is not credited with the wording's
-effect.
+moved almost as much, so the rule is not credited with it. The control cost $0.05.
+A baseline on the same index mattered as much: the rebuilt index alone had
+already moved part of what the day-old `contract-v3` comparison showed.
 
 **Judge-free metrics do not see answer correctness on a question with no
 figure, so a change to the agent's behaviour is checked by reading the answers
 that changed.** The full run with the batching rule passed every judge-free
 gate and one answer was wrong; reading the 30 answers whose text changed found
-it (finding 24). A judge would have scored it too, at about $1.10; reading 30
+it (finding 24). A judge pass costs about $1.10 and was not run on it; reading 30
 answers cost nothing.
 
 ## Deployment
