@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "about": "A small multi-turn probe for the API's per-thread conversation memory (agent/memory.py). Eight conversations of two or three turns over the five FY2025 10-Ks; every follow-up leaves out something the previous turn supplied (the company, the year, the metric, or a pronoun or ellipsis), so a system with no memory cannot answer it. NOT part of the 71-item benchmark: separate ids, never hashed into benchmark_version, no chunk labels. N is small (11 follow-up turns in 8 conversations): the probe shows that memory works and is worth its design, it does not estimate a rate.",
+  "how_to_run": "python -m eval.run_multi_turn_probe --label <label>  (see eval/run_multi_turn_probe.py; 30 requests, about $0.075 actual)",
+  "ground_truth_provenance": "Every figure was read from data/facts.sqlite (the XBRL facts parsed from the filings on disk, python -m ingestion.xbrl) by an SQL query on ticker, concept, fiscal_year and dimension, never from model memory. Each turn lists the facts.id rows it rests on; tests/test_multi_turn_probe.py re-checks every id, ticker, concept, fiscal year and value against the database when it is present. Fiscal years follow the filing's own label: Apple's fiscal 2025 ends 2025-09-27 and Microsoft's ends 2025-06-30, the others end 2025-12-31.",
+  "scoring": "eval/figure_match.py::figure_match(ground_truth, answer), the judge-free check behind figure_primary: the answer contains the first non-year figure of the ground truth. A refused answer scores as not found.",
+  "conversations": [
+    {
+      "id": "mt_01",
+      "kind": "swap the company",
+      "turns": [
+        {
+          "question": "What was Apple's total net sales in fiscal 2025?",
+          "ground_truth": "Apple's total net sales in fiscal 2025 were $416,161 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 9, "ticker": "AAPL", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 416161}],
+          "source": "data/facts.sqlite facts.id=9: AAPL RevenueFromContractWithCustomerExcludingAssessedTax, 2024-09-29 to 2025-09-27, tagged 416,161 x10^6 USD, no dimension"
+        },
+        {
+          "question": "And Microsoft's?",
+          "ground_truth": "Microsoft's total revenue in fiscal 2025 was $281,724 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 4671, "ticker": "MSFT", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 281724}],
+          "source": "data/facts.sqlite facts.id=4671: MSFT RevenueFromContractWithCustomerExcludingAssessedTax, 2024-07-01 to 2025-06-30, tagged 281,724 x10^6 USD, no dimension"
+        },
+        {
+          "question": "And Alphabet's?",
+          "ground_truth": "Alphabet's total revenues in 2025 were $402,836 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 2225, "ticker": "GOOGL", "concept": "us-gaap:Revenues", "fiscal_year": 2025, "value_millions": 402836}],
+          "source": "data/facts.sqlite facts.id=2225: GOOGL Revenues, 2025-01-01 to 2025-12-31, tagged 402,836 x10^6 USD, no dimension"
+        }
+      ]
+    },
+    {
+      "id": "mt_02",
+      "kind": "swap the year",
+      "turns": [
+        {
+          "question": "What was AWS's net sales in 2025?",
+          "ground_truth": "AWS's net sales in 2025 were $128,725 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 2028, "ticker": "AMZN", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 128725}],
+          "source": "data/facts.sqlite facts.id=2028: AMZN RevenueFromContractWithCustomerExcludingAssessedTax, 2025-01-01 to 2025-12-31, tagged 128,725 x10^6 USD, ProductOrServiceAxis=AmazonWebServicesMember"
+        },
+        {
+          "question": "And in 2024?",
+          "ground_truth": "AWS's net sales in 2024 were $107,556 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 2027, "ticker": "AMZN", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2024, "value_millions": 107556}],
+          "source": "data/facts.sqlite facts.id=2027: AMZN RevenueFromContractWithCustomerExcludingAssessedTax, 2024-01-01 to 2024-12-31, tagged 107,556 x10^6 USD, ProductOrServiceAxis=AmazonWebServicesMember"
+        }
+      ]
+    },
+    {
+      "id": "mt_03",
+      "kind": "swap the metric",
+      "turns": [
+        {
+          "question": "What was Meta's net income for 2025?",
+          "ground_truth": "Meta's net income for 2025 was $60,458 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 3731, "ticker": "META", "concept": "us-gaap:NetIncomeLoss", "fiscal_year": 2025, "value_millions": 60458}],
+          "source": "data/facts.sqlite facts.id=3731: META NetIncomeLoss, 2025-01-01 to 2025-12-31, tagged 60,458 x10^6 USD, no dimension"
+        },
+        {
+          "question": "What about its diluted EPS?",
+          "ground_truth": "Meta's diluted earnings per share for 2025 were $23.49.",
+          "depends_on_history": true,
+          "facts": [{"id": 3737, "ticker": "META", "concept": "us-gaap:EarningsPerShareDiluted", "fiscal_year": 2025, "value": 23.49}],
+          "source": "data/facts.sqlite facts.id=3737: META EarningsPerShareDiluted, 2025-01-01 to 2025-12-31, tagged 23.49 USD per share, no dimension"
+        }
+      ]
+    },
+    {
+      "id": "mt_04",
+      "kind": "pronoun and a swapped segment",
+      "turns": [
+        {
+          "question": "What was Apple's iPhone net sales in fiscal 2025?",
+          "ground_truth": "Apple's iPhone net sales in fiscal 2025 were $209,586 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 272, "ticker": "AAPL", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 209586}],
+          "source": "data/facts.sqlite facts.id=272: AAPL RevenueFromContractWithCustomerExcludingAssessedTax, 2024-09-29 to 2025-09-27, tagged 209,586 x10^6 USD, ProductOrServiceAxis=IPhoneMember"
+        },
+        {
+          "question": "And what were its Services net sales?",
+          "ground_truth": "Apple's Services net sales in fiscal 2025 were $109,158 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 6, "ticker": "AAPL", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 109158}],
+          "source": "data/facts.sqlite facts.id=6: AAPL RevenueFromContractWithCustomerExcludingAssessedTax, 2024-09-29 to 2025-09-27, tagged 109,158 x10^6 USD, ProductOrServiceAxis=ServiceMember"
+        }
+      ]
+    },
+    {
+      "id": "mt_05",
+      "kind": "ellipsis, then a derived figure over two earlier answers",
+      "turns": [
+        {
+          "question": "What was Microsoft's Intelligent Cloud segment revenue in fiscal 2025?",
+          "ground_truth": "Microsoft's Intelligent Cloud segment revenue in fiscal 2025 was $106,265 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 6015, "ticker": "MSFT", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 106265}],
+          "source": "data/facts.sqlite facts.id=6015: MSFT RevenueFromContractWithCustomerExcludingAssessedTax, 2024-07-01 to 2025-06-30, tagged 106,265 x10^6 USD, StatementBusinessSegmentsAxis=IntelligentCloudMember"
+        },
+        {
+          "question": "And in fiscal 2024?",
+          "ground_truth": "Microsoft's Intelligent Cloud segment revenue in fiscal 2024 was $87,464 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 6016, "ticker": "MSFT", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2024, "value_millions": 87464}],
+          "source": "data/facts.sqlite facts.id=6016: MSFT RevenueFromContractWithCustomerExcludingAssessedTax, 2023-07-01 to 2024-06-30, tagged 87,464 x10^6 USD, StatementBusinessSegmentsAxis=IntelligentCloudMember"
+        },
+        {
+          "question": "By what percentage did it grow?",
+          "ground_truth": "It grew 21.50% from fiscal 2024 to fiscal 2025.",
+          "depends_on_history": true,
+          "facts": [{"id": 6015, "ticker": "MSFT", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 106265},
+                    {"id": 6016, "ticker": "MSFT", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2024, "value_millions": 87464}],
+          "derived": {"operation": "pct_change", "a_millions": 106265, "b_millions": 87464, "result": 21.50},
+          "source": "computed from facts.id=6015 and 6016: (106,265 - 87,464) / 87,464 x 100 = 21.4958, 21.50 to two places (the calculator's own rounding)"
+        }
+      ]
+    },
+    {
+      "id": "mt_06",
+      "kind": "swap the company",
+      "turns": [
+        {
+          "question": "What was Microsoft's operating income in fiscal 2025?",
+          "ground_truth": "Microsoft's operating income in fiscal 2025 was $128,528 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 4695, "ticker": "MSFT", "concept": "us-gaap:OperatingIncomeLoss", "fiscal_year": 2025, "value_millions": 128528}],
+          "source": "data/facts.sqlite facts.id=4695: MSFT OperatingIncomeLoss, 2024-07-01 to 2025-06-30, tagged 128,528 x10^6 USD, no dimension"
+        },
+        {
+          "question": "How about Alphabet's?",
+          "ground_truth": "Alphabet's operating income in 2025 was $129,039 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 2243, "ticker": "GOOGL", "concept": "us-gaap:OperatingIncomeLoss", "fiscal_year": 2025, "value_millions": 129039}],
+          "source": "data/facts.sqlite facts.id=2243: GOOGL OperatingIncomeLoss, 2025-01-01 to 2025-12-31, tagged 129,039 x10^6 USD, no dimension"
+        }
+      ]
+    },
+    {
+      "id": "mt_07",
+      "kind": "swap the year, then the metric, carrying the company and the year",
+      "turns": [
+        {
+          "question": "What was Alphabet's net income in 2025?",
+          "ground_truth": "Alphabet's net income in 2025 was $132,170 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 2255, "ticker": "GOOGL", "concept": "us-gaap:NetIncomeLoss", "fiscal_year": 2025, "value_millions": 132170}],
+          "source": "data/facts.sqlite facts.id=2255: GOOGL NetIncomeLoss, 2025-01-01 to 2025-12-31, tagged 132,170 x10^6 USD, no dimension"
+        },
+        {
+          "question": "What about 2024?",
+          "ground_truth": "Alphabet's net income in 2024 was $100,118 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 2254, "ticker": "GOOGL", "concept": "us-gaap:NetIncomeLoss", "fiscal_year": 2024, "value_millions": 100118}],
+          "source": "data/facts.sqlite facts.id=2254: GOOGL NetIncomeLoss, 2024-01-01 to 2024-12-31, tagged 100,118 x10^6 USD, no dimension"
+        },
+        {
+          "question": "What was its operating income that year?",
+          "ground_truth": "Alphabet's operating income in 2024 was $112,390 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 2242, "ticker": "GOOGL", "concept": "us-gaap:OperatingIncomeLoss", "fiscal_year": 2024, "value_millions": 112390}],
+          "source": "data/facts.sqlite facts.id=2242: GOOGL OperatingIncomeLoss, 2024-01-01 to 2024-12-31, tagged 112,390 x10^6 USD, no dimension"
+        }
+      ]
+    },
+    {
+      "id": "mt_08",
+      "kind": "swap the year",
+      "turns": [
+        {
+          "question": "What was the revenue of Meta's Reality Labs segment in 2025?",
+          "ground_truth": "Meta's Reality Labs segment revenue in 2025 was $2,207 million.",
+          "depends_on_history": false,
+          "facts": [{"id": 3967, "ticker": "META", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2025, "value_millions": 2207}],
+          "source": "data/facts.sqlite facts.id=3967: META RevenueFromContractWithCustomerExcludingAssessedTax, 2025-01-01 to 2025-12-31, tagged 2,207 x10^6 USD, StatementBusinessSegmentsAxis=RealityLabsMember"
+        },
+        {
+          "question": "How much was that in 2024?",
+          "ground_truth": "Meta's Reality Labs segment revenue in 2024 was $2,146 million.",
+          "depends_on_history": true,
+          "facts": [{"id": 3968, "ticker": "META", "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax", "fiscal_year": 2024, "value_millions": 2146}],
+          "source": "data/facts.sqlite facts.id=3968: META RevenueFromContractWithCustomerExcludingAssessedTax, 2024-01-01 to 2024-12-31, tagged 2,146 x10^6 USD, StatementBusinessSegmentsAxis=RealityLabsMember"
+        }
+      ]
+    }
+  ]
+}
