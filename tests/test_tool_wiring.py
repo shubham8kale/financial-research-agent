@@ -69,3 +69,15 @@ def test_get_retriever_reads_env_once(monkeypatch):
     monkeypatch.setenv("RETRIEVAL_MODE", "dense")
     assert retriever_mod.get_retriever() is r          # built once per process
     monkeypatch.setattr(retriever_mod, "_default_retriever", None)
+
+
+def test_the_fact_lookup_says_in_every_place_the_model_reads_it_that_concept_is_required():
+    # 7 of 131 benchmark tool calls were rejected for a missing `concept`; the requirement is now stated in the
+    # tool's first sentence, its parameter text and the system prompt's rule 7, mirrored on the MCP server
+    # (tests/test_mcp_contract.py pins that side).
+    from agent.financial_agent import _SYSTEM_PROMPT, lookup_financial_fact
+    first_sentence = lookup_financial_fact.description.split("\n")[0]
+    assert "concept is REQUIRED" in first_sentence and "one call per figure and year" in first_sentence
+    assert "REQUIRED on every call" in lookup_financial_fact.description
+    rule_7 = _SYSTEM_PROMPT[_SYSTEM_PROMPT.index("7. For"):_SYSTEM_PROMPT.index("8. Never")]
+    assert "concept is REQUIRED" in rule_7 and "repeat the concept" in rule_7

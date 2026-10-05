@@ -82,6 +82,9 @@ def test_discovery_lists_the_five_tools_with_their_schemas(served):
     assert set(tools["compare_companies"].inputSchema["required"]) == {"question", "tickers"}
     fact = tools["lookup_financial_fact"].inputSchema
     assert set(fact["required"]) == {"ticker", "concept"} and {"fiscal_year", "segment"} <= set(fact["properties"])
+    # deliberate (upgrade run, workstream A): the requirement is stated where the model reads it, in words
+    assert "concept is REQUIRED" in tools["lookup_financial_fact"].description
+    assert fact["properties"]["concept"]["description"].startswith("REQUIRED")
     assert set(tools["compute_metric"].inputSchema["required"]) == {"operation", "a", "b"}
     assert tools["search_filings"].annotations.readOnlyHint is True
 

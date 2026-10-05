@@ -359,7 +359,7 @@ def compare_companies(question: str, tickers: str) -> str:
 @tool
 def lookup_financial_fact(ticker: str, concept: str, fiscal_year: int | None = None,
                           segment: str | None = None) -> str:
-    """Look up an exact financial figure from the company's 10-K XBRL data.
+    """Look up an exact financial figure from the company's 10-K XBRL data. Every call needs BOTH ticker and concept: concept is REQUIRED, and one call returns one concept for one fiscal year, so make one call per figure and year, e.g. lookup_financial_fact(ticker="AAPL", concept="total net sales", fiscal_year=2024).
 
     Every headline number in a 10-K is machine-tagged with its concept, period
     and unit. This tool returns those tagged values, so it is the reliable way
@@ -373,8 +373,8 @@ def lookup_financial_fact(ticker: str, concept: str, fiscal_year: int | None = N
     ticker:
         One of the indexed tickers, e.g. "AAPL".
     concept:
-        Plain language ("total net sales", "net income", "diluted EPS") or an
-        exact concept name ("us-gaap:Revenues").
+        REQUIRED on every call. Plain language ("total net sales", "net income",
+        "diluted EPS") or an exact concept name ("us-gaap:Revenues").
     fiscal_year:
         The fiscal year wanted, e.g. 2025. Leave unset for the most recent
         fiscal year in the filing; the result says which year it used.
@@ -474,7 +474,12 @@ _SYSTEM_PROMPT = (
     "iPhone, Intelligent Cloud, Google Cloud, AWS or Reality Labs - call "
     "lookup_financial_fact FIRST. It returns the value tagged in the filing's "
     "XBRL with its fiscal year, which is more reliable than reading a table out "
-    "of search results. Pass fiscal_year when the question names one. When it "
+    "of search results. Every lookup_financial_fact call needs both ticker and "
+    "concept: concept is REQUIRED, even when a call differs from the previous one "
+    "only by fiscal_year, so to compare two years or two figures make one call "
+    "for each and repeat the concept, for example lookup_financial_fact(ticker="
+    "\"AAPL\", concept=\"total net sales\", fiscal_year=2024). Pass fiscal_year "
+    "when the question names one. When it "
     "does not, the tool uses the most recent fiscal year in the filing: report "
     "that figure and state the year. Use search_filings for narrative, "
     "qualitative or policy questions, and when the fact lookup finds nothing.\n"

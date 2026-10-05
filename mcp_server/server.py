@@ -322,7 +322,9 @@ async def compare_companies(
 
 @mcp.tool(
     description=(
-        "Look up an exact financial figure from a company's 10-K XBRL data: revenue, "
+        "Look up an exact financial figure from a company's 10-K XBRL data. Every call needs BOTH ticker and "
+        "concept: concept is REQUIRED, and one call returns one concept for one fiscal year, so make one call per "
+        "figure and year, e.g. ticker='AAPL', concept='total net sales', fiscal_year=2024. Covers revenue, "
         "net income, operating income, EPS, total assets, cash flow, capital expenditures, "
         "or a segment/product figure (iPhone, Intelligent Cloud, Google Cloud, AWS, Reality "
         "Labs). Returns the tagged value with its fiscal year, period and unit. Use FIRST for "
@@ -332,7 +334,7 @@ async def compare_companies(
 )
 async def lookup_financial_fact(
     ticker: Annotated[str, Field(description="Indexed ticker, e.g. 'AAPL'.")],
-    concept: Annotated[str, Field(description="Plain language ('total net sales', 'diluted EPS') or a concept name ('us-gaap:Revenues').")],
+    concept: Annotated[str, Field(description="REQUIRED on every call. Plain language ('total net sales', 'diluted EPS') or a concept name ('us-gaap:Revenues').")],
     ctx: Context,
     fiscal_year: Annotated[int | None, Field(description="Fiscal year wanted, e.g. 2025. Unset = most recent in the filing.")] = None,
     segment: Annotated[str | None, Field(description="Segment or product to restrict to, e.g. 'iPhone', 'AWS'. Unset = consolidated.")] = None,
