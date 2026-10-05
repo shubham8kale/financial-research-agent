@@ -32,6 +32,7 @@ Counted cost = actual cost (sum of `cost_usd` in the new results file; for the p
 | 3 | 22:45 | `run_eval --generate-only --label b-rule-v1 --cache-file eval/cache/b-rule-v1.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on` (git `3d1f616`) | 17 | $0.0531 | $0.0425 | $0.0531 | $0.1129 |
 | 4 | 22:50 | `run_eval --generate-only --label b-control --cache-file eval/cache/b-control.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=off` (fix kept, git `911f8c5`) | 17 | $0.0531 | $0.0421 | $0.0526 | $0.1656 |
 | 5 | 22:57 | `run_eval --generate-only --label b-rule-v2 --cache-file eval/cache/b-rule-v2.json --ids <ITEMS_B>` with `AGENT_BATCH_RULE=on`, rule wording v2 (git `7438a47`) | 17 | $0.0531 | $0.0379 | $0.0474 | $0.2130 |
+| 6 | 23:01 | `run_eval --generate-only --label upgrade-v1 --cache-file eval/cache/upgrade-v1.json` with `AGENT_BATCH_RULE=on`, rule v2 (git `cc21568`), all 71 items | 71 | $0.2219 | $0.1465 | $0.1831 | $0.3961 |
 | | | (no other paid call yet) | | | | | |
 
 ## Journal
@@ -212,3 +213,31 @@ NEXT STEP: rule wording iteration 1 (commit, then run `b-rule-v2` on ITEMS_B wit
 Decision: one iteration is enough (the second allowed iteration is not needed); the full 71-item confirmation run uses rule v2 ON with the Phase 2 fix, label `upgrade-v1`, and its default-on gate is evaluated against `contract-v3` AND against the rule's own controlled evidence above (the vs-`contract-v3` gate in section 3.4 cannot separate the rule from the wording fix, so the rule ships on only if it also beats the rule-off control, which v2 does and v1 did not).
 
 NEXT STEP: commit these results, then `upgrade-v1`, the full 71-item run (expected counted cost 71 x $0.0025 x 1.25 = $0.2219, ledger $0.2130 + $0.2219 = $0.4349), on a QUIET machine (no tests or builds during the run: the latency gate reads from it).
+
+### 2026-10-04 23:25 Phase 3.4: the full 71-item run with the fix and rule v2 ON (`upgrade-v1`); the formal gates pass; a manual answer review finds one regression the gates cannot see
+
+`upgrade-v1` (`eval/results/upgrade-v1-0c01c6017b31.json`, git `cc21568`, clean tree, `prompt_version sha256:95cd45597bbc`, `agent_batch_rule on`, `tool_schema_version sha256:88e7a8918c7f`): all 71 items; actual $0.1465, counted $0.1831, ledger total **$0.3961**. Quiet machine. Tool metrics with the `contract-v3` comparison: `eval/tool_metrics/upgrade-v1-0c01c6017b31.json`.
+
+| 71 items | `contract-v3` (09-28, the shipped configuration then) | `upgrade-v1` (fix + rule v2 ON) |
+|---|---|---|
+| tool calls | 131 | 121 |
+| calls rejected | 7 of 131 (all `lookup_financial_fact`, 6 items) | **0 of 121** (lookups 0 of 60) |
+| calls issued in a batched step | not measurable (8 items had more calls than tool steps) | 35 of 121 (28.9%); 12 of 71 items had a batched step; 13 had more calls than steps |
+| agent model calls per query | 2.68 | **2.37** |
+| `figure_primary` | 45 of 45 | 46 of 46 (the 45 plus `qa_0066`, whose ground truth was corrected on 09-28, after the contract-v3 snapshot); 45 of 45 on the original 45 |
+| verified / refused | 70 / 0 | 70 / 0 |
+| terminal failures | 1 (`qa_0062`) | 1 (`qa_0024`, a nine-search loop on a list question; it also hit the limit in `reindex-v3`) |
+| `first_tool_ok` / `tool_set_ok` | 67 of 71 / 67 of 71 | 70 of 71 / 69 of 71 |
+| latency p50 / p95 / mean, nearest-rank, terminal failure excluded (n=70) | 3,684 / 9,077 / 4,453 ms | 2,831 / 5,572 / 3,273 ms |
+| cost per query / whole benchmark | $0.002067 / $0.1467 | $0.002063 / $0.1465 |
+
+**The section 3.4 gates, evaluated literally against `contract-v3`: all hold** (`figure_primary` not below; verified 70 not below and refusals 0; terminal failures 1 not above 1; p50 latency 23% better, not worse; cost per query equal; invalid lookup calls 0 below 7). **I do not read that as a licence to turn the rule on, for two reasons found by looking, not by the gates.**
+
+1. **A regression the gates cannot see: `qa_0008`.** "Which of Apple's reportable segments saw a decrease in net sales in fiscal 2025?" (ground truth: Greater China) was answered correctly in all five earlier runs that included it (`cost-v3`, `contract-v3`, `reindex-v3`, my `a-before` and `a-wording`, rule off) and WRONG in `upgrade-v1`: the rule made the model fan out TEN parallel `lookup_financial_fact` calls over Apple's product categories (iPhone, Mac, iPad, Wearables, Services, two years each), treat them as the "reportable segments" (they are geographic: Americas, Europe, Greater China, Japan, Rest of Asia Pacific) and answer "Wearables, Home and Accessories", verified. The figure check does not apply (the ground truth has no figure) and the contract verifies figures against the observations, which the model did retrieve, so nothing in `figure_primary`, verification or the tool metrics reflects it. The mechanism is the one a batching rule should be expected to have: "make one lookup per company or year in the same step" invites a fan-out where a narrative search was the right tool. I read every answer that changed between `contract-v3` and `upgrade-v1` (30 items) against its ground truth: `qa_0008` is the only one that became wrong; `qa_0014`, `qa_0035`, `qa_0047` are paraphrase-level changes that also differ between the committed runs, and the other 26 are the same answer in new words.
+2. **The latency gain is mostly not the change.** 52 items used exactly the same tools in both runs (45 of them a single call); their p50 fell from 3,338 to 2,722 ms (median per-item ratio 0.84) with nothing about what they did changed, and the median `search_filings` call fell from 859 to 706 ms. About 16% of the latency difference is the day, not the code. Only structural counts (model calls, steps, batched calls) are evidence about the change; the latency difference is NOT quoted.
+
+**Decision.** `AGENT_BATCH_RULE` ships with the default **off**. Evidence for the switch, all kept: the rule v2 does what it was written to do (ITEMS_B against the rule-off control: agent model calls 3.06 to 2.53, 47 to 39 calls, `qa_0062` four serial searches to one `compare_companies` call, answers unchanged on the figure items) and the full run shows 0 rejected calls, 2.68 to 2.37 model calls per query and no figure or verification regression; against that it produced at least one wrong, verified answer on the full benchmark. R3 says a change that does not clearly help is switched off and written up; R4 says the default of a switch that could regress answers is decided by a measured gate, and this gate (answer correctness read by hand) is not met. The wording fix of Phase 2 is unconditional (it repairs a defect) and is on.
+
+**What is still missing for the default I am shipping.** Nothing has run the SHIPPED configuration (fix on, rule off) over all 71 items: `upgrade-v1` had the rule on. So the second full run is the same configuration with the rule OFF (the optional "second full run": ledger $0.3961 is under the $0.60 limit for it; counted cost expected $0.2219). It gives the full-benchmark numbers for what ships, a read of the answers for any regression of the wording fix, and, set against `upgrade-v1`, the rule's effect at full scale. I chose it over a pure repeat of `upgrade-v1` as the noise sample because noise is already measured twice (12% p50 between two committed runs, the 16% same-tools drift above).
+
+NEXT STEP: commit these results; run `upgrade-v1-off` (label `upgrade-control`): all 71 items, `AGENT_BATCH_RULE=off`, quiet machine; then the multi-turn probe.
