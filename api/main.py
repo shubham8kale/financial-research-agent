@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 
 from agent import financial_agent, mcp_agent
 from agent.contract import averify_answer
+from agent.memory import ThreadMemory, Turn, compose_message
 from agent.meter import QueryMeter, public_meta
 from agent.observations import FALLBACK_RE, observation_text, parse_observation
 from agent.financial_agent import (
@@ -88,6 +89,11 @@ async def lifespan(app: FastAPI):
     app.state.direct_agent = financial_agent.build_agent_executor()
     logger.info("Direct agent built successfully at startup")
 
+    app.state.thread_memory = ThreadMemory.from_env()
+    logger.info("Thread memory %s (in process, %d turns per thread, %.0f s idle TTL, %d threads)",
+                "on" if app.state.thread_memory.enabled else "off", app.state.thread_memory.max_turns,
+                app.state.thread_memory.ttl_seconds, app.state.thread_memory.max_threads)
+
     yield
 
 
@@ -111,6 +117,10 @@ class QueryRequest(BaseModel):
     # longest benchmark question.
     question: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
     ticker: Optional[str] = Field(default=None, max_length=10)
+    # Optional conversation thread (agent/memory.py).  A request that carries one gets the earlier turns of that
+    # thread in front of its question; a request that does not is exactly what it was before this field existed.
+    # The client mints it (the web UI uses crypto.randomUUID()); the server treats it as an opaque key.
+    thread_id: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]{8,64}$")
 
 
 class SourceChunk(BaseModel):
@@ -129,7 +139,9 @@ class QueryResponse(BaseModel):
     # Per-request meter: latency_ms, llm_calls, input/output tokens, cost_usd at
     # the repo's price table, tools called, tool_ms_total, trace_id (the
     # LangSmith trace when tracing is on) and which backend answered.  Additive
-    # to the contract; older clients ignore it.
+    # to the contract; older clients ignore it.  A request that carried a thread
+    # id while memory is on also gets thread_id and thread_turns (how many
+    # earlier turns the model was shown).
     meta: Optional[Dict[str, Any]] = None
     # The output contract's verdict (agent/contract.py): status verified |
     # unverified | refused | skipped, the claims' figure counts, the failures
@@ -296,8 +308,51 @@ def _chunk_idx_of(source_file: str) -> str:
     return ""
 
 
-def _new_config(meter: QueryMeter) -> dict:
-    return {"recursion_limit": 20, "callbacks": [meter]}
+def _new_config(meter: QueryMeter, thread_id: Optional[str] = None) -> dict:
+    config = {"recursion_limit": 20, "callbacks": [meter]}
+    if thread_id:
+        # LangSmith run metadata only: it lets a trace be found by conversation; it never reaches a log line or a prompt.
+        config["metadata"] = {"thread_id": thread_id}
+    return config
+
+
+# ── Conversation memory (agent/memory.py) ──────────────────────────────────────
+#
+# One path for /query and /query/stream, so the two cannot drift: the same thread context in front of the
+# agent, the same bookkeeping behind it.
+
+def _thread_memory(request: Request) -> ThreadMemory:
+    memory = getattr(request.app.state, "thread_memory", None)
+    if memory is None:                      # the lifespan did not run (tests, or a host that skips it)
+        memory = request.app.state.thread_memory = ThreadMemory.from_env()
+    return memory
+
+
+def _thread_context(request: Request, req: QueryRequest) -> tuple[Optional[str], list[Turn]]:
+    """(the thread id in force, its earlier turns).  (None, []) when no id was sent or memory is off."""
+    memory = _thread_memory(request)
+    if not req.thread_id or not memory.enabled:
+        return None, []
+    return req.thread_id, memory.history(req.thread_id)
+
+
+def _payload(question: str, turns: list[Turn]) -> dict:
+    """The agent's input.  With no earlier turns it is exactly the payload the API has always sent."""
+    if not turns:
+        return {"messages": [("human", question)]}
+    return {"messages": [("human", compose_message(turns, question))]}
+
+
+def _finish_thread(request: Request, thread_id: Optional[str], n_turns: int, question: str, answer: str,
+                   meta: dict, verification: dict) -> None:
+    """After an answer is served: say which thread it belonged to, and remember it if it passed verification."""
+    if not thread_id:
+        return
+    meta["thread_id"] = thread_id
+    meta["thread_turns"] = n_turns
+    if classify_terminal_state(answer):     # a terminal failure carries verification "skipped"; it is not an answer
+        return
+    _thread_memory(request).remember(thread_id, question, answer, (verification or {}).get("status"))
 
 
 def _remaining(deadline: float) -> float:
@@ -334,8 +389,12 @@ async def _complete(question: str, result: dict, meter: QueryMeter, backend: str
     return answer, sources, meta, verification
 
 
-async def _run_with_fallback(request: Request, question: str):
+async def _run_with_fallback(request: Request, question: str, turns: Optional[list[Turn]] = None,
+                             thread_id: Optional[str] = None):
     """Run the agent (MCP first, then direct) and return (answer, sources, meta, verification).
+
+    *turns* are the earlier turns of the request's thread (none when it has none); they reach the agent inside one
+    human message, while *question*, the current one alone, is what the verification step sees.
 
     Mirrors /query's fallback order and AGENT_TIMEOUT_SECONDS timeout (120 s by
     default) so the streaming endpoint has
@@ -343,7 +402,8 @@ async def _run_with_fallback(request: Request, question: str):
     asyncio.TimeoutError if the direct agent also times out, or the underlying
     exception if it fails, so the caller can emit an SSE error event.
     """
-    payload = {"messages": [("human", question)]}
+    turns = turns or []
+    payload = _payload(question, turns)
     deadline = asyncio.get_running_loop().time() + AGENT_TIMEOUT_SECONDS
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
@@ -351,13 +411,15 @@ async def _run_with_fallback(request: Request, question: str):
         meter = QueryMeter(model=financial_agent.LLM_MODEL)
         try:
             result = await asyncio.wait_for(
-                mcp_exec.ainvoke(payload, config=_new_config(meter)),
+                mcp_exec.ainvoke(payload, config=_new_config(meter, thread_id)),
                 timeout=_remaining(deadline),
             )
             answer = _final_answer(result)
             if not classify_terminal_state(answer):
                 logger.info("Stream answered via MCP agent")
-                return await _complete(question, result, meter, "mcp")
+                served, sources, meta, verification = await _complete(question, result, meter, "mcp")
+                _finish_thread(request, thread_id, len(turns), question, served, meta, verification)
+                return served, sources, meta, verification
             logger.warning("MCP agent produced no usable answer; falling back")
         except asyncio.TimeoutError:
             logger.warning("MCP agent timed out; falling back to direct agent")
@@ -373,20 +435,23 @@ async def _run_with_fallback(request: Request, question: str):
     direct_exec = request.app.state.direct_agent
     meter = QueryMeter(model=financial_agent.LLM_MODEL)
     result = await asyncio.wait_for(
-        direct_exec.ainvoke(payload, config=_new_config(meter)),
+        direct_exec.ainvoke(payload, config=_new_config(meter, thread_id)),
         timeout=_remaining(deadline),
     )
     logger.info("Stream answered via direct agent")
-    return await _complete(question, result, meter, "direct")
+    served, sources, meta, verification = await _complete(question, result, meter, "direct")
+    _finish_thread(request, thread_id, len(turns), question, served, meta, verification)
+    return served, sources, meta, verification
 
 
-async def _sse_event_stream(request: Request, question: str):
+async def _sse_event_stream(request: Request, question: str, turns: Optional[list[Turn]] = None,
+                            thread_id: Optional[str] = None):
     """Async generator yielding SSE lines: token* → sources → verification → meta → done (or error)."""
     # Run the agent as a task and emit SSE keepalive comments while it works. The
     # chunked-answer design produces no output until the agent finishes, so on a
     # slow free-tier host that silent gap can trip a proxy idle-timeout and drop
     # the connection. Comment lines (": ...") are ignored by SSE clients.
-    run = asyncio.create_task(_run_with_fallback(request, question))
+    run = asyncio.create_task(_run_with_fallback(request, question, turns, thread_id))
     try:
         while True:
             finished, _ = await asyncio.wait({run}, timeout=SSE_KEEPALIVE_SECONDS)
@@ -477,7 +542,8 @@ async def _sse_event_stream(request: Request, question: str):
 @app.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest, request: Request) -> QueryResponse:
     question = _build_question(req)
-    payload = {"messages": [("human", question)]}
+    thread_id, turns = _thread_context(request, req)
+    payload = _payload(question, turns)
     deadline = asyncio.get_running_loop().time() + AGENT_TIMEOUT_SECONDS
 
     mcp_exec = getattr(request.app.state, "mcp_agent", None)
@@ -485,7 +551,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
         try:
             meter = QueryMeter(model=financial_agent.LLM_MODEL)
             result = await asyncio.wait_for(
-                mcp_exec.ainvoke(payload, config=_new_config(meter)),
+                mcp_exec.ainvoke(payload, config=_new_config(meter, thread_id)),
                 timeout=_remaining(deadline),
             )
             answer = _final_answer(result)
@@ -496,6 +562,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
                 raise RuntimeError(f"MCP agent terminal failure: {mcp_outcome}")
             logger.info("Query answered via MCP agent")
             answer, sources, meta, verification = await _complete(question, result, meter, "mcp")
+            _finish_thread(request, thread_id, len(turns), question, answer, meta, verification)
             return QueryResponse(
                 answer=answer,
                 sources=sources,
@@ -521,7 +588,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
     try:
         meter = QueryMeter(model=financial_agent.LLM_MODEL)
         result = await asyncio.wait_for(
-            direct_exec.ainvoke(payload, config=_new_config(meter)),
+            direct_exec.ainvoke(payload, config=_new_config(meter, thread_id)),
             timeout=_remaining(deadline),
         )
         answer = _final_answer(result)
@@ -531,6 +598,7 @@ async def query(req: QueryRequest, request: Request) -> QueryResponse:
             raise _terminal_http_error(outcome)
         logger.info("Query answered via direct agent")
         answer, sources, meta, verification = await _complete(question, result, meter, "direct")
+        _finish_thread(request, thread_id, len(turns), question, answer, meta, verification)
         return QueryResponse(
             answer=answer,
             sources=sources,
@@ -571,8 +639,9 @@ async def query_stream(req: QueryRequest, request: Request):
     rather than streamed via astream_events.
     """
     question = _build_question(req)
+    thread_id, turns = _thread_context(request, req)
     return StreamingResponse(
-        _sse_event_stream(request, question),
+        _sse_event_stream(request, question, turns, thread_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
