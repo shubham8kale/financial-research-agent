@@ -443,3 +443,43 @@ Each number, its n, its definition and the file it comes from. `tm/` is `eval/to
 * **`tool_set_ok` or `first_tool_ok` as answer quality**: they measure conformity to the prompt's tool rules.
 * **`figure_primary` 46 of 46 against 45 of 45 as a gain**: the extra item is `qa_0066`, whose ground truth was corrected after `contract-v3` was generated.
 * **The `trace_id` in these results files**: tracing was off, so none opens in LangSmith.
+
+## Post-run (2026-10-05)
+
+The owner reviewed the 35 commits of the upgrade run above and asked for `FRA upgrade prompts/FRA_POSTRUN_PROMPT.md` (outside the repo), which supersedes `FRA_CLEANUP_PROMPT.md`: a judge pass over the shipped answers, the tool-schema fingerprint in the cache key, removal of the tolerant-tool marker, and documentation corrections. Same rules as the upgrade run (sections 2, 3, 4 of its prompt): commit on `main`, no new branch, **no push**, stage by explicit path, no edit of an existing file under `eval/results/`, `eval/cache/`, `eval/tool_metrics/` or `eval/probes/`, the R8 gates before every commit that touches code, no key in any file or log, no non-Gemini API. The REPORT at the top of this file is not rewritten; corrections to it are made here. Commits carry no `Co-Authored-By` trailer (the owner's standing instruction for this repo).
+
+```
+JUDGED_SCORE_ONLY = 1
+SPEND_CAP_USD     = 1.60   # counted (actual x 1.25), this run alone
+PUSH              = false
+```
+
+### 2026-10-05 08:00 Post-run step 0: preflight
+
+- Branch `main` (not detached), HEAD `b27d3d997b8e2347365158e129c661d372b73c40`, `git log --oneline eda988e..HEAD` = 35 commits, `git status --short` empty. Interpreter `C:\Users\1842s\anaconda3\envs\financial-agent\python.exe`, Python 3.11.15.
+- **Stale locks.** `.git/index.lock` (0 bytes, 2026-10-05 07:22:43 local = 11:22 UTC) in this repo and `../hf-space/.git/index.lock` (0 bytes, 07:48:14 local = 11:48 UTC). `Get-Process git` returned nothing; waited 10 seconds; still nothing; deleted exactly those two files and nothing else in either `.git/`. The hf-space lock is the only thing touched outside this repo; nothing else there was read or changed. Neither lock had reappeared when the gates below finished (`Test-Path` false for both); a reappearance is journalled where it is seen.
+- **Gates at HEAD, all green:** `pytest --tb=short --strict-markers -p no:cacheprovider` 358 passed (2 warnings) in 55 s; `flake8 . --max-line-length 120 --ignore E501,W503` exit 0; `eval.run_eval --dry-run`, `eval.run_retrieval_eval --dry-run` (71 items, 71 labelled, index of 4,783 chunks), `eval.ci_gate retrieval --dry-run` exit 0; `web`: `npm run lint` exit 0, `npm test` 3 files and 16 tests passed, `npm run build` exit 0. The tree was still clean afterwards.
+- Interpreter checks that decide step 1: see the next entry.
+
+### Post-run spend ledger
+
+Counted = actual x 1.25 (the repo meter cannot see retried or interrupted requests). The cap of $1.60 applies to this run alone (the "this run" column); the upgrade run's counted $0.6518 is NOT carried into the cap and is shown in the last column so the owner sees cumulative spend against his credit (about $5 in all at the start of the upgrade run; the earlier ledger put about $4.35 of it left).
+
+| # | time | command | items | expected (counted) | actual | counted (x1.25) | this run (cap $1.60) | cumulative incl. upgrade run's $0.6518 |
+|---|------|---------|-------|--------------------|--------|-----------------|----------------------|----------------------------------------|
+| 10 | 08:10 | `run_eval --score-only --judge-provider google --max-judge-calls 520 --label upgrade-judged --cache-file eval/cache/upgrade-control.json` (shipped configuration, `AGENT_BATCH_RULE=off`; judge `gemini-3.6-flash`; no agent call) | 71 | $1.31 (426 judge calls, $1.0229 actual on `reindex-v3`) | pending | pending | pending | pending |
+
+NEXT STEP: step 1.1 preconditions (done offline, next entry), then run row 10.
+
+### 2026-10-05 08:08 Post-run step 1.1: the offline preconditions of the judge pass all hold
+
+A script outside the repo (`judge_preconditions.py`, no network, no model call, prints no environment value) set the shipped environment (`VERIFY_MODE=strict`, `LLM_MODEL=gemini-3.1-flash-lite`, `RETRIEVAL_RERANK=true`, `RETRIEVAL_FETCH_K=50`, `RETRIEVAL_TICKER_FILTER=inferred`, `AGENT_BATCH_RULE=off`, `RAGAS_LLM_MODEL=gemini-3.6-flash`, tracing off, Hub offline), built the keys the way `main()` builds them, and checked:
+
+- `tool_schema_version()` = `sha256:88e7a8918c7f`; `_prompt_version()` with `AGENT_BATCH_RULE=off` = `sha256:e96ec6393c90`; both equal what `eval/results/upgrade-control-7c50eed7da71.json` records, as do its retrieval config, `contract_version` (`da6f5bea0c8b`), `agent_batch_rule` (`off`) and judge (`google/gemini-3.6-flash`).
+- The key `main()` builds is `<id>|gemini-3.1-flash-lite|sha256:e96ec6393c90|rc=6a10e680|vc=strict-da6f5bea`; `eval/cache/upgrade-control.json` holds **71 of 71** ids under it.
+- **71 of 71 cached answers are byte-identical** to `results[].answer` of the committed results file. The judge will score the committed answers.
+- That results file is a `--generate-only` run (`run_status.complete` false), so `find_existing_result` does not match it and the judged run (config hash expected `7c50eed7da71`, file `upgrade-judged-7c50eed7da71.json`) will not be refused or overwrite anything.
+
+Spend check (section 7 protocol): expected actual $1.05, counted $1.31 (the identical pass on `reindex-v3` made 426 judge calls for $1.0229 actual); this run's ledger total is $0.00; $0.00 + $1.31 is under the $1.60 cap. Row 10 above was written before the run.
+
+NEXT STEP: run row 10 (step 1.3); the tree is committed first so the results file records `git_dirty` false.
