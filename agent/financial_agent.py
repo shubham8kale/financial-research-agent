@@ -500,8 +500,9 @@ _SYSTEM_PROMPT = (
 # Appended to the system prompt ONLY when AGENT_BATCH_RULE=on (system_prompt() below).  LangGraph's tool node already
 # runs the calls of one model step concurrently, and the model sometimes issues several at once; this asks it to do
 # so whenever a question needs the same lookup for several companies, years or concepts.  It repeats that every call
-# in the batch needs its required arguments because the rejected `concept`-less lookups of the committed runs
-# happened inside batched steps.  Off by default until a measured gate (eval/EVALUATION.md, finding 24) decides.
+# in the batch needs its required arguments so that asking for several calls at once cannot make the omitted-`concept`
+# failure (finding 23) more likely.  Off by default: measured on the full benchmark it saved model calls and one
+# answer it changed was wrong and verified, so the default is off (eval/EVALUATION.md, finding 24).
 _BATCH_RULE = (
     "\n9. When a question needs the same lookup for several companies, years or "
     "concepts, issue all of those calls together in ONE step rather than one per "

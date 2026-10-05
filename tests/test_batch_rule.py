@@ -50,7 +50,7 @@ def test_the_rule_says_what_it_is_meant_to_say(monkeypatch):
     assert "ONE step" in rule and "several companies, years or concepts" in rule
     assert "ONE compare_companies call that lists every ticker" in rule and "step budget" in rule
     assert "one lookup_financial_fact call per company or year" in rule
-    # the rejected lookups of the committed runs happened inside batched steps, so the rule repeats the requirement
+    # asking for several calls at once must not make the omitted-concept failure (finding 23) more likely
     assert "required arguments" in rule and "concept" in rule
     assert "\n9." not in financial_agent._SYSTEM_PROMPT
 
