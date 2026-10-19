@@ -151,7 +151,7 @@ uvicorn==0.44.0
 #                     provides FastMCP (high-level server API), the Context type
 #                     for lifespan-state injection, and transport implementations
 #                     (stdio, SSE, streamable-http).
-mcp[cli]==1.28.1
+mcp[cli]==1.30.0
 
 # ── MCP client adapter for LangGraph ──────────────────────────────────────────
 # langchain-mcp-adapters: bridges MCP servers and LangChain/LangGraph. Provides
